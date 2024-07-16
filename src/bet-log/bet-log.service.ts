@@ -30,7 +30,7 @@ export class BetLogService {
     return `This action returns a #${id} betLog`;
   }
 
-  async update(id: number, updateBetLogDto: any) {
+  async update(id: string, updateBetLogDto: any) {
     return await this.betLogModel.findByIdAndUpdate(id, updateBetLogDto, {
       upsert: true,
     });

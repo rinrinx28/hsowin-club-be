@@ -8,6 +8,7 @@ import { SessionService } from 'src/session/session.service';
 import { CronjobService } from 'src/cronjob/cronjob.service';
 import { UserService } from 'src/user/user.service';
 import { BetLogService } from 'src/bet-log/bet-log.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ClientService {
@@ -20,6 +21,7 @@ export class ClientService {
     private readonly cronJobService: CronjobService,
     private readonly userService: UserService,
     private readonly betLogService: BetLogService,
+    private eventEmitter: EventEmitter2,
   ) {}
   private logger: Logger = new Logger('Client Auto');
 
@@ -38,6 +40,11 @@ export class ClientService {
           result: `${data['type']}`,
           total: old_bet?.sendIn - old_bet?.sendOut,
         });
+        this.eventEmitter.emit('result-bet-user', {
+          betId: old_bet?.id,
+          result: data['type'],
+          server: server,
+        });
       }
     } else if (new_content.includes('Núi khỉ đen')) {
       data['type'] = 1;
@@ -48,6 +55,11 @@ export class ClientService {
           isEnd: true,
           result: `${data['type']}`,
           total: old_bet?.sendIn - old_bet?.sendOut,
+        });
+        this.eventEmitter.emit('result-bet-user', {
+          betId: old_bet?.id,
+          result: data['type'],
+          server: server,
         });
       }
     } else {

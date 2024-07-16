@@ -19,6 +19,9 @@ export class UserBet {
   @Prop()
   result: string;
 
+  @Prop({ default: '' })
+  resultBet: string;
+
   @Prop()
   server: string;
 

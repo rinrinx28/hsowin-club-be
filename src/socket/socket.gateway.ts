@@ -10,6 +10,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CreateUserBet } from './dto/socket.dto';
 
 @WebSocketGateway()
 export class SocketGateway
@@ -25,9 +26,9 @@ export class SocketGateway
     this.eventEmitter.emit('message', message);
   }
 
-  @SubscribeMessage('bet-user')
-  handleBetUser(@MessageBody() data: any) {
-    this.eventEmitter.emit('bet-user', data);
+  @SubscribeMessage('bet-user-ce')
+  handleBetUser(@MessageBody() data: CreateUserBet) {
+    this.eventEmitter.emit('bet-user-ce', data);
   }
 
   afterInit(server: Server) {
