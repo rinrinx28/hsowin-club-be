@@ -72,7 +72,8 @@ export class EventService {
       if (amount < min_amount) throw new Error('The min bet amount is 30');
 
       // Check max limited bet amount
-      if (amount > max_amount) throw new Error('The max bet amount is 3000');
+      if (amount > max_amount)
+        throw new Error(`The max bet amount is ${max_amount}`);
 
       // Let minus gold of user
       await this.userService.update(uid, {
