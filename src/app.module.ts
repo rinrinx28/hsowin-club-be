@@ -17,7 +17,6 @@ import { UnitlService } from './unitl/unitl.service';
 import { WebSocketModule } from './socket/socket.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventService } from './event/event.service';
-import { EventModule } from './event/event.module';
 
 @Module({
   imports: [
@@ -34,9 +33,8 @@ import { EventModule } from './event/event.module';
     SessionModule,
     AuthModule,
     WebSocketModule,
-    EventModule,
   ],
   controllers: [AppController],
-  providers: [AppService, CronjobService, UnitlService],
+  providers: [AppService, CronjobService, UnitlService, EventService],
 })
 export class AppModule {}

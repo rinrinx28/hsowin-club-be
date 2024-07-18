@@ -10,6 +10,10 @@ export class BossService {
     @InjectModel(Boss.name)
     private readonly bossModel: Model<Boss>,
   ) {}
+
+  async findServer(server: any) {
+    return await this.bossModel.findOne({ server: server });
+  }
   async createAndUpdate(server: any, data: UpdateBossDto) {
     return await this.bossModel.findOneAndUpdate({ server }, data, {
       new: true,

@@ -25,6 +25,9 @@ export class User {
   @Prop({ default: 0 })
   gold: number;
 
+  @Prop()
+  server: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

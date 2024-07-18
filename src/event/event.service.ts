@@ -10,6 +10,8 @@ import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { UserService } from 'src/user/user.service';
 import { MessageResult, ResultBet } from './dto/event.dto';
+import { StatusBoss } from 'src/client/dto/client.dto';
+import { Mutex } from 'async-mutex'; // Example using async-mutex for locking
 
 @Injectable()
 export class EventService {
@@ -22,8 +24,10 @@ export class EventService {
     private readonly cronJobService: CronjobService,
     private readonly userService: UserService,
     private readonly betLogService: BetLogService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
+  private readonly mutexMap = new Map<string, Mutex>();
   private logger: Logger = new Logger('Events');
 
   @OnEvent('bet-user-ce')
@@ -31,8 +35,8 @@ export class EventService {
     try {
       const { uid, amount, betId, result, server } = data;
       // Let check timeEnd
-      const bet_session = await this.betLogService.findByServer(server);
-      if (!bet_session) throw new Error('The bet is stop');
+      const bet_session = await this.betLogService.findById(betId);
+      if (!bet_session || bet_session.isEnd) throw new Error('The bet is stop');
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
@@ -44,8 +48,31 @@ export class EventService {
       if (!target) throw new Error('The User is not exist');
 
       // Check Sv Default of user ...
+      let min_amount = 30;
+      let max_amount = target?.server === server ? 3000 : 1500;
+      let total_amount = target?.server === server ? 8000 : 4000;
       if (target.gold - amount <= 0)
         throw new Error('The Balance is not enough');
+
+      // Let query total amount of sesson Bet
+      const old_bet_user = await this.userService.findOneUserBet({
+        betId: betId,
+        uid: uid,
+        isEnd: false,
+        server: server,
+      });
+      let total_bet_user = 0;
+      for (const betUser of old_bet_user) {
+        total_bet_user += betUser.amount;
+      }
+      if (total_bet_user + amount > total_amount)
+        throw new Error('Limited bet amount');
+
+      // Check min limited bet amount
+      if (amount < min_amount) throw new Error('The min bet amount is 30');
+
+      // Check max limited bet amount
+      if (amount > max_amount) throw new Error('The max bet amount is 3000');
 
       // Let minus gold of user
       await this.userService.update(uid, {
@@ -53,15 +80,6 @@ export class EventService {
           gold: -amount,
         },
       });
-      // Let query total amount of sesson Bet
-      const old_bet_user = await this.userService.findOneUserBet({
-        betId: betId,
-        id: uid,
-        isEnd: false,
-        server: server,
-      });
-      const total_bet_user = old_bet_user.reduce((a, b) => a + b.amount, 0);
-      if (total_bet_user >= 3000) throw new Error('Limited Amount Of Bets');
 
       // Let create new Bet
       const betCreate = await this.userService.createBet({
@@ -96,7 +114,7 @@ export class EventService {
     }
   }
 
-  @OnEvent('result-bet-user')
+  // @OnEvent('result-bet-user')
   async handleResultBet(data: ResultBet) {
     const { betId, result, server } = data;
     try {
@@ -121,7 +139,6 @@ export class EventService {
         status: true,
         data: newBetUser,
       });
-      console.log(newBetUser);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -142,6 +159,93 @@ export class EventService {
     return msg;
   }
 
+  @OnEvent('status-boss')
+  async handleStatusBoss(data: StatusBoss) {
+    const parameter = data.server; // Tham số cần lock
+
+    // Tạo mutex cho tham số nếu chưa tồn tại
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      const { content, server } = data;
+      let new_content = this.unitlService.hexToString(content);
+      data.content = new_content;
+
+      // Check spam Boss Status
+      const old_server_update = await this.bossService.findServer(server);
+      if (old_server_update) {
+        let now = Math.floor(Date.now() / 1000);
+        let current_update = Math.floor(
+          new Date(old_server_update?.updatedAt).getTime() / 1000,
+        );
+        if (now - current_update < 5) {
+          throw new Error('Spam');
+        }
+      }
+      const old_bet = await this.betLogService.findByServer(server);
+      if (new_content.includes('Núi khỉ đỏ')) {
+        data['type'] = 0;
+      } else if (new_content.includes('Núi khỉ đen')) {
+        data['type'] = 1;
+      } else {
+        data['type'] = 2;
+      }
+
+      data['respam'] = data['type'] === 2 ? 180 : 0;
+      if (data['type'] === 2) {
+        if (old_bet) {
+          await this.betLogService.update(old_bet?.id, {
+            server,
+            timeEnd: this.addSeconds(new Date(), 180),
+            isEnd: false,
+            result: ``,
+          });
+        } else {
+          await this.betLogService.create({
+            server,
+            timeEnd: this.addSeconds(new Date(), 180),
+          });
+        }
+      } else {
+        if (old_bet) {
+          await this.handleResultBet({
+            betId: old_bet?.id,
+            result: `${data['type']}`,
+            server: server,
+          });
+          // Update new total in the Bet
+          const update_old = await this.betLogService.findById(old_bet?.id);
+          await this.betLogService.update(old_bet?.id, {
+            isEnd: true,
+            result: `${data['type']}`,
+            total: update_old?.sendIn - update_old?.sendOut,
+          });
+        }
+      }
+      // Create new Bet
+      await this.bossService.createAndUpdate(server, {
+        server,
+        type: data?.type,
+        respam: data?.respam,
+      });
+      this.socketGateway.server.emit('status-boss', {
+        server,
+        type: data?.type,
+        respam: data?.respam,
+      });
+      this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
+      return;
+    } catch (err) {
+      this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
+    } finally {
+      release();
+    }
+  }
+
   async handleUpdateUserBet(id: any, uid: any, betId: any, data: any) {
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
@@ -149,7 +253,7 @@ export class EventService {
     }
   }
 
-  async handleTransactionUserBet(id: any, betId, amount: number) {
+  async handleTransactionUserBet(id: any, betId: any, amount: number) {
     await this.userService.update(id, {
       $inc: {
         gold: +amount,
@@ -160,5 +264,9 @@ export class EventService {
         sendOut: +amount,
       },
     });
+  }
+
+  addSeconds(date: Date, seconds: number): Date {
+    return new Date(date.getTime() + seconds * 1000);
   }
 }

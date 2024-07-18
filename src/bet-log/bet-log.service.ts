@@ -22,15 +22,20 @@ export class BetLogService {
     return old_bet;
   }
 
+  async findById(id: any) {
+    const old_bet = await this.betLogModel.findById(id);
+    return old_bet;
+  }
+
   findAll() {
     return `This action returns all betLog`;
   }
 
-  findOne(id: number) {
+  findOne(id: any) {
     return `This action returns a #${id} betLog`;
   }
 
-  async update(id: string, updateBetLogDto: any) {
+  async update(id: any, updateBetLogDto: any) {
     return await this.betLogModel.findByIdAndUpdate(id, updateBetLogDto, {
       upsert: true,
     });

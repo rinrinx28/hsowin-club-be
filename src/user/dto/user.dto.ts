@@ -9,8 +9,8 @@ export class CreateUserBetDto {
 }
 
 export class FindUserBetDto {
-  id: string;
-  betId: string;
+  uid: any;
+  betId: any;
   isEnd: boolean;
   server: string;
 }

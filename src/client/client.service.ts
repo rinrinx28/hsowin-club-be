@@ -26,68 +26,7 @@ export class ClientService {
   private logger: Logger = new Logger('Client Auto');
 
   async getStatusBoss(data: StatusBoss) {
-    const { content, server } = data;
-    const old_bet = await this.betLogService.findByServer(server);
-    let new_content = this.unitlService.hexToString(content);
-    data.content = new_content;
-    if (new_content.includes('Núi khỉ đỏ')) {
-      data['type'] = 0;
-      data['respam'] = 0;
-      if (old_bet) {
-        // Update End Bet
-        await this.betLogService.update(old_bet?.id, {
-          isEnd: true,
-          result: `${data['type']}`,
-          total: old_bet?.sendIn - old_bet?.sendOut,
-        });
-        this.eventEmitter.emit('result-bet-user', {
-          betId: old_bet?.id,
-          result: data['type'],
-          server: server,
-        });
-      }
-    } else if (new_content.includes('Núi khỉ đen')) {
-      data['type'] = 1;
-      data['respam'] = 0;
-      if (old_bet) {
-        // Update End Bet
-        await this.betLogService.update(old_bet?.id, {
-          isEnd: true,
-          result: `${data['type']}`,
-          total: old_bet?.sendIn - old_bet?.sendOut,
-        });
-        this.eventEmitter.emit('result-bet-user', {
-          betId: old_bet?.id,
-          result: data['type'],
-          server: server,
-        });
-      }
-    } else {
-      data['type'] = 2;
-      data['respam'] = 180;
-      if (old_bet) {
-        await this.betLogService.update(old_bet?.id, {
-          server: server,
-          timeEnd: this.addSeconds(new Date(), 180),
-        });
-      } else {
-        await this.betLogService.create({
-          server: server,
-          timeEnd: this.addSeconds(new Date(), 180),
-        });
-      }
-    }
-    await this.bossService.createAndUpdate(server, {
-      server,
-      type: data?.type,
-      respam: data?.respam,
-    });
-    this.socketGateway.server.emit('status-boss', {
-      server,
-      type: data?.type,
-      respam: data?.respam,
-    });
-    this.logger.log(`Boss Status: ${data.content}`);
+    await this.eventEmitter.emitAsync('status-boss', data);
     return 'ok';
   }
 
