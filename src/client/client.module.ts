@@ -6,9 +6,9 @@ import { SessionModule } from 'src/session/session.module';
 import { BossModule } from 'src/boss/boss.module';
 import { UserModule } from 'src/user/user.module';
 import { UnitlService } from 'src/unitl/unitl.service';
-import { CronjobService } from 'src/cronjob/cronjob.service';
 import { WebSocketModule } from 'src/socket/socket.module';
 import { BetLogModule } from 'src/bet-log/bet-log.module';
+import { CronjobModule } from 'src/cronjob/cronjob.module';
 
 @Module({
   imports: [
@@ -18,8 +18,9 @@ import { BetLogModule } from 'src/bet-log/bet-log.module';
     UserModule,
     WebSocketModule,
     BetLogModule,
+    CronjobModule,
   ],
   controllers: [ClientController],
-  providers: [ClientService, UnitlService, CronjobService],
+  providers: [ClientService, UnitlService],
 })
 export class ClientModule {}

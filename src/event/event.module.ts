@@ -9,9 +9,9 @@ import { UserModule } from 'src/user/user.module';
 import { EventService } from './event.service';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { WebSocketModule } from 'src/socket/socket.module';
-import { CronjobService } from 'src/cronjob/cronjob.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventConfig, EventConfigSchema } from './schema/event.schema';
+import { CronjobModule } from 'src/cronjob/cronjob.module';
 
 @Module({
   imports: [
@@ -26,8 +26,9 @@ import { EventConfig, EventConfigSchema } from './schema/event.schema';
     SessionModule,
     UserModule,
     WebSocketModule,
+    CronjobModule,
   ],
-  providers: [EventService, UnitlService, CronjobService],
+  providers: [EventService, UnitlService],
   exports: [EventService],
 })
 export class EventModule {}

@@ -26,9 +26,9 @@ export class SocketGateway
     this.eventEmitter.emit('message', message);
   }
 
-  @SubscribeMessage('bet-user-ce')
+  @SubscribeMessage('bet-user-ce-boss')
   async handleBetUser(@MessageBody() data: CreateUserBet) {
-    await this.eventEmitter.emitAsync('bet-user-ce', data);
+    await this.eventEmitter.emitAsync('bet-user-ce-boss', data);
   }
 
   afterInit(server: Server) {

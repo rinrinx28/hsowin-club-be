@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class CronjobService {
+  constructor(private eventEmitter: EventEmitter2) {}
   private job = new Map();
 
   create(sessionId, timeOutId) {
@@ -16,5 +19,10 @@ export class CronjobService {
     } else {
       return false;
     }
+  }
+
+  @Cron('0 */3 * * * *')
+  handleServerAuto() {
+    this.eventEmitter.emit('server-24', 'isRun');
   }
 }

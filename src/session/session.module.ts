@@ -4,15 +4,16 @@ import { SessionService } from './session.service';
 import { Session, SessionSchema } from './schema/session.schema';
 import { SessionController } from './session.controller';
 import { UserModule } from 'src/user/user.module';
-import { CronjobService } from 'src/cronjob/cronjob.service';
+import { CronjobModule } from 'src/cronjob/cronjob.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
     UserModule,
+    CronjobModule,
   ],
   controllers: [SessionController],
-  providers: [SessionService, CronjobService],
+  providers: [SessionService],
   exports: [SessionService],
 })
 export class SessionModule {}

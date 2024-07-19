@@ -12,14 +12,16 @@ import { BossModule } from './boss/boss.module';
 import { MessagesModule } from './messeges/messeges.module';
 import { SessionModule } from './session/session.module';
 import { AuthModule } from './auth/auth.module';
-import { CronjobService } from './cronjob/cronjob.service';
 import { UnitlService } from './unitl/unitl.service';
 import { WebSocketModule } from './socket/socket.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventService } from './event/event.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CronjobModule } from './cronjob/cronjob.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({ envFilePath: '.env', isGlobal: true }),
     MongooseModule.forRoot(process.env.DATABASE_URI),
     EventEmitterModule.forRoot(),
@@ -33,8 +35,9 @@ import { EventService } from './event/event.service';
     SessionModule,
     AuthModule,
     WebSocketModule,
+    CronjobModule,
   ],
   controllers: [AppController],
-  providers: [AppService, CronjobService, UnitlService, EventService],
+  providers: [AppService, UnitlService, EventService],
 })
 export class AppModule {}

@@ -30,7 +30,7 @@ export class EventService {
   private readonly mutexMap = new Map<string, Mutex>();
   private logger: Logger = new Logger('Events');
 
-  @OnEvent('bet-user-ce')
+  @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
     try {
       const { uid, amount, betId, result, server } = data;
@@ -103,7 +103,7 @@ export class EventService {
         status: true,
         data: [betCreate],
       });
-      this.socketGateway.server.emit('re-bet-user-ce', msg);
+      this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -111,7 +111,7 @@ export class EventService {
         status: false,
         data: [],
       });
-      this.socketGateway.server.emit('re-bet-user-ce', msg);
+      this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       return msg;
     }
   }
@@ -441,6 +441,94 @@ export class EventService {
     obj_result.total.TX = `${obj_result.t ? 'T' : 'X'}`;
     obj_result.total.XIEN = `${obj_result.total.CL}${obj_result.total.TX}`;
     return `${obj_result.total.XIEN}-${obj_result.total.result}`;
+  }
+
+  //TODO ———————————————[Handler Mini game Server 24/24]———————————————
+  @OnEvent('server-24')
+  async handleServerAuto() {
+    const parameter = '24'; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      // Let config
+      const now = new Date();
+      // Let find the old bet
+      const old_bet = await this.betLogService.findSvByServer('24');
+
+      // Update database main boss
+      await this.bossService.createAndUpdate('24', {
+        server: '24',
+        type: 4,
+        respam: 180,
+      });
+
+      // Get value now update
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const result = this.handleResultBetBoss(
+        `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+      );
+
+      // If the bet not exist > will create new
+      if (!old_bet) {
+        await this.betLogService.createSv({
+          server: '24',
+          timeEnd: this.addSeconds(now, 180),
+        });
+      } else {
+        // Send result for user bet the sv
+        await this.handleResultServerWithBoss({
+          betId: old_bet?.id,
+          result: result,
+          server: `24`,
+        });
+
+        const update_old_sv = await this.betLogService.findSvById(old_bet?.id);
+        const reqUpdateSv = this.betLogService.updateSv(update_old_sv?.id, {
+          isEnd: true,
+          result: result,
+          total: update_old_sv?.sendIn - update_old_sv?.sendOut,
+        });
+        const reqUpdateBetHistorySv =
+          this.betLogService.createAndUpdateBetHistory(`24`, {
+            $inc: {
+              sendIn: +update_old_sv?.sendIn,
+              sendOut: +update_old_sv?.sendOut,
+            },
+          });
+        await Promise.all([reqUpdateSv, reqUpdateBetHistorySv]);
+        // Create new bet
+        await this.betLogService.createSv({
+          server: '24',
+          timeEnd: this.addSeconds(now, 180),
+        });
+      }
+
+      const msg = this.handleMessageResult({
+        message: 'server-24-is-run',
+        status: true,
+        data: '',
+      });
+      this.logger.log(
+        `Server 24/24: Result is ${result} - Update/Create: ${old_bet ? true : false}`,
+      );
+      return msg;
+    } catch (err) {
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+        data: '',
+      });
+      return msg;
+    } finally {
+      release();
+    }
   }
 
   //TODO ———————————————[Handler Another]———————————————
