@@ -31,3 +31,10 @@ export class Transaction {
   service_id?: string;
   server: string;
 }
+
+export class StatusServerWithBoss {
+  uuid: string;
+  content: string;
+  server: string;
+  respam?: number;
+}

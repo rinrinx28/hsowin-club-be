@@ -9,3 +9,8 @@ export class ResultBet {
   result: string;
   server: string;
 }
+export class ResultBetBoss {
+  betId: string;
+  result: string;
+  server: string;
+}

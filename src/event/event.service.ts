@@ -9,8 +9,8 @@ import { CreateUserBet } from 'src/socket/dto/socket.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { UserService } from 'src/user/user.service';
-import { MessageResult, ResultBet } from './dto/event.dto';
-import { StatusBoss } from 'src/client/dto/client.dto';
+import { MessageResult, ResultBet, ResultBetBoss } from './dto/event.dto';
+import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
 import { Mutex } from 'async-mutex'; // Example using async-mutex for locking
 
 @Injectable()
@@ -40,7 +40,7 @@ export class EventService {
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
-      if (timeEnd - current_now <= 20)
+      if (timeEnd - current_now < 10)
         throw new Error('the time to bet is stop');
 
       // Find User with UID
@@ -49,8 +49,8 @@ export class EventService {
 
       // Check Sv Default of user ...
       let min_amount = 30;
-      let max_amount = target?.server === server ? 3000 : 1500;
-      let total_amount = target?.server === server ? 8000 : 4000;
+      let max_amount = target?.server.includes(server) ? 3000 : 2000;
+      let total_amount = target?.server.includes(server) ? 5000 : 3000;
       if (target.gold - amount <= 0)
         throw new Error('The Balance is not enough');
 
@@ -65,6 +65,7 @@ export class EventService {
       for (const betUser of old_bet_user) {
         total_bet_user += betUser.amount;
       }
+      // console.log(total_bet_user, min_amount, max_amount, amount);
       if (total_bet_user + amount > total_amount)
         throw new Error('Limited bet amount');
 
@@ -160,11 +161,12 @@ export class EventService {
     return msg;
   }
 
+  //TODO ———————————————[Handle Status Boss]———————————————
   @OnEvent('status-boss')
   async handleStatusBoss(data: StatusBoss) {
-    const parameter = data.server; // Tham số cần lock
+    const parameter = data.server; // Value will be lock
 
-    // Tạo mutex cho tham số nếu chưa tồn tại
+    // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
       this.mutexMap.set(parameter, new Mutex());
     }
@@ -187,7 +189,12 @@ export class EventService {
           throw new Error('Spam');
         }
       }
-      const old_bet = await this.betLogService.findByServer(server);
+
+      // Check Type spam or die of the boss
+      const old_bet_boss = await this.betLogService.findByServer(server);
+      const old_bet_sv = await this.betLogService.findSvByServer(
+        `${server}-mini`,
+      );
       if (new_content.includes('Núi khỉ đỏ')) {
         data['type'] = 0;
       } else if (new_content.includes('Núi khỉ đen')) {
@@ -196,43 +203,120 @@ export class EventService {
         data['type'] = 2;
       }
 
+      // Set new time respam for the boss if it has die
       data['respam'] = data['type'] === 2 ? 180 : 0;
-      if (data['type'] === 2) {
-        if (old_bet) {
-          await this.betLogService.update(old_bet?.id, {
-            server,
-            timeEnd: this.addSeconds(new Date(), 180),
-            isEnd: false,
-            result: ``,
-          });
-        } else {
-          await this.betLogService.create({
-            server,
-            timeEnd: this.addSeconds(new Date(), 180),
-          });
-        }
-      } else {
-        if (old_bet) {
-          await this.handleResultBet({
-            betId: old_bet?.id,
-            result: `${data['type']}`,
-            server: server,
-          });
-          // Update new total in the Bet
-          const update_old = await this.betLogService.findById(old_bet?.id);
-          await this.betLogService.update(old_bet?.id, {
-            isEnd: true,
-            result: `${data['type']}`,
-            total: update_old?.sendIn - update_old?.sendOut,
-          });
-        }
-      }
-      // Create new Bet
-      await this.bossService.createAndUpdate(server, {
+
+      // Update database main boss
+      const statusBoss = await this.bossService.createAndUpdate(server, {
         server,
         type: data?.type,
         respam: data?.respam,
       });
+
+      // Get value now update
+      const now = new Date();
+      const current_now = new Date(statusBoss?.updatedAt);
+      let hours = current_now.getHours();
+      let minutes = current_now.getMinutes();
+      const result = this.handleResultBetBoss(
+        `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+      );
+
+      // let return result to user
+      if (data['type'] === 2) {
+        if (old_bet_sv || old_bet_boss) {
+          const update_old_boss = this.betLogService.update(old_bet_boss?.id, {
+            server,
+            timeEnd: this.addSeconds(now, 180),
+            isEnd: false,
+            result: ``,
+          });
+          const update_old_sv = this.betLogService.updateSv(old_bet_sv?.id, {
+            server: `${server}-mini`,
+            timeEnd: this.addSeconds(now, 180),
+            isEnd: false,
+            result: ``,
+          });
+          await Promise.all([update_old_sv, update_old_boss]);
+        } else {
+          // Create new Bet between Map Boss and Server
+          const create_new_boss = this.betLogService.create({
+            server,
+            timeEnd: this.addSeconds(now, 180),
+          });
+          const create_new_sv = this.betLogService.createSv({
+            server: `${server}-mini`,
+            timeEnd: this.addSeconds(now, 180),
+          });
+          await Promise.all([create_new_boss, create_new_sv]);
+        }
+      } else {
+        if (old_bet_sv || old_bet_boss) {
+          // Send Result for user bet the map boss
+          const resultUserMapBoss = this.handleResultBet({
+            betId: old_bet_boss?.id,
+            result: `${data['type']}`,
+            server: server,
+          });
+          // Send result for user bet the sv
+          const resultUserMapSv = this.handleResultServerWithBoss({
+            betId: old_bet_sv?.id,
+            result: result,
+            server: `${server}-mini`,
+          });
+          await Promise.all([resultUserMapBoss, resultUserMapSv]);
+          // Get two update old of MapBoss and Sv
+          const update_old_boss = this.betLogService.findById(old_bet_boss?.id);
+          const update_old_sv = this.betLogService.findSvById(old_bet_sv?.id);
+
+          // Promise get two Database MapBossBet and SvBet
+          const [res_update_old_sv, res_update_old_boss] = await Promise.all([
+            update_old_sv,
+            update_old_boss,
+          ]);
+
+          // Map Boss Update
+          const reqUpdateMapBoss = this.betLogService.update(old_bet_boss?.id, {
+            isEnd: true,
+            result: `${data['type']}`,
+            total: res_update_old_boss?.sendIn - res_update_old_boss?.sendOut,
+          });
+          const reqUpdateBetHistoryMapBoss =
+            this.betLogService.createAndUpdateBetHistory(data?.server, {
+              $inc: {
+                sendIn: +res_update_old_boss?.sendIn,
+                sendOut: +res_update_old_boss?.sendOut,
+              },
+            });
+          // The sv update
+          const reqUpdateSv = this.betLogService.updateSv(
+            res_update_old_sv?.id,
+            {
+              isEnd: true,
+              result: result,
+              total: res_update_old_sv?.sendIn - res_update_old_sv?.sendOut,
+            },
+          );
+          const reqUpdateBetHistorySv =
+            this.betLogService.createAndUpdateBetHistory(
+              `${data?.server}-mini`,
+              {
+                $inc: {
+                  sendIn: +res_update_old_sv?.sendIn,
+                  sendOut: +res_update_old_sv?.sendOut,
+                },
+              },
+            );
+          // Send all the Promise update
+          await Promise.all([
+            reqUpdateMapBoss,
+            reqUpdateBetHistoryMapBoss,
+            reqUpdateSv,
+            reqUpdateBetHistorySv,
+          ]);
+        }
+      }
+
       this.socketGateway.server.emit('status-boss', {
         server,
         type: data?.type,
@@ -246,6 +330,7 @@ export class EventService {
       release();
     }
   }
+  //TODO ———————————————[Handler Mini game map boss]———————————————
 
   async handleUpdateUserBet(id: any, uid: any, betId: any, data: any) {
     await this.userService.updateBet(id, data);
@@ -266,6 +351,99 @@ export class EventService {
       },
     });
   }
+
+  //TODO ———————————————[Handler Mini Game Server (1,2,3)]———————————————
+  async handleResultServerWithBoss(data: ResultBetBoss) {
+    try {
+      let result = data.result;
+      // Config receive
+      let precent = 1.9;
+
+      // Find all bet of sesson
+      const all_bet = await this.userService.findBetWithBetId(
+        data?.betId,
+        `${data?.server}`,
+      );
+
+      for (const bet of all_bet) {
+        if (result.includes(bet.result)) {
+          bet.receive = bet.amount * precent;
+        }
+        await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
+          resultBet: `${result}`,
+          receive: bet.receive,
+          isEnd: true,
+        });
+      }
+      const msg = this.handleMessageResult({
+        message: `result-bet-boss-user-${data?.server}`,
+        status: true,
+        data: `${result}`,
+      });
+      return msg;
+    } catch (err) {
+      this.logger.log(
+        `Bet Server Status: ${err.message} - Server: ${data?.server}`,
+      );
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+        data: '',
+      });
+      return msg;
+    }
+  }
+
+  randomResultWithTime(timeBoss: string): string {
+    let result: string | Array<any | number>;
+    let random = Math.floor(100000 + Math.random() * 900000);
+    result = `${timeBoss}${random}`.split('').map((a) => Number(a));
+    let new_result = result.reduce((a, b) => a + b, 0);
+    return `${new_result}`;
+  }
+
+  async handleUpdateUserBetWithBoss(id: any, uid: any, betId: any, data: any) {
+    await this.userService.updateBet(id, data);
+    if (data?.receive > 0) {
+      await this.handleTransactionUserBetWithBoss(uid, betId, data?.receive);
+    }
+  }
+
+  async handleTransactionUserBetWithBoss(id: any, betId: any, amount: number) {
+    await this.userService.update(id, {
+      $inc: {
+        gold: +amount,
+      },
+    });
+    await this.betLogService.updateSv(betId, {
+      $inc: {
+        sendOut: +amount,
+      },
+    });
+  }
+
+  handleResultBetBoss(timeBoss: string) {
+    let result = this.randomResultWithTime(`${timeBoss}`);
+    let new_result = `${result}`.split('')[1];
+    let obj_result = {
+      c: Number(new_result) % 2 === 0,
+      l: Number(new_result) % 2 !== 0,
+      x: Number(new_result) < 5,
+      t: Number(new_result) > 4,
+      total: {
+        CL: '',
+        TX: '',
+        result: `${result}`,
+        XIEN: '',
+      },
+    };
+    obj_result.total.CL = `${obj_result.c ? 'C' : 'L'}`;
+    obj_result.total.TX = `${obj_result.t ? 'T' : 'X'}`;
+    obj_result.total.XIEN = `${obj_result.total.CL}${obj_result.total.TX}`;
+    return `${obj_result.total.XIEN}-${obj_result.total.result}`;
+  }
+
+  //TODO ———————————————[Handler Another]———————————————
 
   addSeconds(date: Date, seconds: number): Date {
     return new Date(date.getTime() + seconds * 1000);
