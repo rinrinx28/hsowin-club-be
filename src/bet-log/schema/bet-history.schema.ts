@@ -13,6 +13,9 @@ export class BetHistory {
   @Prop({ default: 0 })
   sendOut: number;
 
+  @Prop({ default: 0 })
+  jackpot: number;
+
   @Prop()
   server: string;
 

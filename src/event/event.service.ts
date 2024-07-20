@@ -12,6 +12,7 @@ import { UserService } from 'src/user/user.service';
 import { MessageResult, ResultBet, ResultBetBoss } from './dto/event.dto';
 import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
 import { Mutex } from 'async-mutex'; // Example using async-mutex for locking
+import { User } from 'src/user/schema/user.schema';
 
 @Injectable()
 export class EventService {
@@ -43,45 +44,20 @@ export class EventService {
       if (timeEnd - current_now < 10)
         throw new Error('the time to bet is stop');
 
-      // Find User with UID
-      const target = await this.userService.findById(uid);
-      if (!target) throw new Error('The User is not exist');
-
-      // Check Sv Default of user ...
-      let min_amount = 30;
-      let max_amount = target?.server.includes(server) ? 3000 : 2000;
-      let total_amount = target?.server.includes(server) ? 5000 : 3000;
-      if (target.gold - amount <= 0)
-        throw new Error('The Balance is not enough');
-
-      // Let query total amount of sesson Bet
-      const old_bet_user = await this.userService.findOneUserBet({
-        betId: betId,
-        uid: uid,
-        isEnd: false,
-        server: server,
-      });
-      let total_bet_user = 0;
-      for (const betUser of old_bet_user) {
-        total_bet_user += betUser.amount;
-      }
-      // console.log(total_bet_user, min_amount, max_amount, amount);
-      if (total_bet_user + amount > total_amount)
-        throw new Error('Limited bet amount');
-
-      // Check min limited bet amount
-      if (amount < min_amount) throw new Error('The min bet amount is 30');
-
-      // Check max limited bet amount
-      if (amount > max_amount)
-        throw new Error(`The max bet amount is ${max_amount}`);
+      const target = await this.queryRequestUserBet(uid, betId, server, amount);
 
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
           gold: -amount,
+          totalBet: +amount,
         },
       });
+
+      // Check user has in the clan
+      if (target?.clansId.length > 0) {
+        await this.userService.updateTotalBetClans(amount, target?.clansId);
+      }
 
       // Let create new Bet
       const betCreate = await this.userService.createBet({
@@ -116,7 +92,76 @@ export class EventService {
     }
   }
 
-  // @OnEvent('result-bet-user')
+  @OnEvent('bet-user-ce-sv')
+  async handleBetSvAuto(data: CreateUserBet) {
+    try {
+      const { amount, betId, result, server, uid } = data;
+
+      // Let check timeEnd
+      const bet_session = await this.betLogService.findSvById(betId);
+      if (!bet_session || bet_session.isEnd) throw new Error('The bet is stop');
+
+      let current_now = Math.floor(Date.now() / 1000);
+      let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
+      if (timeEnd - current_now < 10)
+        throw new Error('the time to bet is stop');
+
+      const target = await this.queryRequestUserBet(uid, betId, server, amount);
+
+      // Let minus gold of user
+      await this.userService.update(uid, {
+        $inc: {
+          gold: -amount,
+          totalBet: +amount,
+        },
+      });
+
+      // Check user has in the clan
+      if (target?.clansId.length > 0) {
+        await this.userService.updateTotalBetClans(amount, target?.clansId);
+      }
+      // Let create new Bet
+      const betCreate = await this.userService.createBet({
+        amount,
+        betId,
+        result,
+        server,
+        uid,
+      });
+
+      // Let update sendIn The bet
+      await this.betLogService.updateSv(betId, {
+        $inc: {
+          sendIn: +amount,
+        },
+      });
+
+      // Update jackpot if it is the server 24/24
+      if (bet_session.server === '24') {
+        await this.betLogService.createAndUpdateBetHistory(bet_session.server, {
+          $inc: {
+            jackpot: +amount * 0.1,
+          },
+        });
+      }
+      const msg = this.handleMessageResult({
+        message: 'The bet is success',
+        status: true,
+        data: [betCreate],
+      });
+      this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
+      return msg;
+    } catch (err) {
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+        data: [],
+      });
+      this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
+      return msg;
+    }
+  }
+
   async handleResultBet(data: ResultBet) {
     const { betId, result, server } = data;
     try {
@@ -482,6 +527,15 @@ export class EventService {
           timeEnd: this.addSeconds(now, 180),
         });
       } else {
+        // Check if the result is jack pot
+        if (result === '99') {
+          await this.handleJackPotServerAuto({
+            betId: old_bet?.id,
+            result: result,
+            server: `24`,
+          });
+        }
+
         // Send result for user bet the sv
         await this.handleResultServerWithBoss({
           betId: old_bet?.id,
@@ -531,9 +585,116 @@ export class EventService {
     }
   }
 
+  async handleJackPotServerAuto(data: ResultBetBoss) {
+    try {
+      const { betId, result, server } = data;
+
+      // Let find all User is bet
+      const all_bets = await this.userService.findBetWithBetId(betId, server);
+      const historyBet =
+        await this.betLogService.findBetHistoryByServer(server);
+
+      let list_user_amount: Record<string, number> = {};
+      let list_user_isWin: Record<string, boolean> = {};
+      for (const bet of all_bets) {
+        list_user_amount[bet.uid] = list_user_amount[bet?.id]
+          ? list_user_amount[bet.id] + bet.amount
+          : bet.amount;
+        if (result.includes(bet.result)) {
+          list_user_isWin[bet.uid] = true;
+        }
+      }
+      let list_user_jackpot: Array<any> = [];
+      // Filter user is win in the list_user_amount and the list user iswin
+      for (const key of Object.keys(list_user_isWin)) {
+        list_user_jackpot.push({ uid: key, amount: list_user_amount[key] });
+      }
+      // Let sum total amount of user is win
+      let totalSumWin = list_user_jackpot.reduce((a, b) => a + b.amount, 0);
+      // Let calculator percent the user will get how much percent of the prize
+      let list_user_percent = [];
+      for (const user of list_user_jackpot) {
+        list_user_percent.push({
+          uid: user.uid,
+          percent: Math.floor(user.amount / totalSumWin),
+          amount: user.amount,
+        });
+      }
+
+      // let render show the prize of user
+      let list_user_prize = list_user_percent.map((user) => {
+        let prize = historyBet.jackpot * user.percent;
+        return { ...user, prize };
+      });
+
+      // let send the prize for user and update the prize on history bet
+      for (const user of list_user_prize) {
+        await this.userService.update(user.uid, {
+          $inc: {
+            gold: +user.prize,
+          },
+        });
+      }
+
+      let totalPrize = list_user_prize.reduce((a, b) => a + b.prize, 0);
+      await this.betLogService.createAndUpdateBetHistory(server, {
+        $inc: {
+          jackpot: -totalPrize,
+        },
+      });
+
+      return;
+    } catch (err) {
+      return err.message;
+    }
+  }
+
+  //TODO ———————————————[Handle System Clans]———————————————
+  async handleClansUserBet(user: User) {}
+
   //TODO ———————————————[Handler Another]———————————————
 
   addSeconds(date: Date, seconds: number): Date {
     return new Date(date.getTime() + seconds * 1000);
+  }
+
+  async queryRequestUserBet(
+    uid: any,
+    betId: any,
+    server: string,
+    amount: number,
+  ) {
+    // Find User with UID
+    const target = await this.userService.findById(uid);
+    if (!target) throw new Error('The User is not exist');
+
+    // Check Sv Default of user ...
+    let min_amount = 30;
+    let max_amount = target?.server.includes(server) ? 3000 : 2000;
+    let total_amount = target?.server.includes(server) ? 5000 : 3000;
+    if (target.gold - amount <= 0) throw new Error('The Balance is not enough');
+
+    // Let query total amount of sesson Bet
+    const old_bet_user = await this.userService.findOneUserBet({
+      betId: betId,
+      uid: uid,
+      isEnd: false,
+      server: server,
+    });
+    let total_bet_user = 0;
+    for (const betUser of old_bet_user) {
+      total_bet_user += betUser.amount;
+    }
+    // console.log(total_bet_user, min_amount, max_amount, amount);
+    if (total_bet_user + amount > total_amount)
+      throw new Error('Limited bet amount');
+
+    // Check min limited bet amount
+    if (amount < min_amount) throw new Error('The min bet amount is 30');
+
+    // Check max limited bet amount
+    if (amount > max_amount)
+      throw new Error(`The max bet amount is ${max_amount}`);
+    return target;
   }
 }

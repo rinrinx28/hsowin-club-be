@@ -75,7 +75,7 @@ export class BetLogService {
 
   //TODO ———————————————[Bet Server]———————————————
   /**
-   * Create The Bet Server (1,2,3)
+   * Create The Bet Server (1,2,3) and 24/24
    * @param data
    * @returns
    */
@@ -84,7 +84,7 @@ export class BetLogService {
   }
 
   /**
-   * Find The Bet Server (1,2,3) with Server
+   * Find The Bet Server (1,2,3) and 24/24 with Server
    * @param server
    * @returns
    */
@@ -97,7 +97,7 @@ export class BetLogService {
   }
 
   /**
-   * Find The Bet Server (1,2,3) with ID
+   * Find The Bet Server (1,2,3) and 24/24 with ID
    * @param id
    * @returns
    */
@@ -107,7 +107,7 @@ export class BetLogService {
   }
 
   /**
-   * Update The Bet Server (1,2,3) with ID
+   * Update The Bet Server (1,2,3) and 24/24 with ID
    * @param id
    * @param updateBetLogDto
    * @returns

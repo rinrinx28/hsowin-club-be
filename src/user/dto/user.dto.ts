@@ -14,3 +14,13 @@ export class FindUserBetDto {
   isEnd: boolean;
   server: string;
 }
+
+export class CreateClans {
+  clansName: string;
+  ownerId: string;
+}
+
+export class MemberClans {
+  uid: string;
+  clanId: string;
+}

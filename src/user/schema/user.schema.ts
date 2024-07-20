@@ -25,6 +25,15 @@ export class User {
   @Prop({ default: 0 })
   gold: number;
 
+  @Prop({ default: '' })
+  clansId: string;
+
+  @Prop({ default: 0 })
+  totalBet: number;
+
+  @Prop({ default: 0 })
+  limitedTrade: number;
+
   @Prop()
   server: string;
 
