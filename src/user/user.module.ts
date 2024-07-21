@@ -11,7 +11,7 @@ import { ClansSchema, Clans } from './schema/clans.schema';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: UserBet.name, schema: UserBetSchema },
-      { name: UserBet.name, schema: ClansSchema },
+      { name: Clans.name, schema: ClansSchema },
     ]),
   ],
   controllers: [UserController],
