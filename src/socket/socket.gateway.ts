@@ -12,7 +12,11 @@ import { Server, Socket } from 'socket.io';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateUserBet } from './dto/socket.dto';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: ['http:/localhost:3000'],
+  },
+})
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
