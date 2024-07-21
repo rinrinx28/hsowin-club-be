@@ -40,6 +40,7 @@ export class ClientService {
     this.logger.log(
       `Bot Status: Bot ${data.name} - Gold Current:${data?.gold} - Server: ${data?.server}`,
     );
+    this.socketGateway.server.emit('status-bot', data);
     return 'ok';
   }
 
