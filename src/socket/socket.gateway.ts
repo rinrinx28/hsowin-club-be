@@ -14,7 +14,7 @@ import { CreateUserBet } from './dto/socket.dto';
 
 @WebSocketGateway({
   cors: {
-    origin: ['http:/localhost:3000'],
+    origin: ['http://localhost:3000'],
   },
 })
 export class SocketGateway
