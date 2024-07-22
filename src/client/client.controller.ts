@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ClientService } from './client.service';
 
 @Controller('/api/client')
@@ -57,5 +57,10 @@ export class ClientController {
       server,
     };
     return this.clientService.getTransaction(data);
+  }
+
+  @Post('/hsowin-bank')
+  handleDoiThe(@Body() data: any) {
+    console.log(data);
   }
 }
