@@ -25,4 +25,17 @@ export class CronjobService {
   handleServerAuto() {
     this.eventEmitter.emit('server-24', 'isRun');
   }
+
+  @Cron('0 0 0 * * *', {
+    name: 'Reset Rank Days',
+  })
+  handleRankDay() {
+    this.eventEmitter.emit('rank-days', 'isrun');
+  }
+  @Cron('0 0 0 * * *', {
+    name: 'Reset Rank Clans',
+  })
+  handleRankClans() {
+    this.eventEmitter.emit('rank-clans', 'isrun');
+  }
 }

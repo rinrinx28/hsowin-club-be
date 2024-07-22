@@ -53,10 +53,10 @@ export class EventService {
           totalBet: +amount,
         },
       });
-
+      let clansObj = JSON.parse(target?.clan);
       // Check user has in the clan
-      if (target?.clansId.length > 0) {
-        await this.userService.updateTotalBetClans(amount, target?.clansId);
+      if ('clanId' in clansObj) {
+        await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
       }
 
       // Let create new Bet
@@ -116,9 +116,10 @@ export class EventService {
         },
       });
 
+      let clansObj = JSON.parse(target?.clan);
       // Check user has in the clan
-      if (target?.clansId.length > 0) {
-        await this.userService.updateTotalBetClans(amount, target?.clansId);
+      if ('clanId' in clansObj) {
+        await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
       }
       // Let create new Bet
       const betCreate = await this.userService.createBet({
@@ -650,7 +651,36 @@ export class EventService {
   }
 
   //TODO ———————————————[Handle System Clans]———————————————
-  async handleClansUserBet(user: User) {}
+  @OnEvent('rank-clans')
+  async handleRankClans() {
+    try {
+      // Let find top 10 rank clans with totalBet
+      const topClans = await this.userService.getTopClans();
+
+      // Let find list user in the top clans
+      let list_clans_users: Record<string, Array<any>> = {};
+      for (const clan of topClans) {
+        const { id } = clan;
+        const users = await this.userService.getUserWithClansId(id);
+        list_clans_users[id] = users;
+      }
+      console.log(list_clans_users);
+    } catch (err) {
+      return err.message;
+    }
+  }
+
+  @OnEvent('rank-days')
+  async handleRankDays() {
+    try {
+      const topUser = await this.userService.getTopUserBet();
+      for (const user of topUser) {
+        console.log(user);
+      }
+    } catch (err) {
+      return err.message;
+    }
+  }
 
   //TODO ———————————————[Handler Another]———————————————
 

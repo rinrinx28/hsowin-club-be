@@ -16,7 +16,7 @@ export class AuthService {
   ): Promise<{ access_token: string }> {
     const user = await this.userService.findOne(username);
     if (user?.pwd_h !== pass) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Username or password is incorrect');
     }
     const payload = { sub: user.id, username: user.username };
     return {

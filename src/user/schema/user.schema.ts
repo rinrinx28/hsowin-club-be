@@ -10,7 +10,7 @@ export class User {
   @Prop()
   uid: string;
 
-  @Prop()
+  @Prop({ unique: true })
   username: string;
 
   @Prop()
@@ -25,8 +25,8 @@ export class User {
   @Prop({ default: 0 })
   gold: number;
 
-  @Prop({ default: '' })
-  clansId: string;
+  @Prop({ default: '{}' })
+  clan: string;
 
   @Prop({ default: 0 })
   totalBet: number;

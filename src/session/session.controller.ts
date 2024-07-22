@@ -15,11 +15,11 @@ import { CreateSessionDto } from './dto/session.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('session')
+@UseGuards(AuthGuard)
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
   @Post('/create')
   create(@Body() body: CreateSessionDto, @Req() req: any) {
     const user = req.user;
@@ -27,7 +27,6 @@ export class SessionController {
   }
 
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard)
   @Get('/find')
   find(@Req() req: any) {
     const user = req.user;

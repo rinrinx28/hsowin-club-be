@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
+// import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ClientModule } from './client/client.module';
 import { UserModule } from './user/user.module';
@@ -37,7 +37,7 @@ import { CronjobModule } from './cronjob/cronjob.module';
     WebSocketModule,
     CronjobModule,
   ],
-  controllers: [AppController],
+  controllers: [],
   providers: [AppService, UnitlService, EventService],
 })
 export class AppModule {}

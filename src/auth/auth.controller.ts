@@ -34,11 +34,4 @@ export class AuthController {
   async signUp(@Body() signUpDto: CreateAuthDto) {
     return await this.authService.signUp(signUpDto);
   }
-
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req): PayLoad {
-    const user: PayLoad = req.user;
-    return user;
-  }
 }

@@ -11,7 +11,10 @@ export class Clans {
   ownerId: string;
 
   @Prop()
-  clanname: string;
+  clanName: string;
+
+  @Prop()
+  typeClan: string;
 
   @Prop({ default: 0 })
   totalBet: number;

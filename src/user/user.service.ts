@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   CreateClans,
   CreateUserBetDto,
@@ -11,6 +11,7 @@ import { User } from './schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserBet } from './schema/userBet.schema';
 import { Clans } from './schema/clans.schema';
+import { CatchException } from 'src/common/common.exception';
 
 @Injectable()
 export class UserService {
@@ -24,7 +25,11 @@ export class UserService {
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
-    return await this.userModel.create(createUserDto);
+    try {
+      return await this.userModel.create(createUserDto);
+    } catch (err) {
+      throw new CatchException(err);
+    }
   }
 
   findAll() {
@@ -69,6 +74,14 @@ export class UserService {
     );
   }
 
+  async getUserWithClansId(clansId: any) {
+    return await this.userModel.find({
+      $expr: {
+        $eq: [{ $jsonPath: '$clan.clanId' }, clansId],
+      },
+    });
+  }
+
   //TODO ———————————————[User Bet Model]———————————————
   async createBet(createUserBetDto: CreateUserBetDto) {
     return await this.userBetModel.create(createUserBetDto);
@@ -100,51 +113,94 @@ export class UserService {
 
   //TODO ———————————————[Clans Model]———————————————
   async createClans(data: CreateClans) {
-    return await this.clansModel.create(data);
+    try {
+      // Check if owner was owner of clan
+      const user = await this.findById(data.ownerId);
+      const userClanJSON = JSON.parse(user?.clan);
+      if ('clanId' in userClanJSON) {
+        let OwnerTargetClan = await this.findClanWithId(userClanJSON?.clanId);
+        if (user?.id === OwnerTargetClan.ownerId)
+          throw new Error('You was owner of the Clan');
+      }
+      return await this.clansModel.create(data);
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   async addMemberClans(data: MemberClans) {
-    // Update member into clans
-    await this.clansModel.findByIdAndUpdate(
-      data?.clanId,
-      {
-        $inc: {
-          member: +1,
+    try {
+      // Check if owner was owner of clan
+      const target = await this.findById(data.uid);
+      const targetClanJSON = JSON.parse(target?.clan);
+      if ('clanId' in targetClanJSON) {
+        let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
+        if (target?.id === OwnerTargetClan.ownerId)
+          throw new Error('You was owner of the Clan');
+      }
+      // Update member into clans
+      await this.clansModel.findByIdAndUpdate(
+        data?.clanId,
+        {
+          $inc: {
+            member: +1,
+          },
         },
-      },
-      { upsert: true },
-    );
-    return await this.userModel.findByIdAndUpdate(
-      data?.uid,
-      {
-        clansId: data?.clanId,
-      },
-      { upsert: true },
-    );
+        { upsert: true },
+      );
+      const clanInfo = {
+        clanId: data?.clanId,
+        timejoin: new Date(),
+      };
+      const clanInfoString = JSON.stringify(clanInfo);
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          data?.uid,
+          {
+            clan: clanInfoString,
+          },
+          { upsert: true },
+        )
+        .exec();
+      return user;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   async removeMemberClans(data: MemberClans) {
-    await this.clansModel.findByIdAndUpdate(
-      data?.clanId,
-      {
-        $inc: {
-          member: -1,
+    try {
+      // Check if owner was owner of clan
+      const target = await this.findById(data.uid);
+      const targetClanJSON = JSON.parse(target?.clan);
+      if ('clanId' in targetClanJSON) {
+        let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
+        if (target?.id === OwnerTargetClan.ownerId)
+          throw new Error('You was owner of the Clan');
+      }
+      // Update member into clans
+      await this.clansModel.findByIdAndUpdate(
+        data?.clanId,
+        {
+          $inc: {
+            member: -1,
+          },
         },
-      },
-      { upsert: true },
-    );
-    return await this.userModel.findByIdAndUpdate(
-      data?.uid,
-      {
-        clansId: '',
-      },
-      { upsert: true },
-    );
-  }
-
-  async removeClans(clanId: any) {
-    await this.clansModel.findByIdAndDelete(clanId);
-    return 'ok';
+        { upsert: true },
+      );
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          data?.uid,
+          {
+            clan: '',
+          },
+          { upsert: true },
+        )
+        .exec();
+      return user;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   async updateTotalBetClans(amount: number, clansId: any) {
@@ -157,5 +213,21 @@ export class UserService {
 
   async getTopClans() {
     return await this.clansModel.find().sort({ totalBet: -1 }).limit(10).exec();
+  }
+
+  async findClanWithId(id: any) {
+    return await this.clansModel.findById(id);
+  }
+
+  async deleteClanWithOwner(data: MemberClans) {
+    try {
+      const targetClan = await this.findClanWithId(data.clanId);
+      if (targetClan.ownerId !== data.uid)
+        throw new Error('You not is the owner of clan');
+      await this.clansModel.findByIdAndDelete(data.clanId);
+      return 'ok';
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
   }
 }
