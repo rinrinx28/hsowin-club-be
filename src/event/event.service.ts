@@ -118,7 +118,7 @@ export class EventService {
       if (timeEnd - current_now < 10)
         throw new Error('Ván cược đã đóng thời gian cược');
 
-      // const target = await this.queryRequestUserBet(uid, betId, server, amount);
+      const target = await this.queryRequestUserBet(uid, betId, server, amount);
 
       // Let minus gold of user
       await this.userService.update(uid, {
@@ -162,6 +162,30 @@ export class EventService {
         data: [betCreate],
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
+      if (amount >= ConfigNoti.min) {
+        this.socketGateway.server.emit(
+          'noti-bet',
+          `Người chơi ${target.username} đã lớn ${amount} gold khi cược ${
+            result === 'C'
+              ? 'Chẵn'
+              : result === 'CT'
+                ? 'Chẵn và Tài'
+                : result === 'CX'
+                  ? 'Chẵn và Xĩu'
+                  : result === 'L'
+                    ? 'Lẽ'
+                    : result === 'LT'
+                      ? 'Lẽ và Tài'
+                      : result === 'LX'
+                        ? 'Lẽ và Xĩu'
+                        : result === 'T'
+                          ? 'Tài'
+                          : result === 'X'
+                            ? 'Xĩu'
+                            : result
+          }`,
+        );
+      }
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
