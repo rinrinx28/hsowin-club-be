@@ -17,9 +17,9 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new BadRequestException('Token not match', {
+      throw new BadRequestException('Token không khớp', {
         cause: new Error(),
-        description: 'Please, Login again',
+        description: 'Xin vui lòng đăng nhập lại',
       });
     }
     try {
@@ -28,9 +28,9 @@ export class AuthGuard implements CanActivate {
       });
       request['user'] = payload;
     } catch {
-      throw new BadRequestException('Token not match', {
+      throw new BadRequestException('Token không khớp', {
         cause: new Error(),
-        description: 'Please, Login again',
+        description: 'Xin vui lòng đăng nhập lại',
       });
     }
     return true;

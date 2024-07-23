@@ -9,10 +9,15 @@ import { CreateUserBet } from 'src/socket/dto/socket.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { UserService } from 'src/user/user.service';
-import { MessageResult, ResultBet, ResultBetBoss } from './dto/event.dto';
+import {
+  CreateEvent,
+  MessageResult,
+  ResultBet,
+  ResultBetBoss,
+} from './dto/event.dto';
 import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
-import { Mutex } from 'async-mutex'; // Example using async-mutex for locking
-import { User } from 'src/user/schema/user.schema';
+import { Mutex } from 'async-mutex';
+import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
 
 @Injectable()
 export class EventService {
@@ -37,12 +42,13 @@ export class EventService {
       const { uid, amount, betId, result, server } = data;
       // Let check timeEnd
       const bet_session = await this.betLogService.findById(betId);
-      if (!bet_session || bet_session.isEnd) throw new Error('The bet is stop');
+      if (!bet_session || bet_session.isEnd)
+        throw new Error('Ván cược đã kết thúc');
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
       if (timeEnd - current_now < 10)
-        throw new Error('the time to bet is stop');
+        throw new Error('Ván cược đã đóng thời gian cược');
 
       const target = await this.queryRequestUserBet(uid, betId, server, amount);
 
@@ -50,14 +56,13 @@ export class EventService {
       await this.userService.update(uid, {
         $inc: {
           gold: -amount,
-          totalBet: +amount,
         },
       });
-      let clansObj = JSON.parse(target?.clan);
-      // Check user has in the clan
-      if ('clanId' in clansObj) {
-        await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
-      }
+      // let clansObj = JSON.parse(target?.clan);
+      // // Check user has in the clan
+      // if ('clanId' in clansObj) {
+      //   await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
+      // }
 
       // Let create new Bet
       const betCreate = await this.userService.createBet({
@@ -75,11 +80,17 @@ export class EventService {
         },
       });
       const msg = this.handleMessageResult({
-        message: 'The bet is success',
+        message: 'Tham gia cược thành công',
         status: true,
         data: [betCreate],
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
+      if (amount >= ConfigNoti.min) {
+        this.socketGateway.server.emit(
+          'noti-bet',
+          `Người chơi ${target.username} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
+        );
+      }
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -99,28 +110,28 @@ export class EventService {
 
       // Let check timeEnd
       const bet_session = await this.betLogService.findSvById(betId);
-      if (!bet_session || bet_session.isEnd) throw new Error('The bet is stop');
+      if (!bet_session || bet_session.isEnd)
+        throw new Error('Ván cược đã kết thúc');
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
       if (timeEnd - current_now < 10)
-        throw new Error('the time to bet is stop');
+        throw new Error('Ván cược đã đóng thời gian cược');
 
-      const target = await this.queryRequestUserBet(uid, betId, server, amount);
+      // const target = await this.queryRequestUserBet(uid, betId, server, amount);
 
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
           gold: -amount,
-          totalBet: +amount,
         },
       });
 
-      let clansObj = JSON.parse(target?.clan);
-      // Check user has in the clan
-      if ('clanId' in clansObj) {
-        await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
-      }
+      // let clansObj = JSON.parse(target?.clan);
+      // // Check user has in the clan
+      // if ('clanId' in clansObj) {
+      //   await this.userService.updateTotalBetClans(amount, clansObj?.clanId);
+      // }
       // Let create new Bet
       const betCreate = await this.userService.createBet({
         amount,
@@ -146,7 +157,7 @@ export class EventService {
         });
       }
       const msg = this.handleMessageResult({
-        message: 'The bet is success',
+        message: 'Tham gia cược thành công',
         status: true,
         data: [betCreate],
       });
@@ -168,8 +179,10 @@ export class EventService {
     try {
       // Let find all betUser with BetId
       const betusers = await this.userService.findBetWithBetId(betId, server);
-      if (betusers.length === 0) throw new Error('Everyone no bet');
-      let precent = 1.9;
+      if (betusers.length === 0) throw new Error('Không ai tham gia cược');
+      const event_bet =
+        await this.userService.handleGetEventModel('e-ti-le-bet');
+      let precent = event_bet?.status ? event_bet?.value : 1.9;
       let newBetUser = [];
       for (let bet of betusers) {
         if (bet.result === result) {
@@ -181,6 +194,16 @@ export class EventService {
           isEnd: true,
         });
         newBetUser.push(bet);
+      }
+      const userNoti = newBetUser.filter(
+        (bet) => bet.receive >= ConfigNoti.min * precent,
+      );
+      for (const bet of userNoti) {
+        const user = await this.userService.findById(bet.uid);
+        this.socketGateway.server.emit(
+          'noti-bet',
+          `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
+        );
       }
       const msg = this.handleMessageResult({
         message: `result-bet-user-${server}`,
@@ -379,6 +402,15 @@ export class EventService {
   //TODO ———————————————[Handler Mini game map boss]———————————————
 
   async handleUpdateUserBet(id: any, uid: any, betId: any, data: any) {
+    const target = await this.userService.findById(uid);
+    let clansObj = JSON.parse(target?.clan);
+    // Check user has in the clan
+    if ('clanId' in clansObj) {
+      await this.userService.updateTotalBetClans(
+        data?.receive,
+        clansObj?.clanId,
+      );
+    }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
       await this.handleTransactionUserBet(uid, betId, data?.receive);
@@ -389,6 +421,7 @@ export class EventService {
     await this.userService.update(id, {
       $inc: {
         gold: +amount,
+        totalBet: +amount,
       },
     });
     await this.betLogService.update(betId, {
@@ -403,14 +436,16 @@ export class EventService {
     try {
       let result = data.result;
       // Config receive
-      let precent = 1.9;
+      const event_bet =
+        await this.userService.handleGetEventModel('e-ti-le-bet');
+      let precent = event_bet?.status ? event_bet?.value : 1.9;
 
       // Find all bet of sesson
       const all_bet = await this.userService.findBetWithBetId(
         data?.betId,
         `${data?.server}`,
       );
-
+      let newBetUser = [];
       for (const bet of all_bet) {
         if (result.includes(bet.result)) {
           bet.receive = bet.amount * precent;
@@ -420,6 +455,35 @@ export class EventService {
           receive: bet.receive,
           isEnd: true,
         });
+        newBetUser.push(bet);
+      }
+      const userNoti = newBetUser.filter(
+        (bet) => bet.receive >= ConfigNoti.min * precent,
+      );
+      for (const bet of userNoti) {
+        const user = await this.userService.findById(bet.uid);
+        this.socketGateway.server.emit(
+          'noti-bet',
+          `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược ${
+            bet.result === 'C'
+              ? 'Chẵn'
+              : bet.result === 'CT'
+                ? 'Chẵn và Tài'
+                : bet.result === 'CX'
+                  ? 'Chẵn và Xĩu'
+                  : bet.result === 'L'
+                    ? 'Lẽ'
+                    : bet.result === 'LT'
+                      ? 'Lẽ và Tài'
+                      : bet.result === 'LX'
+                        ? 'Lẽ và Xĩu'
+                        : bet.result === 'T'
+                          ? 'Tài'
+                          : bet.result === 'X'
+                            ? 'Xĩu'
+                            : bet.result
+          }`,
+        );
       }
       const msg = this.handleMessageResult({
         message: `result-bet-boss-user-${data?.server}`,
@@ -449,6 +513,15 @@ export class EventService {
   }
 
   async handleUpdateUserBetWithBoss(id: any, uid: any, betId: any, data: any) {
+    const target = await this.userService.findById(uid);
+    let clansObj = JSON.parse(target?.clan);
+    // Check user has in the clan
+    if ('clanId' in clansObj) {
+      await this.userService.updateTotalBetClans(
+        data?.receive,
+        clansObj?.clanId,
+      );
+    }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
       await this.handleTransactionUserBetWithBoss(uid, betId, data?.receive);
@@ -459,6 +532,7 @@ export class EventService {
     await this.userService.update(id, {
       $inc: {
         gold: +amount,
+        totalBet: +amount,
       },
     });
     await this.betLogService.updateSv(betId, {
@@ -529,7 +603,7 @@ export class EventService {
         });
       } else {
         // Check if the result is jack pot
-        if (result === '99') {
+        if (result.includes('99')) {
           await this.handleJackPotServerAuto({
             betId: old_bet?.id,
             result: result,
@@ -635,6 +709,10 @@ export class EventService {
             gold: +user.prize,
           },
         });
+        this.socketGateway.server.emit(
+          'noti-bet',
+          `Chúc mừng người chơi có ID: ${this.shortenString(user.uid, 3, 3)} đã trúng jackpot ${user.prize} gold`,
+        );
       }
 
       let totalPrize = list_user_prize.reduce((a, b) => a + b.prize, 0);
@@ -696,13 +774,18 @@ export class EventService {
   ) {
     // Find User with UID
     const target = await this.userService.findById(uid);
-    if (!target) throw new Error('The User is not exist');
+    if (!target) throw new Error('Người chơi không tồn tại');
 
     // Check Sv Default of user ...
-    let min_amount = 30;
-    let max_amount = target?.server.includes(server) ? 3000 : 2000;
-    let total_amount = target?.server.includes(server) ? 5000 : 3000;
-    if (target.gold - amount <= 0) throw new Error('The Balance is not enough');
+    let min_amount = ConfigBet.min;
+    let max_amount = target?.server.includes(server)
+      ? ConfigBet.max
+      : ConfigBetDiff.max;
+    let total_amount = target?.server.includes(server)
+      ? ConfigBet.total
+      : ConfigBetDiff.total;
+    if (target.gold - amount <= 0)
+      throw new Error('Tài khoản của bản không khả dụng');
 
     // Let query total amount of sesson Bet
     const old_bet_user = await this.userService.findOneUserBet({
@@ -717,14 +800,25 @@ export class EventService {
     }
     // console.log(total_bet_user, min_amount, max_amount, amount);
     if (total_bet_user + amount > total_amount)
-      throw new Error('Limited bet amount');
+      throw new Error('Đã vượt quá giới hạn số lượng cược cho phép');
 
     // Check min limited bet amount
-    if (amount < min_amount) throw new Error('The min bet amount is 30');
+    if (amount < min_amount)
+      throw new Error(`Số lượng cược nhỏ nhất là ${ConfigBet.min} gold`);
 
     // Check max limited bet amount
     if (amount > max_amount)
-      throw new Error(`The max bet amount is ${max_amount}`);
+      throw new Error(`Số lượng cược lớn nhất là ${max_amount}`);
     return target;
+  }
+
+  shortenString(str, startLength, endLength) {
+    if (str.length <= startLength + endLength) {
+      return str; // Trả về chuỗi gốc nếu nó ngắn hơn hoặc bằng tổng chiều dài của phần đầu và phần cuối
+    }
+
+    const start = str.substring(0, startLength);
+    const end = str.substring(str.length - endLength, str.length);
+    return `${start}...${end}`;
   }
 }

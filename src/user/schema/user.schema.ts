@@ -25,6 +25,9 @@ export class User {
   @Prop({ default: 0 })
   gold: number;
 
+  @Prop({ default: 0 })
+  diamon: number;
+
   @Prop({ default: '{}' })
   clan: string;
 

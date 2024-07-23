@@ -1,6 +1,12 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateUserDto {}
+//TODO ———————————————[DTO User]———————————————
+export class CreateUserDto {
+  username: string;
+  pwd_h: string;
+}
+
+//TODO ———————————————[DTO Bet User]———————————————
 
 export class CreateUserBetDto {
   uid: string;
@@ -17,21 +23,28 @@ export class FindUserBetDto {
   server: string;
 }
 
+//TODO ———————————————[DTO Clans]———————————————
+
 export class CreateClans {
-  @IsNotEmpty({ message: 'ClanName cannot be empty' })
+  @IsNotEmpty({ message: 'ClanName không thể để trống' })
   clanName: string;
 
-  @IsNotEmpty({ message: 'ownerId cannot be empty' })
+  @IsNotEmpty({ message: 'ownerId không thể để trống' })
   ownerId: string;
 
-  @IsNotEmpty({ message: 'typeClan cannot be empty' })
+  @IsNotEmpty({ message: 'typeClan không thể để trống' })
   typeClan: string;
 }
 
 export class MemberClans {
-  @IsNotEmpty({ message: 'uid cannot be empty' })
+  @IsNotEmpty({ message: 'uid không thể để trống' })
   uid: string;
 
-  @IsNotEmpty({ message: 'clanId cannot be empty' })
+  @IsNotEmpty({ message: 'clanId không thể để trống' })
   clanId: string;
+}
+
+//TODO ———————————————[DTO Exchange]———————————————
+export class Exchange {
+  diamon: number;
 }

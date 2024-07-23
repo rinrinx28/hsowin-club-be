@@ -1,17 +1,29 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 
-export type EventConfigDocument = EventConfig & Document;
+export type EventDocument = Event & Document;
 
 @Schema({
   timestamps: true,
 })
-export class EventConfig {
-  @Prop({ default: 1.9 })
-  percentBet: number;
+export class Event {
+  @Prop()
+  value: number;
+
+  @Prop({ default: false })
+  status: boolean;
+
+  @Prop({ default: 'Something' })
+  description: string;
+
+  @Prop({ unique: true })
+  name: string;
+
+  @Prop({ default: '{}' })
+  option: string;
 
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export const EventConfigSchema = SchemaFactory.createForClass(EventConfig);
+export const EventSchema = SchemaFactory.createForClass(Event);

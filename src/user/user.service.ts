@@ -3,6 +3,7 @@ import {
   CreateClans,
   CreateUserBetDto,
   CreateUserDto,
+  Exchange,
   FindUserBetDto,
   MemberClans,
 } from './dto/user.dto';
@@ -12,6 +13,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { UserBet } from './schema/userBet.schema';
 import { Clans } from './schema/clans.schema';
 import { CatchException } from 'src/common/common.exception';
+import { Event } from 'src/event/schema/event.schema';
+import { CreateEvent } from 'src/event/dto/event.dto';
+import { ConfigExchange } from 'src/config/config';
 
 @Injectable()
 export class UserService {
@@ -22,11 +26,30 @@ export class UserService {
     private readonly userBetModel: Model<UserBet>,
     @InjectModel(Clans.name)
     private readonly clansModel: Model<Clans>,
+    @InjectModel(Event.name)
+    private readonly eventModel: Model<Event>,
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
     try {
-      return await this.userModel.create(createUserDto);
+      const target = await this.userModel.create(createUserDto);
+      const event_wellcome = await this.eventModel.findOne({
+        name: 'e-well-come',
+      });
+      // Event WellCome
+      if (event_wellcome.status) {
+        await this.userModel.findByIdAndUpdate(
+          target.id,
+          {
+            $inc: {
+              gold: +event_wellcome.value,
+            },
+          },
+          { new: true, upsert: true },
+        );
+        target.gold = event_wellcome.value;
+      }
+      return target;
     } catch (err) {
       throw new CatchException(err);
     }
@@ -49,6 +72,7 @@ export class UserService {
   async update(id: any, updateUserDto: any) {
     const user = await this.userModel.findByIdAndUpdate(id, updateUserDto, {
       upsert: true,
+      new: true,
     });
     delete user.pwd_h;
     return user;
@@ -70,7 +94,7 @@ export class UserService {
           totalBet: +amount,
         },
       },
-      { upsert: true },
+      { upsert: true, new: true },
     );
   }
 
@@ -94,6 +118,7 @@ export class UserService {
   async updateBet(id: any, updateUserBetDto: any) {
     return await this.userBetModel.findByIdAndUpdate(id, updateUserBetDto, {
       upsert: true,
+      new: true,
     });
   }
 
@@ -120,9 +145,17 @@ export class UserService {
       if ('clanId' in userClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(userClanJSON?.clanId);
         if (user?.id === OwnerTargetClan.ownerId)
-          throw new Error('You was owner of the Clan');
+          throw new Error('Bạn đã là chủ một Clan');
       }
-      return await this.clansModel.create(data);
+      const targetClan = await this.clansModel.create(data);
+      const targetUser = await this.update(data.ownerId, {
+        clan: JSON.stringify({
+          clanId: targetClan.id,
+          timejoin: new Date(),
+        }),
+      });
+      delete targetUser.pwd_h;
+      return [targetClan, targetUser];
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -136,7 +169,7 @@ export class UserService {
       if ('clanId' in targetClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
         if (target?.id === OwnerTargetClan.ownerId)
-          throw new Error('You was owner of the Clan');
+          throw new Error('Bạn là chủ của một Clan');
       }
       // Update member into clans
       await this.clansModel.findByIdAndUpdate(
@@ -146,7 +179,7 @@ export class UserService {
             member: +1,
           },
         },
-        { upsert: true },
+        { upsert: true, new: true },
       );
       const clanInfo = {
         clanId: data?.clanId,
@@ -159,7 +192,7 @@ export class UserService {
           {
             clan: clanInfoString,
           },
-          { upsert: true },
+          { upsert: true, new: true },
         )
         .exec();
       return user;
@@ -176,7 +209,7 @@ export class UserService {
       if ('clanId' in targetClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
         if (target?.id === OwnerTargetClan.ownerId)
-          throw new Error('You was owner of the Clan');
+          throw new Error('Bạn là chủ của một Clan');
       }
       // Update member into clans
       await this.clansModel.findByIdAndUpdate(
@@ -186,7 +219,7 @@ export class UserService {
             member: -1,
           },
         },
-        { upsert: true },
+        { upsert: true, new: true },
       );
       const user = await this.userModel
         .findByIdAndUpdate(
@@ -194,7 +227,7 @@ export class UserService {
           {
             clan: '',
           },
-          { upsert: true },
+          { upsert: true, new: true },
         )
         .exec();
       return user;
@@ -204,11 +237,15 @@ export class UserService {
   }
 
   async updateTotalBetClans(amount: number, clansId: any) {
-    return await this.clansModel.findByIdAndUpdate(clansId, {
-      $inc: {
-        totalBet: +amount,
+    return await this.clansModel.findByIdAndUpdate(
+      clansId,
+      {
+        $inc: {
+          totalBet: +amount,
+        },
       },
-    });
+      { upsert: true, new: true },
+    );
   }
 
   async getTopClans() {
@@ -223,11 +260,62 @@ export class UserService {
     try {
       const targetClan = await this.findClanWithId(data.clanId);
       if (targetClan.ownerId !== data.uid)
-        throw new Error('You not is the owner of clan');
+        throw new Error('Bạn không phải là chủ một Clan');
       await this.clansModel.findByIdAndDelete(data.clanId);
       return 'ok';
     } catch (err) {
       throw new BadRequestException(err.message);
     }
+  }
+
+  //TODO ———————————————[Handle Event Model]———————————————
+  async handleCreateEventModel(data: CreateEvent) {
+    return await this.eventModel.create(data);
+  }
+
+  async handleGetEventModel(name: string) {
+    return await this.eventModel.findOne({ name });
+  }
+
+  async handleGetEventModels(data: any) {
+    return await this.eventModel.find(data);
+  }
+
+  async handleUpdateEventModel(name: string, data: any) {
+    return await this.eventModel.findOneAndUpdate({ name }, data, {
+      upsert: true,
+    });
+  }
+
+  //TODO ———————————————[Handle Exchange]———————————————
+  async handleExchangeGold(data: Exchange, user) {
+    try {
+      const min = ConfigExchange.diamon;
+      const percent = ConfigExchange.gold;
+      if (data.diamon < min)
+        throw new Error(
+          'Bạn không đủ kim cương để đổi, tối thiêu 50 kim cương',
+        );
+      let value = (data.diamon / min) * percent;
+      const target = await this.update(user.sub, {
+        $inc: {
+          gold: +value,
+          diamon: -data.diamon,
+        },
+      });
+      delete target.pwd_h;
+      return target;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  splitDecimal(number) {
+    const integerPart = Math.floor(number);
+    const decimalPart = number - integerPart; // Đảm bảo chính xác đến nhiều chữ số
+    return {
+      integerPart,
+      decimalPart,
+    };
   }
 }

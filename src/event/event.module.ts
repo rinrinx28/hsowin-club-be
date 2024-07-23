@@ -9,15 +9,10 @@ import { UserModule } from 'src/user/user.module';
 import { EventService } from './event.service';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { WebSocketModule } from 'src/socket/socket.module';
-import { MongooseModule } from '@nestjs/mongoose';
-import { EventConfig, EventConfigSchema } from './schema/event.schema';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: EventConfig.name, schema: EventConfigSchema },
-    ]),
     ClientModule,
     BossModule,
     BetLogModule,

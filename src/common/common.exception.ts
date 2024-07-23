@@ -5,7 +5,7 @@ export class ExceptionResponse extends HttpException {
     super(
       {
         status: status ?? HttpStatus.BAD_REQUEST,
-        message: message ?? 'Invalid data!',
+        message: message ?? 'Dữ liệu không hợp lệ!',
         data: data || null,
       },
       status ?? HttpStatus.BAD_REQUEST,

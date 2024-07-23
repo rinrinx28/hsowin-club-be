@@ -14,3 +14,11 @@ export class ResultBetBoss {
   result: string;
   server: string;
 }
+
+export class CreateEvent {
+  name: string;
+  value: number;
+  description?: string;
+  status?: boolean;
+  option?: string;
+}
