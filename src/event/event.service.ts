@@ -627,7 +627,7 @@ export class EventService {
       const old_bet = await this.betLogService.findSvByServer('24');
 
       // Update database main boss
-      const new_bet = await this.bossService.createAndUpdate('24', {
+      await this.bossService.createAndUpdate('24', {
         server: '24',
         type: 4,
         respam: 180,
@@ -640,6 +640,7 @@ export class EventService {
         `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
       );
 
+      let new_bet = null;
       // If the bet not exist > will create new
       if (!old_bet) {
         await this.betLogService.createSv({
@@ -678,7 +679,7 @@ export class EventService {
           });
         await Promise.all([reqUpdateSv, reqUpdateBetHistorySv]);
         // Create new bet
-        await this.betLogService.createSv({
+        new_bet = await this.betLogService.createSv({
           server: '24',
           timeEnd: this.addSeconds(now, 180),
         });
