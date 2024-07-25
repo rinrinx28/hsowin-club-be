@@ -434,7 +434,7 @@ export class EventService {
       });
       this.socketGateway.server.emit('status-sv', {
         type: bet_data['type'],
-        boss: bet_data['sv'],
+        sv: bet_data['sv'],
         server: `${server}-mini`,
       });
       return;
