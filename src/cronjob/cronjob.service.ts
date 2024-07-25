@@ -23,7 +23,7 @@ export class CronjobService {
 
   @Cron('0 */3 * * * *')
   handleServerAuto() {
-    // this.eventEmitter.emit('server-24', 'isRun');
+    this.eventEmitter.emit('server-24', 'isRun');
   }
 
   @Cron('0 0 0 * * *', {
