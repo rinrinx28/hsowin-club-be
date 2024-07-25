@@ -336,8 +336,8 @@ export class EventService {
             update_old_sv,
             update_old_boss,
           ]);
-          bet_data['old_boss'] = res2;
-          bet_data['old_sv'] = res1;
+          bet_data['boss'] = res2;
+          bet_data['sv'] = res1;
           bet_data['type'] = 'old';
         } else {
           // Create new Bet between Map Boss and Server
@@ -353,8 +353,8 @@ export class EventService {
             create_new_boss,
             create_new_sv,
           ]);
-          bet_data['new_boss'] = res1;
-          bet_data['new_sv'] = res2;
+          bet_data['boss'] = res1;
+          bet_data['sv'] = res2;
           bet_data['type'] = 'new';
         }
       } else {
@@ -421,13 +421,22 @@ export class EventService {
             reqUpdateSv,
             reqUpdateBetHistorySv,
           ]);
-          bet_data['old_boss'] = resBoss1;
-          bet_data['old_sv'] = resSv1;
+          bet_data['boss'] = resBoss1;
+          bet_data['sv'] = resSv1;
           bet_data['type'] = 'old';
         }
       }
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
-      this.socketGateway.server.emit('status-boss-sv', bet_data);
+      this.socketGateway.server.emit('status-boss', {
+        type: bet_data['type'],
+        boss: bet_data['boss'],
+        server: server,
+      });
+      this.socketGateway.server.emit('status-sv', {
+        type: bet_data['type'],
+        boss: bet_data['sv'],
+        server: `${server}-mini`,
+      });
       return;
     } catch (err) {
       this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
