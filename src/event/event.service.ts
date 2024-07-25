@@ -611,15 +611,6 @@ export class EventService {
   //TODO ———————————————[Handler Mini game Server 24/24]———————————————
   @OnEvent('server-24')
   async handleServerAuto() {
-    const parameter = '24'; // Value will be lock
-
-    // Create mutex if it not exist
-    if (!this.mutexMap.has(parameter)) {
-      this.mutexMap.set(parameter, new Mutex());
-    }
-
-    const mutex = this.mutexMap.get(parameter);
-    const release = await mutex.acquire();
     try {
       // Let config
       const now = new Date();
@@ -711,8 +702,6 @@ export class EventService {
         data: '',
       });
       return msg;
-    } finally {
-      release();
     }
   }
 
