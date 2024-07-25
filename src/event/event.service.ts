@@ -338,6 +338,7 @@ export class EventService {
           ]);
           bet_data['old_boss'] = res2;
           bet_data['old_sv'] = res1;
+          bet_data['type'] = 'old';
         } else {
           // Create new Bet between Map Boss and Server
           const create_new_boss = this.betLogService.create({
@@ -354,6 +355,7 @@ export class EventService {
           ]);
           bet_data['new_boss'] = res1;
           bet_data['new_sv'] = res2;
+          bet_data['type'] = 'new';
         }
       } else {
         if (old_bet_sv || old_bet_boss) {
@@ -421,6 +423,7 @@ export class EventService {
           ]);
           bet_data['old_boss'] = resBoss1;
           bet_data['old_sv'] = resSv1;
+          bet_data['type'] = 'old';
         }
       }
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
