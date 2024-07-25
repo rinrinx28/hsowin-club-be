@@ -4,7 +4,7 @@ import { TopBetServer } from './dto/bet-log.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('bet-log')
-@UseGuards(AuthGuard)
+// @UseGuards(AuthGuard)
 export class BetLogController {
   constructor(private readonly betLogService: BetLogService) {}
   @Post('/topBet/server')
