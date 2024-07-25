@@ -315,6 +315,8 @@ export class EventService {
         `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
       );
 
+      let bet_data = {};
+
       // let return result to user
       if (data['type'] === 2) {
         if (old_bet_sv || old_bet_boss) {
@@ -330,7 +332,12 @@ export class EventService {
             isEnd: false,
             result: ``,
           });
-          await Promise.all([update_old_sv, update_old_boss]);
+          const [res1, res2] = await Promise.all([
+            update_old_sv,
+            update_old_boss,
+          ]);
+          bet_data['old_boss'] = res2;
+          bet_data['old_sv'] = res1;
         } else {
           // Create new Bet between Map Boss and Server
           const create_new_boss = this.betLogService.create({
@@ -341,7 +348,12 @@ export class EventService {
             server: `${server}-mini`,
             timeEnd: this.addSeconds(now, 180),
           });
-          await Promise.all([create_new_boss, create_new_sv]);
+          const [res1, res2] = await Promise.all([
+            create_new_boss,
+            create_new_sv,
+          ]);
+          bet_data['new_boss'] = res1;
+          bet_data['new_sv'] = res2;
         }
       } else {
         if (old_bet_sv || old_bet_boss) {
@@ -400,6 +412,8 @@ export class EventService {
                 },
               },
             );
+          bet_data['old_boss'] = res_update_old_boss;
+          bet_data['old_sv'] = res_update_old_sv;
           // Send all the Promise update
           await Promise.all([
             reqUpdateMapBoss,
@@ -409,13 +423,8 @@ export class EventService {
           ]);
         }
       }
-
-      this.socketGateway.server.emit('status-boss', {
-        server,
-        type: data?.type,
-        respam: data?.respam,
-      });
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
+      this.socketGateway.server.emit('status-boss-sv', bet_data);
       return;
     } catch (err) {
       this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
@@ -606,7 +615,7 @@ export class EventService {
       const old_bet = await this.betLogService.findSvByServer('24');
 
       // Update database main boss
-      await this.bossService.createAndUpdate('24', {
+      const new_bet = await this.bossService.createAndUpdate('24', {
         server: '24',
         type: 4,
         respam: 180,
@@ -671,6 +680,12 @@ export class EventService {
       this.logger.log(
         `Server 24/24: Result is ${result} - Update/Create: ${old_bet ? true : false}`,
       );
+      this.socketGateway.server.emit('status-24/24', {
+        old_bet: old_bet,
+        result,
+        server: '24',
+        new_bet: new_bet,
+      });
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
