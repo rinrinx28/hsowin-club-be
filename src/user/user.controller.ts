@@ -74,4 +74,10 @@ export class UserController {
   async handleExchangeGold(@Body() data: Exchange, @Request() req: any) {
     return await this.userService.handleExchangeGold(data, req.user);
   }
+
+  //TODO ———————————————[Admin Controller]———————————————
+  @Get('/all/user')
+  async handleGetUser() {
+    return await this.userService.handleGetAllUser();
+  }
 }

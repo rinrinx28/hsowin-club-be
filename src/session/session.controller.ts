@@ -32,4 +32,9 @@ export class SessionController {
     const user = req.user;
     return this.sessionService.findAllByUID(user);
   }
+
+  @Get('/all')
+  async getAll() {
+    return await this.sessionService.findAllSesions();
+  }
 }

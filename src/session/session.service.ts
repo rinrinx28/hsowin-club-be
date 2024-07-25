@@ -98,4 +98,8 @@ export class SessionService {
     });
     return result;
   }
+
+  async findAllSesions() {
+    return await this.sessionModel.find();
+  }
 }

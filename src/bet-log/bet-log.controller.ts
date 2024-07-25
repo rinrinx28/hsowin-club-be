@@ -1,8 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { BetLogService } from './bet-log.service';
 import { TopBetServer } from './dto/bet-log.dto';
 
 @Controller('bet-log')
+@UseGuards(AuthGuard)
 export class BetLogController {
   constructor(private readonly betLogService: BetLogService) {}
   @Post('/topBet/server')
@@ -12,5 +13,15 @@ export class BetLogController {
     } else {
       return await this.betLogService.handleTopBetServerBoss(data);
     }
+  }
+
+  @Get('/all/server')
+  async handleGetAllServer() {
+    return await this.betLogService.handleGetAllServer();
+  }
+
+  @Get('/all/boss')
+  async handleGetAllBoss() {
+    return await this.betLogService.handleGetAllBoss();
   }
 }

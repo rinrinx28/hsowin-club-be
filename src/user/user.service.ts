@@ -318,4 +318,9 @@ export class UserService {
       decimalPart,
     };
   }
+
+  //TODO ———————————————[Admin Server]———————————————
+  async handleGetAllUser() {
+    return await this.userBetModel.find();
+  }
 }

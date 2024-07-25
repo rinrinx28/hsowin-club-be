@@ -157,4 +157,13 @@ export class BetLogService {
       .sort({ updatedAt: -1 })
       .limit(data.limited + 1);
   }
+
+  //TODO ———————————————[Admin Server]———————————————
+  async handleGetAllServer() {
+    return await this.betServerModel.find();
+  }
+
+  async handleGetAllBoss() {
+    return await this.betLogModel.find();
+  }
 }
