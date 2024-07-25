@@ -455,7 +455,7 @@ export class EventService {
     });
   }
 
-  //TODO ———————————————[Handler Mini Game Server (1,2,3)]———————————————
+  //TODO ———————————————[Handler Mini Game Server (1,2,3) and 24/24]———————————————
   async handleResultServerWithBoss(data: ResultBetBoss) {
     try {
       let result = data.result;

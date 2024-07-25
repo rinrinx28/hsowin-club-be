@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { BetLog } from './schema/bet-log.schema';
-import { CreateBetHistory, CreateBetLogDto } from './dto/bet-log.dto';
+import {
+  CreateBetHistory,
+  CreateBetLogDto,
+  TopBetServer,
+} from './dto/bet-log.dto';
 import { BetServer } from './schema/bet-sv.schema';
 import { BetHistory } from './schema/bet-history.schema';
 
@@ -136,5 +140,19 @@ export class BetLogService {
       upsert: true,
       new: true,
     });
+  }
+
+  //TODO ———————————————[Top Bet Server]———————————————
+  async handleTopBetServer(data: TopBetServer) {
+    return await this.betServerModel
+      .find({ server: data.server })
+      .sort({ updatedAt: -1 })
+      .limit(data.limited + 1);
+  }
+  async handleTopBetServerBoss(data: TopBetServer) {
+    return await this.betLogModel
+      .find({ server: data.server })
+      .sort({ updatedAt: -1 })
+      .limit(data.limited + 1);
   }
 }

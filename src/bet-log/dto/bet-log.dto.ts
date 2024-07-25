@@ -6,3 +6,8 @@ export class CreateBetLogDto {
 export class CreateBetHistory {
   server: string;
 }
+
+export class TopBetServer {
+  server: string;
+  limited: number;
+}
