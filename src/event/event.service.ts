@@ -624,7 +624,7 @@ export class EventService {
       // Let config
       const now = new Date();
       // Let find the old bet
-      const old_bet = await this.betLogService.findSvByServer('24');
+      let old_bet = await this.betLogService.findSvByServer('24');
 
       // Update database main boss
       await this.bossService.createAndUpdate('24', {
@@ -677,7 +677,11 @@ export class EventService {
               sendOut: +update_old_sv?.sendOut,
             },
           });
-        await Promise.all([reqUpdateSv, reqUpdateBetHistorySv]);
+        const [res_old_bet, res_olb_bet_history] = await Promise.all([
+          reqUpdateSv,
+          reqUpdateBetHistorySv,
+        ]);
+        old_bet = res_old_bet;
         // Create new bet
         new_bet = await this.betLogService.createSv({
           server: '24',
