@@ -70,6 +70,7 @@ export class BetLogService {
   async update(id: any, updateBetLogDto: any) {
     return await this.betLogModel.findByIdAndUpdate(id, updateBetLogDto, {
       upsert: true,
+      new: true,
     });
   }
 
@@ -119,6 +120,7 @@ export class BetLogService {
   async updateSv(id: any, updateBetLogDto: any) {
     return await this.betServerModel.findByIdAndUpdate(id, updateBetLogDto, {
       upsert: true,
+      new: true,
     });
   }
 
