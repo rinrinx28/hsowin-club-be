@@ -412,15 +412,15 @@ export class EventService {
                 },
               },
             );
-          bet_data['old_boss'] = res_update_old_boss;
-          bet_data['old_sv'] = res_update_old_sv;
           // Send all the Promise update
-          await Promise.all([
+          const [resBoss1, resBoss2, resSv1, resSv2] = await Promise.all([
             reqUpdateMapBoss,
             reqUpdateBetHistoryMapBoss,
             reqUpdateSv,
             reqUpdateBetHistorySv,
           ]);
+          bet_data['old_boss'] = resBoss1;
+          bet_data['old_sv'] = resSv1;
         }
       }
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);

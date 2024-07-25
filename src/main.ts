@@ -11,7 +11,7 @@ async function bootstrap() {
   const logger = new Logger('AppLogger');
 
   // Define an array of allowed origins
-  const allowedOrigins = ['http://localhost:3000'];
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost'];
 
   app.enableCors({
     origin: (origin, callback) => {
