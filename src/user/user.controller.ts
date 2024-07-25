@@ -76,8 +76,12 @@ export class UserController {
   }
 
   //TODO ———————————————[Admin Controller]———————————————
-  @Get('/all/user')
+  @Get('/all/users')
   async handleGetUser() {
     return await this.userService.handleGetAllUser();
+  }
+  @Get('/all/users/bet')
+  async handleGetUserBet() {
+    return await this.userService.handleGetAllUserbet();
   }
 }

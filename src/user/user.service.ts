@@ -321,6 +321,9 @@ export class UserService {
 
   //TODO ———————————————[Admin Server]———————————————
   async handleGetAllUser() {
+    return await this.userModel.find();
+  }
+  async handleGetAllUserbet() {
     return await this.userBetModel.find();
   }
 }
