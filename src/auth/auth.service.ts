@@ -12,10 +12,10 @@ export class AuthService {
 
   async signIn(username: string, pass: string) {
     const user = await this.userService.findOne(username);
-    if (user?.pwd_h !== pass) {
+    if (!user || user.pwd_h !== pass) {
       throw new UnauthorizedException('Username hoặc password không đúng');
     }
-    const payload = { sub: user._id, username: user.username };
+    const payload = { sub: user.id, username: user.username };
     const userObj = user.toObject(); // Convert Mongoose document to plain object
     const { pwd_h, ...res } = userObj;
     return {
