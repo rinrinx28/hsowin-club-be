@@ -32,11 +32,15 @@ export class AuthService {
   }
 
   async relogin(token: string) {
-    const payload = await this.jwtService.verifyAsync(token, {
-      secret: jwtConstants.secret,
-    });
-    const user = await this.userService.findById(payload?.sub);
-    delete user.pwd_h;
-    return user;
+    try {
+      const payload = await this.jwtService.verifyAsync(token, {
+        secret: jwtConstants.secret,
+      });
+      const user = await this.userService.findById(payload?.sub);
+      delete user.pwd_h;
+      return user;
+    } catch (err) {
+      throw new UnauthorizedException('Token không khớp');
+    }
   }
 }
