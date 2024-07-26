@@ -16,8 +16,7 @@ export class AuthService {
       throw new UnauthorizedException('Username hoặc password không đúng');
     }
     const payload = { sub: user.id, username: user.username };
-    const res = user;
-    delete res.pwd_h;
+    const { pwd_h, ...res } = user;
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: res,
