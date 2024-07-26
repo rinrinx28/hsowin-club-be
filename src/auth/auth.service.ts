@@ -10,19 +10,17 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(
-    username: string,
-    pass: string,
-  ): Promise<{ access_token: string }> {
+  async signIn(username: string, pass: string) {
     const user = await this.userService.findOne(username);
     if (user?.pwd_h !== pass) {
       throw new UnauthorizedException('Username hoặc password không đúng');
     }
     const payload = { sub: user.id, username: user.username };
-    delete user.pwd_h;
+    const res = user;
+    delete res.pwd_h;
     return {
       access_token: await this.jwtService.signAsync(payload),
-      ...user,
+      user: res,
     };
   }
 
