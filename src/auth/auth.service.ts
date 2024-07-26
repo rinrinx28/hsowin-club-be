@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/auth.dto';
+import { jwtConstants } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -28,5 +29,14 @@ export class AuthService {
     const result = await this.userService.create(body);
     delete result.pwd_h;
     return result;
+  }
+
+  async relogin(token: string) {
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: jwtConstants.secret,
+    });
+    const user = await this.userService.findById(payload?.sub);
+    delete user.pwd_h;
+    return user;
   }
 }

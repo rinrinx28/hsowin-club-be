@@ -25,8 +25,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
   @Post('relogin')
-  reSignIn() {
-    return 'ok';
+  reSignIn(@Body() data: any) {
+    return this.authService.relogin(data);
   }
 
   @HttpCode(HttpStatus.OK)
