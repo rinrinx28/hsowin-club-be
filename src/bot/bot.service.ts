@@ -16,4 +16,8 @@ export class BotService {
       upsert: true,
     });
   }
+
+  async getAll() {
+    return await this.botModel.find();
+  }
 }
