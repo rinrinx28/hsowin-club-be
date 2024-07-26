@@ -16,7 +16,8 @@ export class AuthService {
       throw new UnauthorizedException('Username hoặc password không đúng');
     }
     const payload = { sub: user.id, username: user.username };
-    const { pwd_h, ...res } = user;
+    const userObj = user.toObject(); // Convert Mongoose document to plain object
+    const { pwd_h, ...res } = userObj;
     return {
       access_token: await this.jwtService.signAsync(payload),
       user: res,
