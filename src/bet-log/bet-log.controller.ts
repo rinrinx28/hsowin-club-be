@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { BetLogService } from './bet-log.service';
 import { TopBetServer } from './dto/bet-log.dto';
 import { AuthGuard } from 'src/auth/auth.guard';

@@ -38,8 +38,8 @@ export class EventService {
 
   @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
+    const { uid, amount, betId, result, server } = data;
     try {
-      const { uid, amount, betId, result, server } = data;
       // Let check timeEnd
       const bet_session = await this.betLogService.findById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -96,7 +96,7 @@ export class EventService {
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
-        data: [],
+        data: [data],
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       return msg;
@@ -105,9 +105,8 @@ export class EventService {
 
   @OnEvent('bet-user-ce-sv')
   async handleBetSvAuto(data: CreateUserBet) {
+    const { amount, betId, result, server, uid } = data;
     try {
-      const { amount, betId, result, server, uid } = data;
-
       // Let check timeEnd
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -191,7 +190,7 @@ export class EventService {
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
-        data: [],
+        data: [data],
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       return msg;

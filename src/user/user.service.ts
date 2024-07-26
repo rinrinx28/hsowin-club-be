@@ -326,4 +326,33 @@ export class UserService {
   async handleGetAllUserbet() {
     return await this.userBetModel.find();
   }
+
+  //TODO ———————————————[Non User Call]———————————————
+  async handleUserBetLog(limit: number) {
+    const data = await this.userBetModel
+      .find()
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .exec();
+    return {
+      status: true,
+      data,
+    };
+  }
+
+  async handleUserRank() {
+    const data = await this.userModel
+      .find()
+      .sort({ updatedAt: -1, totalBet: -1 })
+      .limit(7)
+      .exec();
+    let new_data = data.map((user) => {
+      delete user.pwd_h;
+      return user;
+    });
+    return {
+      data: new_data,
+      status: true,
+    };
+  }
 }
