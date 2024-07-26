@@ -208,7 +208,7 @@ export class EventService {
         await this.userService.handleGetEventModel('e-ti-le-bet');
       let precent = event_bet?.status ? event_bet?.value : 1.9;
       let newBetUser = [];
-      for (let bet of betusers) {
+      for (const bet of betusers) {
         if (bet.result === result) {
           bet.receive = bet.amount * precent;
         }
@@ -217,6 +217,7 @@ export class EventService {
           receive: bet.receive,
           isEnd: true,
         });
+        bet.resultBet = result;
         newBetUser.push(bet);
       }
       const userNoti = newBetUser.filter(
@@ -501,6 +502,7 @@ export class EventService {
           receive: bet.receive,
           isEnd: true,
         });
+        bet.resultBet = result;
         newBetUser.push(bet);
       }
       const userNoti = newBetUser.filter(
@@ -534,9 +536,9 @@ export class EventService {
       const msg = this.handleMessageResult({
         message: `result-bet-boss-user-${data?.server}`,
         status: true,
-        data: `${result}`,
+        data: newBetUser,
       });
-      this.socketGateway.server.emit('re-bet-user-rs-sv', msg);
+      this.socketGateway.server.emit('re-bet-user-res-sv', msg);
       return msg;
     } catch (err) {
       this.logger.log(
