@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -24,9 +25,10 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard)
-  @Post('relogin')
-  reSignIn(@Body() data: any) {
-    return this.authService.relogin(data);
+  @Get('relogin')
+  reSignIn(@Req() req: any) {
+    const user = req.user;
+    return this.authService.relogin(user);
   }
 
   @HttpCode(HttpStatus.OK)

@@ -234,6 +234,7 @@ export class EventService {
         status: true,
         data: newBetUser,
       });
+      this.socketGateway.server.emit('re-bet-user-res-boss', msg);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -535,6 +536,7 @@ export class EventService {
         status: true,
         data: `${result}`,
       });
+      this.socketGateway.server.emit('re-bet-user-rs-sv', msg);
       return msg;
     } catch (err) {
       this.logger.log(
