@@ -257,7 +257,12 @@ export class EventService {
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
       return msg;
     } catch (err) {
-      return this.handleMessageResult({ message: err.message, status: false });
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+      });
+      this.socketGateway.server.emit('bet-user-del-boss-re', msg);
+      return;
     }
   }
 
@@ -300,7 +305,12 @@ export class EventService {
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
       return msg;
     } catch (err) {
-      return this.handleMessageResult({ message: err.message, status: false });
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+      });
+      this.socketGateway.server.emit('bet-user-del-sv-re', msg);
+      return;
     }
   }
 
