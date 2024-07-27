@@ -894,11 +894,11 @@ export class EventService {
   // Hàm kiểm tra cược Chẵn Lẻ - Tài Xỉu có hợp lệ không
   isValidBet(newBet: string, oldBets: UserBet[]): boolean {
     // Tách cược mới thành các phần
-    const newBetParts = newBet.split(' ');
+    const newBetParts = newBet.split('');
 
     for (const bet of oldBets) {
       // Tách cược cũ thành các phần
-      const oldBetParts = bet.result.split(' ');
+      const oldBetParts = bet.result.split('');
 
       // Kiểm tra từng phần của cược mới với từng phần của cược cũ
       for (const oldPart of oldBetParts) {
