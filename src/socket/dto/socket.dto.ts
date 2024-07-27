@@ -5,3 +5,9 @@ export class CreateUserBet {
   result: string;
   server: string;
 }
+
+export class DelUserBet {
+  betId: any;
+  uid: any;
+  userBetId: any;
+}

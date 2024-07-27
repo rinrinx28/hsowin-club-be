@@ -10,7 +10,7 @@ import {
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreateUserBet } from './dto/socket.dto';
+import { CreateUserBet, DelUserBet } from './dto/socket.dto';
 
 @WebSocketGateway({
   cors: {
@@ -43,6 +43,16 @@ export class SocketGateway
   @SubscribeMessage('bet-user-ce-sv')
   async handleBetUserSv(@MessageBody() data: CreateUserBet) {
     await this.eventEmitter.emitAsync('bet-user-ce-sv', data);
+  }
+
+  @SubscribeMessage('bet-user-del-boss')
+  async handleDelBetUserBoss(@MessageBody() data: DelUserBet) {
+    await this.eventEmitter.emitAsync('bet-user-del-boss', data);
+  }
+
+  @SubscribeMessage('bet-user-del-sv')
+  async handleDelBetUserSv(@MessageBody() data: DelUserBet) {
+    await this.eventEmitter.emitAsync('bet-user-del-sv', data);
   }
 
   afterInit(server: Server) {

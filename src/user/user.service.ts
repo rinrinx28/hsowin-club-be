@@ -136,6 +136,10 @@ export class UserService {
     return result;
   }
 
+  async deletOneUserBetWithID(id: any) {
+    return await this.userBetModel.findByIdAndDelete(id);
+  }
+
   //TODO ———————————————[Clans Model]———————————————
   async createClans(data: CreateClans) {
     try {

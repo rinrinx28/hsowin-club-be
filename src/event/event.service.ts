@@ -5,7 +5,7 @@ import { BossService } from 'src/boss/boss.service';
 import { BotService } from 'src/bot/bot.service';
 import { CronjobService } from 'src/cronjob/cronjob.service';
 import { SessionService } from 'src/session/session.service';
-import { CreateUserBet } from 'src/socket/dto/socket.dto';
+import { CreateUserBet, DelUserBet } from 'src/socket/dto/socket.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { UserService } from 'src/user/user.service';
@@ -19,6 +19,7 @@ import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
 import { Mutex } from 'async-mutex';
 import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
 import { UserBet } from 'src/user/schema/userBet.schema';
+import moment from 'moment';
 
 @Injectable()
 export class EventService {
@@ -36,6 +37,8 @@ export class EventService {
 
   private readonly mutexMap = new Map<string, Mutex>();
   private logger: Logger = new Logger('Events');
+
+  //TODO ———————————————[Handle Create Bet User]———————————————
 
   @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
@@ -211,6 +214,93 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       return msg;
+    }
+  }
+
+  //TODO ———————————————[Handler Del Bet User]———————————————
+  @OnEvent('bet-user-del-boss')
+  async handleDelBetUserBoss(data: DelUserBet) {
+    try {
+      const { betId, uid, userBetId } = data;
+      const targetUserBetLog = await this.userService.findByIdBet(userBetId);
+      const { amount } = targetUserBetLog;
+      const targetBetId = await this.betLogService.findById(betId);
+      const { timeEnd } = targetBetId;
+      let now = moment().unix();
+      let currentEnd = moment(timeEnd).unix();
+      if (currentEnd - now < 5)
+        throw new Error('Không thể hủy cược vào lúc này');
+
+      // Update BetLog Chung
+      await this.betLogService.update(betId, {
+        $inc: {
+          sendIn: -amount,
+        },
+      });
+
+      // Update server data
+      const user = await this.userService.update(uid, {
+        $inc: {
+          gold: +amount,
+        },
+      });
+      // Delete UserBet
+      await this.userService.deletOneUserBetWithID(userBetId);
+      const msg = this.handleMessageResult({
+        message: 'Đã hủy cược thành công',
+        status: true,
+        data: {
+          user,
+          userBetId,
+        },
+      });
+      this.socketGateway.server.emit('bet-user-del-boss-re', msg);
+      return msg;
+    } catch (err) {
+      return this.handleMessageResult({ message: err.message, status: false });
+    }
+  }
+
+  @OnEvent('bet-user-del-sv')
+  async handleDelBetUserSv(data: DelUserBet) {
+    try {
+      const { betId, uid, userBetId } = data;
+      const targetUserBetLog = await this.userService.findByIdBet(userBetId);
+      const { amount } = targetUserBetLog;
+      const targetBetId = await this.betLogService.findSvById(betId);
+      const { timeEnd } = targetBetId;
+      let now = moment().unix();
+      let currentEnd = moment(timeEnd).unix();
+      if (currentEnd - now < 5)
+        throw new Error('Không thể hủy cược vào lúc này');
+
+      // Update BetLog Chung
+      await this.betLogService.updateSv(betId, {
+        $inc: {
+          sendIn: -amount,
+        },
+      });
+
+      // Update server data
+      const user = await this.userService.update(uid, {
+        $inc: {
+          gold: +amount,
+        },
+      });
+      // Delete UserBet
+      await this.userService.deletOneUserBetWithID(userBetId);
+      const msg = this.handleMessageResult({
+        message: 'Đã hủy cược thành công',
+        status: true,
+        data: {
+          user,
+          userBetId,
+        },
+      });
+      this.socketGateway.server.emit('bet-user-del-sv-re', msg);
+      return msg;
+    } catch (err) {
+      return this.handleMessageResult({ message: err.message, status: false });
     }
   }
 
