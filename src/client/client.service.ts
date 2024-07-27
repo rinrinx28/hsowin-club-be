@@ -9,6 +9,7 @@ import { CronjobService } from 'src/cronjob/cronjob.service';
 import { UserService } from 'src/user/user.service';
 import { BetLogService } from 'src/bet-log/bet-log.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CatchException } from 'src/common/common.exception';
 
 @Injectable()
 export class ClientService {
@@ -105,7 +106,7 @@ export class ClientService {
           return 'ok';
       }
     } catch (err) {
-      return err.message;
+      throw new CatchException(err);
     }
   }
 

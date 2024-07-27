@@ -21,6 +21,7 @@ import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
 import { UserBet } from 'src/user/schema/userBet.schema';
 import * as moment from 'moment';
 import { MessegesService } from 'src/messeges/messeges.service';
+import { CatchException } from 'src/common/common.exception';
 
 @Injectable()
 export class EventService {
@@ -112,7 +113,7 @@ export class EventService {
         data: [data],
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
-      return msg;
+      throw new CatchException(err);
     }
   }
 
@@ -213,7 +214,7 @@ export class EventService {
         data: [data],
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
-      return msg;
+      throw new CatchException(err);
     }
   }
 
@@ -262,7 +263,7 @@ export class EventService {
         status: false,
       });
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
-      return;
+      throw new CatchException(err);
     }
   }
 
@@ -310,7 +311,7 @@ export class EventService {
         status: false,
       });
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
-      return;
+      throw new CatchException(err);
     }
   }
 
@@ -358,7 +359,7 @@ export class EventService {
         status: false,
         data: [],
       });
-      return msg;
+      throw new CatchException(err);
     }
   }
 
@@ -561,6 +562,7 @@ export class EventService {
       return;
     } catch (err) {
       this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
+      throw new CatchException(err);
     } finally {
       release();
     }
@@ -667,7 +669,7 @@ export class EventService {
         status: false,
         data: '',
       });
-      return msg;
+      throw new CatchException(err);
     }
   }
 
@@ -823,7 +825,7 @@ export class EventService {
         status: false,
         data: '',
       });
-      return msg;
+      throw new CatchException(err);
     }
   }
 
@@ -890,7 +892,7 @@ export class EventService {
 
       return;
     } catch (err) {
-      return err.message;
+      throw new CatchException(err);
     }
   }
 
@@ -910,7 +912,7 @@ export class EventService {
       }
       console.log(list_clans_users);
     } catch (err) {
-      return err.message;
+      throw new CatchException(err);
     }
   }
 
@@ -922,7 +924,7 @@ export class EventService {
         console.log(user);
       }
     } catch (err) {
-      return err.message;
+      throw new CatchException(err);
     }
   }
 

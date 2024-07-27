@@ -14,6 +14,7 @@ import apiClient from 'src/unitl/apiClient';
 import * as moment from 'moment';
 import * as crypto from 'crypto';
 import { Event } from 'src/event/schema/event.schema';
+import { CatchException } from 'src/common/common.exception';
 
 @Injectable()
 export class SessionService {
@@ -71,7 +72,7 @@ export class SessionService {
       this.cronJobService.create(result?.id, timeOutId);
       return result;
     } catch (err) {
-      throw new BadRequestException(err.message);
+      throw new CatchException(err);
     }
   }
 
@@ -84,7 +85,7 @@ export class SessionService {
         .exec();
       return sessions;
     } catch (err) {
-      throw new ForbiddenException();
+      throw new CatchException(err);
     }
   }
 
@@ -98,7 +99,7 @@ export class SessionService {
         .exec();
       return session;
     } catch (err) {
-      throw new BadRequestException();
+      throw new CatchException(err);
     }
   }
 
@@ -168,7 +169,7 @@ export class SessionService {
       return result;
     } catch (err) {
       console.log(err);
-      throw new BadRequestException('Đã Xảy Ra Lỗi');
+      throw new CatchException(err);
     }
   }
 
