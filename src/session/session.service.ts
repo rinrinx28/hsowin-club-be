@@ -17,7 +17,6 @@ import { Event } from 'src/event/schema/event.schema';
 
 @Injectable()
 export class SessionService {
-  private orderCount = 10015;
   private checksumKey = process.env.PAYOS_CHECKSUM_KEY; // Đảm bảo rằng biến môi trường này đã được cấu hình
   constructor(
     @InjectModel(Session.name)
@@ -118,10 +117,12 @@ export class SessionService {
   async handleCreateBank(data: BankCreate) {
     try {
       const { amount, uid } = data;
+      const eventOrderBank =
+        await this.userService.handleGetEventModel('e-order-bank');
       let now = moment();
       let exp = now.add(15, 'minute');
       const sign = {
-        orderCode: this.orderCount,
+        orderCode: eventOrderBank.value,
         amount: amount,
         description: 'Thanh toan don hang',
         cancelUrl: 'http://localhost:3000/user',
@@ -150,16 +151,21 @@ export class SessionService {
         },
       });
 
-      console.log(res.data);
+      const result = res.data;
 
-      // await this.bankModel.create({
-      //   amount,
-      //   uid,
-      //   status: 0,
-      //   orderId: res.data?.data.paymentLinkId,
-      // });
-      this.orderCount++;
-      return res.data;
+      await this.bankModel.create({
+        amount,
+        uid,
+        status: 0,
+        orderId: result?.data.paymentLinkId,
+      });
+
+      await this.userService.handleUpdateEventModel('e-order-bank', {
+        $inc: {
+          value: +1,
+        },
+      });
+      return result;
     } catch (err) {
       console.log(err);
       throw new BadRequestException('Đã Xảy Ra Lỗi');
