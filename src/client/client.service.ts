@@ -120,9 +120,13 @@ export class ClientService {
 
   //TODO ———————————————[Handle Banking]———————————————
   async handleBankUpdate(data: any) {
-    return await this.sessionService.handleUpdateBank(
-      data?.data?.paymentLinkId,
-      '1',
-    );
+    try {
+      return await this.sessionService.handleUpdateBank(
+        data?.data?.paymentLinkId,
+        '1',
+      );
+    } catch (err) {
+      throw new CatchException(err);
+    }
   }
 }
