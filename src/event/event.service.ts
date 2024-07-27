@@ -52,7 +52,13 @@ export class EventService {
       if (timeEnd - current_now < 10)
         throw new Error('Ván cược đã đóng thời gian cược');
 
-      const target = await this.queryRequestUserBet(uid, betId, server, amount);
+      const target = await this.queryRequestUserBet(
+        uid,
+        betId,
+        server,
+        amount,
+        result,
+      );
 
       // Let minus gold of user
       await this.userService.update(uid, {
@@ -121,7 +127,13 @@ export class EventService {
       if (timeEnd - current_now < 10)
         throw new Error('Ván cược đã đóng thời gian cược');
 
-      const target = await this.queryRequestUserBet(uid, betId, server, amount);
+      const target = await this.queryRequestUserBet(
+        uid,
+        betId,
+        server,
+        amount,
+        result,
+      );
 
       // Let minus gold of user
       await this.userService.update(uid, {
@@ -823,6 +835,7 @@ export class EventService {
     betId: any,
     server: string,
     amount: number,
+    result: string,
   ) {
     // Find User with UID
     const target = await this.userService.findById(uid);
@@ -850,6 +863,9 @@ export class EventService {
     for (const betUser of old_bet_user) {
       total_bet_user += betUser.amount;
     }
+    if (!this.isValidBet(result, old_bet_user))
+      throw new Error('Bạn không được phép đặt 2 cầu');
+
     // console.log(total_bet_user, min_amount, max_amount, amount);
     if (total_bet_user + amount > total_amount)
       throw new Error('Đã vượt quá giới hạn số lượng cược cho phép');
@@ -872,5 +888,25 @@ export class EventService {
     const start = str.substring(0, startLength);
     const end = str.substring(str.length - endLength, str.length);
     return `${start}...${end}`;
+  }
+
+  // Hàm kiểm tra cược Chẵn Lẻ - Tài Xỉu có hợp lệ không
+  isValidBet(newBet: string, old_bet_user: any[]) {
+    for (const bet of old_bet_user) {
+      let new_bet = bet.split('');
+      for (const b of new_bet) {
+        if (
+          (b === 'Chẵn' && newBet === 'Lẻ') ||
+          (b === 'Lẻ' && newBet === 'Chẵn') ||
+          (b === 'Tài' && newBet === 'Xỉu') ||
+          (b === 'Xỉu' && newBet === 'Tài') ||
+          (b === '1' && newBet === '0') ||
+          (b === '0' && newBet === '1')
+        ) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
