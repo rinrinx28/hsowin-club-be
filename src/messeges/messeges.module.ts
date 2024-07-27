@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Messeges, MessegesSchema } from './schema/messeges.schema';
 import { MessegesService } from './messeges.service';
+import { MessagesController } from './messages.controller';
 
 @Module({
   imports: [
@@ -9,7 +10,7 @@ import { MessegesService } from './messeges.service';
       { name: Messeges.name, schema: MessegesSchema },
     ]),
   ],
-  controllers: [],
+  controllers: [MessagesController],
   providers: [MessegesService],
   exports: [MessegesService],
 })
