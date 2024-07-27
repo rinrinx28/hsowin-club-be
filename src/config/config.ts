@@ -1,13 +1,13 @@
 export const ConfigBet = {
-  min: 3,
-  max: 3 * 1e3,
-  total: 8 * 1e3,
+  min: 5,
+  max: 2 * 1e3,
+  total: 4 * 1e3,
 };
 
 export const ConfigBetDiff = {
-  min: 3,
-  max: (3 * 1e3) / 2,
-  total: (8 * 1e3) / 2,
+  min: 30,
+  max: 2 * 1e3,
+  total: 3 * 1e3,
 };
 
 export const ConfigVip = [

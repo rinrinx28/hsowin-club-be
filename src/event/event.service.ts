@@ -45,6 +45,8 @@ export class EventService {
       if (!bet_session || bet_session.isEnd)
         throw new Error('Ván cược đã kết thúc');
 
+      if (result.length < 1) throw new Error('Xin vui lòng Dự Đoán Kết Quả');
+
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
       if (timeEnd - current_now < 10)
@@ -111,6 +113,8 @@ export class EventService {
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
         throw new Error('Ván cược đã kết thúc');
+
+      if (result.length < 1) throw new Error('Xin vui lòng Dự Đoán Kết Quả');
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
@@ -826,10 +830,10 @@ export class EventService {
 
     // Check Sv Default of user ...
     let min_amount = ConfigBet.min;
-    let max_amount = target?.server.includes(server)
+    let max_amount = ['24', server].includes(target?.server)
       ? ConfigBet.max
       : ConfigBetDiff.max;
-    let total_amount = target?.server.includes(server)
+    let total_amount = ['24', server].includes(target?.server)
       ? ConfigBet.total
       : ConfigBetDiff.total;
     if (target.gold - amount <= 0)
