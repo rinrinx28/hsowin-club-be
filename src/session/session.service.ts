@@ -119,7 +119,7 @@ export class SessionService {
     try {
       const { amount, uid } = data;
       let now = moment();
-      let exp = now.add('minute', 15);
+      let exp = now.add(15, 'minute');
       const sign = {
         orderCode: this.orderCount,
         amount: amount,
@@ -159,6 +159,7 @@ export class SessionService {
       this.orderCount++;
       return res.data;
     } catch (err) {
+      console.log(err);
       throw new BadRequestException('Đã Xảy Ra Lỗi');
     }
   }
