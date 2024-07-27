@@ -17,7 +17,7 @@ import { Event } from 'src/event/schema/event.schema';
 
 @Injectable()
 export class SessionService {
-  private orderCount = 10010;
+  private orderCount = 10012;
   private checksumKey = process.env.PAYOS_CHECKSUM_KEY; // Đảm bảo rằng biến môi trường này đã được cấu hình
   constructor(
     @InjectModel(Session.name)
@@ -154,7 +154,7 @@ export class SessionService {
         amount,
         uid,
         status: 0,
-        orderId: res.data.paymentLinkId,
+        orderId: res.data?.data.paymentLinkId,
       });
       this.orderCount++;
       return res.data;
