@@ -904,10 +904,10 @@ export class EventService {
       for (const oldPart of oldBetParts) {
         for (const newPart of newBetParts) {
           if (
-            (oldPart === 'Chẵn' && newPart === 'Lẻ') ||
-            (oldPart === 'Lẻ' && newPart === 'Chẵn') ||
-            (oldPart === 'Tài' && newPart === 'Xỉu') ||
-            (oldPart === 'Xỉu' && newPart === 'Tài') ||
+            (oldPart === 'C' && newPart === 'T') ||
+            (oldPart === 'L' && newPart === 'C') ||
+            (oldPart === 'T' && newPart === 'X') ||
+            (oldPart === 'X' && newPart === 'T') ||
             (oldPart === '1' && newPart === '0') ||
             (oldPart === '0' && newPart === '1')
           ) {
