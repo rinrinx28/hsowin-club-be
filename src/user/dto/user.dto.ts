@@ -63,3 +63,9 @@ export class UserBankWithDraw {
   bankName?: string;
   type: string;
 }
+
+export class UserBankWithDrawUpdate {
+  uid: string;
+  withdrawId: string;
+  status: string;
+}

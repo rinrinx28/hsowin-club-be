@@ -11,6 +11,7 @@ import {
   FindUserBetDto,
   MemberClans,
   UserBankWithDraw,
+  UserBankWithDrawUpdate,
   UserTrade,
 } from './dto/user.dto';
 import { Model } from 'mongoose';
@@ -373,10 +374,45 @@ export class UserService {
       const target = await this.userModel.findById(uid);
       if (!target)
         return { message: 'Không tìm thấy người chơi!', status: false };
+      const eventBankWithDraw =
+        await this.handleGetEventModel('e-withdraw-bank');
       if (target.gold - amount < 0)
         return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
 
-      return await this.userWithDrawModel.create(data);
+      let recive = amount / (eventBankWithDraw?.value ?? 6.2);
+
+      await this.userModel.findByIdAndUpdate(uid, {
+        $inc: {
+          gold: -amount,
+        },
+      });
+      return await this.userWithDrawModel.create({ ...data, recive });
+    } catch (err) {
+      throw new CatchException(err);
+    }
+  }
+
+  async handleUserBankWithdrawUpdate(data: UserBankWithDrawUpdate) {
+    try {
+      const { uid, withdrawId, status } = data;
+      const target = await this.userModel.findById(uid);
+      if (!target)
+        return { message: 'Không tìm thấy người chơi!', status: false };
+      const targetWithDraw = await this.userWithDrawModel.findById(withdrawId);
+
+      // gold / 4.8
+      await this.userModel.findByIdAndUpdate(uid, {
+        $inc: {
+          gold: +targetWithDraw.amount,
+        },
+      });
+      return await this.userWithDrawModel.findByIdAndUpdate(
+        withdrawId,
+        {
+          status,
+        },
+        { upsert: true, new: true },
+      );
     } catch (err) {
       throw new CatchException(err);
     }

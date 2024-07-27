@@ -25,6 +25,12 @@ export class UserWithDraw {
   @Prop()
   bankName?: string;
 
+  @Prop()
+  recive: number;
+
+  @Prop({ default: '0' })
+  status: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
