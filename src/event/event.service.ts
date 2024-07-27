@@ -226,7 +226,7 @@ export class EventService {
       const { amount } = targetUserBetLog;
       const targetBetId = await this.betLogService.findById(betId);
       const { timeEnd } = targetBetId;
-      let now = moment().unix();
+      let now = moment(new Date()).unix();
       let currentEnd = moment(timeEnd).unix();
       if (currentEnd - now < 5)
         throw new Error('Không thể hủy cược vào lúc này');
@@ -274,7 +274,7 @@ export class EventService {
       const { amount } = targetUserBetLog;
       const targetBetId = await this.betLogService.findSvById(betId);
       const { timeEnd } = targetBetId;
-      let now = moment().unix();
+      let now = moment(new Date()).unix();
       let currentEnd = moment(timeEnd).unix();
       if (currentEnd - now < 5)
         throw new Error('Không thể hủy cược vào lúc này');
