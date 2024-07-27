@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 
-export type SessionDocument = Session & Document;
+export type UserWithDrawDocument = UserWithDraw & Document;
 
 @Schema({
   timestamps: true,
 })
-export class Session {
+export class UserWithDraw {
   @Prop()
   uid: string;
 
@@ -14,19 +14,19 @@ export class Session {
   type: string;
 
   @Prop()
-  playerName: string;
-
-  @Prop()
   amount: number;
 
-  @Prop({ default: '0' })
-  status: string;
+  @Prop()
+  accountName: string;
 
   @Prop()
-  server: string;
+  accountNumber: string;
+
+  @Prop()
+  bankName?: string;
 
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export const SessionSchema = SchemaFactory.createForClass(Session);
+export const UserWithDrawSchema = SchemaFactory.createForClass(UserWithDraw);

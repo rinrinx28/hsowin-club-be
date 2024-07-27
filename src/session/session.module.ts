@@ -7,6 +7,7 @@ import { UserModule } from 'src/user/user.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
 import { Bank, BankSchema } from './schema/bank.schema';
 import { Event, EventSchema } from 'src/event/schema/event.schema';
+import { User, UserSchema } from 'src/user/schema/user.schema';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { Event, EventSchema } from 'src/event/schema/event.schema';
       { name: Session.name, schema: SessionSchema },
       { name: Bank.name, schema: BankSchema },
       { name: Event.name, schema: EventSchema },
+      { name: User.name, schema: UserSchema },
     ]),
     UserModule,
     CronjobModule,

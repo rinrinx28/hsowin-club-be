@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -103,7 +104,14 @@ export class SessionService {
     }
   }
 
+  async findByID(id: string) {
+    return await this.sessionModel.findById(id);
+  }
+
   async updateById(id: string, data: any) {
+    if (data?.status === '2') {
+      this.cronJobService.remove(id);
+    }
     const result = await this.sessionModel.findByIdAndUpdate(id, data, {
       upsert: true,
     });
@@ -112,6 +120,14 @@ export class SessionService {
 
   async findAllSesions() {
     return await this.sessionModel.find();
+  }
+
+  async findSessionWithUser(page: number, limit: number, uid: string) {
+    return await this.sessionModel
+      .findOne({ uid: uid })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
   }
 
   //TODO ———————————————[Handle Banking]———————————————

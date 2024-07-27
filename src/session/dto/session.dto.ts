@@ -3,6 +3,12 @@ export class CreateSessionDto {
   type: string;
   amount: number;
   playerName: string;
+  uid: string;
+}
+
+export class CancelSession {
+  sessionId: string;
+  uid: string;
 }
 
 export class BankCreate {

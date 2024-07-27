@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import {
   CreateClans,
   CreateUserBetDto,
@@ -6,6 +10,8 @@ import {
   Exchange,
   FindUserBetDto,
   MemberClans,
+  UserBankWithDraw,
+  UserTrade,
 } from './dto/user.dto';
 import { Model } from 'mongoose';
 import { User } from './schema/user.schema';
@@ -16,6 +22,7 @@ import { CatchException } from 'src/common/common.exception';
 import { Event } from 'src/event/schema/event.schema';
 import { CreateEvent } from 'src/event/dto/event.dto';
 import { ConfigExchange } from 'src/config/config';
+import { UserWithDraw } from './schema/userWithdraw';
 
 @Injectable()
 export class UserService {
@@ -28,6 +35,8 @@ export class UserService {
     private readonly clansModel: Model<Clans>,
     @InjectModel(Event.name)
     private readonly eventModel: Model<Event>,
+    @InjectModel(UserWithDraw.name)
+    private readonly userWithDrawModel: Model<UserWithDraw>,
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
@@ -321,6 +330,56 @@ export class UserService {
       integerPart,
       decimalPart,
     };
+  }
+
+  async handleUserTrade(data: UserTrade) {
+    try {
+      const target = await this.userModel.findById(data?.targetId);
+      if (!target) throw new ForbiddenException();
+      const user = await this.userModel.findById(data?.userId);
+      if (!user) throw new ForbiddenException();
+      if (user.gold - data?.amount <= 0) throw new BadRequestException();
+      const res = await this.userModel.findByIdAndUpdate(
+        data?.userId,
+        {
+          $inc: {
+            gold: -data?.amount,
+          },
+        },
+        { new: true, upsert: true },
+      );
+      await this.userModel.findByIdAndUpdate(
+        data?.targetId,
+        {
+          $inc: {
+            gold: +data?.amount,
+          },
+        },
+        { new: true, upsert: true },
+      );
+      return {
+        message: 'Đã chuyển thành công',
+        status: true,
+        data: res,
+      };
+    } catch (err) {
+      throw new CatchException(err);
+    }
+  }
+
+  async handleUserBankWithdraw(data: UserBankWithDraw) {
+    try {
+      const { uid, amount } = data;
+      const target = await this.userModel.findById(uid);
+      if (!target)
+        return { message: 'Không tìm thấy người chơi!', status: false };
+      if (target.gold - amount < 0)
+        return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
+
+      return await this.userWithDrawModel.create(data);
+    } catch (err) {
+      throw new CatchException(err);
+    }
   }
 
   //TODO ———————————————[Admin Server]———————————————

@@ -48,3 +48,18 @@ export class MemberClans {
 export class Exchange {
   diamon: number;
 }
+
+export class UserTrade {
+  targetId: any;
+  amount: number;
+  userId: any;
+}
+
+export class UserBankWithDraw {
+  uid: string;
+  amount: number;
+  accountName: string;
+  accountNumber: string;
+  bankName?: string;
+  type: string;
+}

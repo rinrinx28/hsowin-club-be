@@ -15,6 +15,8 @@ import {
   CreateUserDto,
   Exchange,
   MemberClans,
+  UserBankWithDraw,
+  UserTrade,
 } from './dto/user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateEvent } from 'src/event/dto/event.dto';
@@ -103,5 +105,15 @@ export class UserController {
   @Get('/rank')
   async handleUserRank() {
     return await this.userService.handleUserRank();
+  }
+
+  @Post('/trade')
+  async handleUserTrade(@Body() data: UserTrade) {
+    return await this.userService.handleUserTrade(data);
+  }
+
+  @Post('/bank/withdraw')
+  async handleUserBankWithdraw(@Body() data: UserBankWithDraw) {
+    return await this.userService.handleUserBankWithdraw(data);
   }
 }
