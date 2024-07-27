@@ -129,6 +129,6 @@ export class UserController {
     @Req() req: any,
   ) {
     const user = req.user;
-    return await this.userService.handleUserBetLog(page, limit, user);
+    return await this.userService.handleUserBetLog(page, limit, user.sub);
   }
 }
