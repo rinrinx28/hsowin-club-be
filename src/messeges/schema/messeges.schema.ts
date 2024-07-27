@@ -13,6 +13,9 @@ export class Messeges {
   @Prop()
   content: string;
 
+  @Prop()
+  username?: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
