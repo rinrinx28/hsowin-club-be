@@ -628,7 +628,7 @@ export class EventService {
       await this.bossService.createAndUpdate('24', {
         server: '24',
         type: 4,
-        respam: 180,
+        respam: 60,
       });
 
       // Get value now update
@@ -643,7 +643,7 @@ export class EventService {
       if (!old_bet) {
         await this.betLogService.createSv({
           server: '24',
-          timeEnd: this.addSeconds(now, 180),
+          timeEnd: this.addSeconds(now, 60),
         });
       } else {
         // Check if the result is jack pot
@@ -683,7 +683,7 @@ export class EventService {
         // Create new bet
         new_bet = await this.betLogService.createSv({
           server: '24',
-          timeEnd: this.addSeconds(now, 180),
+          timeEnd: this.addSeconds(now, 60),
         });
       }
 

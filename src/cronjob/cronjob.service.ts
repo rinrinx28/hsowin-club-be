@@ -21,7 +21,7 @@ export class CronjobService {
     }
   }
 
-  @Cron('0 */3 * * * *')
+  @Cron('0 */1 * * * *')
   handleServerAuto() {
     this.eventEmitter.emit('server-24', 'isRun');
   }
