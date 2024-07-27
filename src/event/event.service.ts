@@ -19,7 +19,7 @@ import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
 import { Mutex } from 'async-mutex';
 import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
 import { UserBet } from 'src/user/schema/userBet.schema';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Injectable()
 export class EventService {
