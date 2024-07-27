@@ -42,4 +42,9 @@ export class SessionController {
   async handleBankCreate(@Body() data: BankCreate) {
     return await this.sessionService.handleCreateBank(data);
   }
+
+  @Post('/banking/update')
+  async handleBankUpdate(@Query('orderId') orderId: any) {
+    return await this.sessionService.handleUpdateBank(orderId, '2');
+  }
 }
