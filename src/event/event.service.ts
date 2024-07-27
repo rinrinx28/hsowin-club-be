@@ -20,6 +20,7 @@ import { Mutex } from 'async-mutex';
 import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
 import { UserBet } from 'src/user/schema/userBet.schema';
 import * as moment from 'moment';
+import { MessegesService } from 'src/messeges/messeges.service';
 
 @Injectable()
 export class EventService {
@@ -32,6 +33,7 @@ export class EventService {
     private readonly cronJobService: CronjobService,
     private readonly userService: UserService,
     private readonly betLogService: BetLogService,
+    private readonly messageService: MessegesService,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -98,8 +100,7 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       if (amount >= ConfigNoti.min) {
-        this.socketGateway.server.emit(
-          'noti-bet',
+        await this.handleMessageSystem(
           `Người chơi ${target.username} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
         );
       }
@@ -182,8 +183,7 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       if (amount >= ConfigNoti.min) {
-        this.socketGateway.server.emit(
-          'noti-bet',
+        await this.handleMessageSystem(
           `Người chơi ${target.username} đã lớn ${amount} gold khi cược ${
             result === 'C'
               ? 'Chẵn'
@@ -341,8 +341,7 @@ export class EventService {
       );
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
-        this.socketGateway.server.emit(
-          'noti-bet',
+        await this.handleMessageSystem(
           `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
         );
       }
@@ -544,6 +543,10 @@ export class EventService {
           bet_data['type'] = 'old';
         }
       }
+
+      await this.handleMessageSystem(
+        `Boss Status: ${data.content} - Server: ${data?.server}`,
+      );
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
       this.socketGateway.server.emit('status-boss', {
         type: bet_data['type'],
@@ -626,8 +629,7 @@ export class EventService {
       );
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
-        this.socketGateway.server.emit(
-          'noti-bet',
+        await this.handleMessageSystem(
           `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược ${
             bet.result === 'C'
               ? 'Chẵn'
@@ -874,8 +876,7 @@ export class EventService {
             gold: +user.prize,
           },
         });
-        this.socketGateway.server.emit(
-          'noti-bet',
+        await this.handleMessageSystem(
           `Chúc mừng người chơi có ID: ${this.shortenString(user.uid, 3, 3)} đã trúng jackpot ${user.prize} gold`,
         );
       }
@@ -1018,5 +1019,12 @@ export class EventService {
     }
 
     return true;
+  }
+
+  //TODO ———————————————[Handle Message Event]———————————————
+  async handleMessageSystem(data: string) {
+    this.socketGateway.server.emit('noti-bet', data);
+    // save message
+    await this.messageService.MessageCreate({ uid: '', content: data });
   }
 }

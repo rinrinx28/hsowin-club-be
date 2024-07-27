@@ -10,6 +10,7 @@ import { EventService } from './event.service';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { WebSocketModule } from 'src/socket/socket.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
+import { MessagesModule } from 'src/messeges/messeges.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CronjobModule } from 'src/cronjob/cronjob.module';
     UserModule,
     WebSocketModule,
     CronjobModule,
+    MessagesModule,
   ],
   providers: [EventService, UnitlService],
   exports: [EventService],
