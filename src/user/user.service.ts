@@ -376,17 +376,16 @@ export class UserService {
         return { message: 'Không tìm thấy người chơi!', status: false };
       const eventBankWithDraw =
         await this.handleGetEventModel('e-withdraw-bank');
-      if (target.gold - amount < 0)
+      let gold = amount * (eventBankWithDraw?.value ?? 6.2);
+      if (target.gold - gold < 0)
         return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
-
-      let recive = amount / (eventBankWithDraw?.value ?? 6.2);
 
       await this.userModel.findByIdAndUpdate(uid, {
         $inc: {
-          gold: -amount,
+          gold: -gold,
         },
       });
-      return await this.userWithDrawModel.create({ ...data, recive });
+      return await this.userWithDrawModel.create({ ...data, gold });
     } catch (err) {
       throw new CatchException(err);
     }
@@ -400,12 +399,14 @@ export class UserService {
         return { message: 'Không tìm thấy người chơi!', status: false };
       const targetWithDraw = await this.userWithDrawModel.findById(withdrawId);
 
-      // gold / 4.8
-      await this.userModel.findByIdAndUpdate(uid, {
-        $inc: {
-          gold: +targetWithDraw.amount,
-        },
-      });
+      // gold
+      if (status === '2') {
+        await this.userModel.findByIdAndUpdate(uid, {
+          $inc: {
+            gold: +targetWithDraw.gold,
+          },
+        });
+      }
       return await this.userWithDrawModel.findByIdAndUpdate(
         withdrawId,
         {

@@ -26,7 +26,7 @@ export class UserWithDraw {
   bankName?: string;
 
   @Prop()
-  recive: number;
+  gold: number;
 
   @Prop({ default: '0' })
   status: string;
