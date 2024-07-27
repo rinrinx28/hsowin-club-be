@@ -18,6 +18,7 @@ import {
 import { StatusBoss, StatusServerWithBoss } from 'src/client/dto/client.dto';
 import { Mutex } from 'async-mutex';
 import { ConfigBet, ConfigBetDiff, ConfigNoti } from 'src/config/config';
+import { UserBet } from 'src/user/schema/userBet.schema';
 
 @Injectable()
 export class EventService {
@@ -891,22 +892,31 @@ export class EventService {
   }
 
   // Hàm kiểm tra cược Chẵn Lẻ - Tài Xỉu có hợp lệ không
-  isValidBet(newBet: string, old_bet_user: any[]) {
-    for (const bet of old_bet_user) {
-      let new_bet = bet.split('');
-      for (const b of new_bet) {
-        if (
-          (b === 'Chẵn' && newBet === 'Lẻ') ||
-          (b === 'Lẻ' && newBet === 'Chẵn') ||
-          (b === 'Tài' && newBet === 'Xỉu') ||
-          (b === 'Xỉu' && newBet === 'Tài') ||
-          (b === '1' && newBet === '0') ||
-          (b === '0' && newBet === '1')
-        ) {
-          return false;
+  isValidBet(newBet: string, oldBets: UserBet[]): boolean {
+    // Tách cược mới thành các phần
+    const newBetParts = newBet.split(' ');
+
+    for (const bet of oldBets) {
+      // Tách cược cũ thành các phần
+      const oldBetParts = bet.result.split(' ');
+
+      // Kiểm tra từng phần của cược mới với từng phần của cược cũ
+      for (const oldPart of oldBetParts) {
+        for (const newPart of newBetParts) {
+          if (
+            (oldPart === 'Chẵn' && newPart === 'Lẻ') ||
+            (oldPart === 'Lẻ' && newPart === 'Chẵn') ||
+            (oldPart === 'Tài' && newPart === 'Xỉu') ||
+            (oldPart === 'Xỉu' && newPart === 'Tài') ||
+            (oldPart === '1' && newPart === '0') ||
+            (oldPart === '0' && newPart === '1')
+          ) {
+            return false;
+          }
         }
       }
     }
+
     return true;
   }
 }
