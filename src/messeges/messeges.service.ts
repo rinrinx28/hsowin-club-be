@@ -18,7 +18,7 @@ export class MessegesService {
   async MessageGetAll(page: number, limit: number) {
     return await this.messageModel
       .find()
-      .sort({ updatedAt: 1 })
+      .sort({ updatedAt: -1 })
       .limit(limit)
       .skip((page - 1) * limit)
       .exec();
