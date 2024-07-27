@@ -122,7 +122,8 @@ export class UserController {
     return await this.userService.handleUserBetLogs(limit);
   }
 
-  @Get('/user/bet/log')
+  @Get('/bets/log')
+  @UseGuards(AuthGuard)
   async handleUserBetLog(
     @Query('page') page: number,
     @Query('limit') limit: number,
