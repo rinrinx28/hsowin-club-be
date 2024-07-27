@@ -4,3 +4,9 @@ export class CreateSessionDto {
   amount: number;
   playerName: string;
 }
+
+export class BankCreate {
+  uid: string;
+  amount: number;
+  orderId?: string;
+}

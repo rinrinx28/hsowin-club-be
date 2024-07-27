@@ -5,10 +5,16 @@ import { Session, SessionSchema } from './schema/session.schema';
 import { SessionController } from './session.controller';
 import { UserModule } from 'src/user/user.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
+import { Bank, BankSchema } from './schema/bank.schema';
+import { Event, EventSchema } from 'src/event/schema/event.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
+    MongooseModule.forFeature([
+      { name: Session.name, schema: SessionSchema },
+      { name: Bank.name, schema: BankSchema },
+      { name: Event.name, schema: EventSchema },
+    ]),
     UserModule,
     CronjobModule,
   ],

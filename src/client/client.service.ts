@@ -116,4 +116,12 @@ export class ClientService {
   generateRandomSixDigitNumber() {
     return Math.floor(100000 + Math.random() * 900000);
   }
+
+  //TODO ———————————————[Handle Banking]———————————————
+  async handleBankUpdate(data: any) {
+    return await this.sessionService.handleUpdateBank(
+      data?.data?.paymentLinkId,
+      '1',
+    );
+  }
 }

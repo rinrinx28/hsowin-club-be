@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { SessionService } from './session.service';
-import { CreateSessionDto } from './dto/session.dto';
+import { BankCreate, CreateSessionDto } from './dto/session.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('session')
@@ -36,5 +36,10 @@ export class SessionController {
   @Get('/all')
   async getAll() {
     return await this.sessionService.findAllSesions();
+  }
+
+  @Post('/banking/create')
+  async handleBankCreate(@Body() data: BankCreate) {
+    return await this.sessionService.handleCreateBank(data);
   }
 }

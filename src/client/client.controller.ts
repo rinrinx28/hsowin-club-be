@@ -60,7 +60,10 @@ export class ClientController {
   }
 
   @Post('/hsowin-bank')
-  handleDoiThe(@Body() data: any) {
-    console.log(data);
+  async handleDoiThe(@Body() data: any) {
+    const res = await this.clientService.handleBankUpdate(data);
+    return {
+      success: res,
+    };
   }
 }

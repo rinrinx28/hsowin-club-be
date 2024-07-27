@@ -6,15 +6,26 @@ import {
 import { Model } from 'mongoose';
 import { Session } from './schema/session.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { CreateSessionDto } from './dto/session.dto';
+import { BankCreate, CreateSessionDto } from './dto/session.dto';
 import { UserService } from 'src/user/user.service';
 import { CronjobService } from 'src/cronjob/cronjob.service';
+import { Bank } from './schema/bank.schema';
+import apiClient from 'src/unitl/apiClient';
+import * as moment from 'moment';
+import * as crypto from 'crypto';
+import { Event } from 'src/event/schema/event.schema';
 
 @Injectable()
 export class SessionService {
+  private orderCount = 10000;
+  private checksumKey = process.env.PAYOS_CHECKSUM_KEY; // Đảm bảo rằng biến môi trường này đã được cấu hình
   constructor(
     @InjectModel(Session.name)
     private readonly sessionModel: Model<Session>,
+    @InjectModel(Bank.name)
+    private readonly bankModel: Model<Bank>,
+    @InjectModel(Event.name)
+    private readonly eventModel: Model<Event>,
     private readonly userService: UserService,
     private readonly cronJobService: CronjobService,
   ) {}
@@ -101,5 +112,87 @@ export class SessionService {
 
   async findAllSesions() {
     return await this.sessionModel.find();
+  }
+
+  //TODO ———————————————[Handle Banking]———————————————
+  async handleCreateBank(data: BankCreate) {
+    try {
+      const { amount, uid } = data;
+      let now = moment();
+      let exp = now.add('minute', 15);
+      const sign = {
+        orderCode: this.orderCount,
+        amount: amount,
+        description: 'Thanh toan don hang',
+        cancelUrl: 'http://localhost:3000/user',
+        returnUrl: 'http://localhost:3000/user',
+      };
+
+      const signature = this.createSignature(sign);
+
+      const body = {
+        ...sign,
+        items: [
+          {
+            name: 'Gói Tự Động',
+            quantity: 1,
+            price: amount,
+          },
+        ],
+        expiredAt: moment(exp).unix(),
+        signature: signature,
+      };
+
+      const res = await apiClient.post('/v2/payment-requests', body, {
+        headers: {
+          'x-client-id': process.env.PAYOS_CLIENT_ID,
+          'x-api-key': process.env.PAYOS_API_KEY,
+        },
+      });
+
+      await this.bankModel.create({
+        amount,
+        uid,
+        status: 0,
+        orderId: res.data.paymentLinkId,
+      });
+      this.orderCount++;
+      return res.data;
+    } catch (err) {
+      throw new BadRequestException('Đã Xảy Ra Lỗi');
+    }
+  }
+
+  createSignature(data: { [key: string]: any }): string {
+    // 1. Sort data theo alphabet
+    const sortedData = Object.keys(data)
+      .sort()
+      .map((key) => `${key}=${data[key]}`)
+      .join('&');
+
+    // 2. Tạo HMAC_SHA256 signature
+    const hmac = crypto.createHmac('sha256', this.checksumKey);
+    hmac.update(sortedData);
+    const signature = hmac.digest('hex');
+
+    return signature;
+  }
+
+  async handleUpdateBank(id: string, status: string) {
+    const eventExchangGold = await this.eventModel.findOne({
+      name: 'e-bank-gold',
+    });
+    const bankInfo = await this.bankModel.findOneAndUpdate(
+      { orderId: id },
+      { status },
+      { new: true, upsert: true },
+    );
+
+    await this.userService.update(bankInfo.uid, {
+      $inc: {
+        gold: +bankInfo.amount * eventExchangGold.value,
+      },
+    });
+    return true;
   }
 }
