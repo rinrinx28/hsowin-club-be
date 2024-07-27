@@ -904,7 +904,7 @@ export class EventService {
       for (const oldPart of oldBetParts) {
         for (const newPart of newBetParts) {
           if (
-            (oldPart === 'C' && newPart === 'T') ||
+            (oldPart === 'C' && newPart === 'L') ||
             (oldPart === 'L' && newPart === 'C') ||
             (oldPart === 'T' && newPart === 'X') ||
             (oldPart === 'X' && newPart === 'T') ||
