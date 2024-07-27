@@ -92,7 +92,7 @@ export class UserService {
   }
 
   async getTopUserBet() {
-    return await this.userModel.find().sort({ totalBet: -1 }).limit(10).exec();
+    return await this.userModel.find().sort({ totalBet: -1 }).exec();
   }
 
   async updateTotalBetUser(uid: any, amount: number) {
@@ -391,7 +391,7 @@ export class UserService {
   }
 
   //TODO ———————————————[Non User Call]———————————————
-  async handleUserBetLog(limit: number) {
+  async handleUserBetLogs(limit: number) {
     const data = await this.userBetModel
       .find()
       .sort({ updatedAt: -1 })
@@ -416,6 +416,19 @@ export class UserService {
     return {
       data: new_data,
       status: true,
+    };
+  }
+
+  async handleUserBetLog(page: number, limit: number, uid: string) {
+    const data = await this.userBetModel
+      .find({ uid })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .exec();
+    return {
+      status: true,
+      data,
     };
   }
 }

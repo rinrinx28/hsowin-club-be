@@ -79,4 +79,14 @@ export class SessionController {
   async handleBankUpdate(@Query('orderId') orderId: any) {
     return await this.sessionService.handleUpdateBank(orderId, '2');
   }
+
+  @Get('/banking/log')
+  async handleBankLog(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: any,
+  ) {
+    const user = req.user;
+    return await this.sessionService.handleBankLogUser(page, limit, user.sub);
+  }
 }

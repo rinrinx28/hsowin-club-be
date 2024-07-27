@@ -221,4 +221,12 @@ export class SessionService {
     });
     return true;
   }
+
+  async handleBankLogUser(page, limit, uid) {
+    return await this.bankModel
+      .findOne({ uid })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
+  }
 }

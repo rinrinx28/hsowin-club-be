@@ -8,6 +8,7 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
@@ -97,15 +98,12 @@ export class UserController {
     return await this.userService.handleGetAllUserbet();
   }
 
-  @Get('/log-bet/all')
-  async handleUserBetLog(@Query('limit') limit: any) {
-    return await this.userService.handleUserBetLog(limit);
-  }
-
   @Get('/rank')
   async handleUserRank() {
     return await this.userService.handleUserRank();
   }
+
+  //TODO ———————————————[User bank and trade]———————————————
 
   @Post('/trade')
   async handleUserTrade(@Body() data: UserTrade) {
@@ -115,5 +113,22 @@ export class UserController {
   @Post('/bank/withdraw')
   async handleUserBankWithdraw(@Body() data: UserBankWithDraw) {
     return await this.userService.handleUserBankWithdraw(data);
+  }
+
+  //TODO ———————————————[Bet Log User]———————————————
+
+  @Get('/log-bet/all')
+  async handleUserBetLogs(@Query('limit') limit: any) {
+    return await this.userService.handleUserBetLogs(limit);
+  }
+
+  @Get('/user/bet/log')
+  async handleUserBetLog(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: any,
+  ) {
+    const user = req.user;
+    return await this.userService.handleUserBetLog(page, limit, user);
   }
 }
