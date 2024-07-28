@@ -106,7 +106,7 @@ export class ClientService {
           return 'ok';
       }
     } catch (err) {
-      throw new CatchException(err);
+      // throw new CatchException(err);
     }
   }
 
@@ -126,7 +126,7 @@ export class ClientService {
         '1',
       );
     } catch (err) {
-      throw new CatchException(err);
+      // throw new CatchException(err);
     }
   }
 }
