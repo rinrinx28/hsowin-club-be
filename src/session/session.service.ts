@@ -34,13 +34,19 @@ export class SessionService {
     const { sub } = user;
     try {
       // Limited Amount
-      if (body.amount < 30) throw new Error('The Min Amount is 30 gold');
+      if (body.type === '0' && body.amount < 30)
+        throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');
+      if (body.type === '1' && body.amount <= 300 && body.amount >= 100)
+        throw new Error(
+          'Số thỏi vàng cần rút phải lớn 30 và nhỏ hon 300 thỏi vàng',
+        );
+
       // Let minus gold of user
       if (body.type === '1') {
         const target = await this.userService.findOne(user.username);
         if (target?.gold - body.amount <= 0)
           throw new Error(
-            'The balance is not enough to make the withdrawal order',
+            'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
           );
         await this.userService.update(sub, { $inc: { gold: -body.amount } });
       }
@@ -50,7 +56,8 @@ export class SessionService {
         .sort({ updatedAt: -1 })
         .exec();
       // old session has exist > return error BadRequest
-      if (old_session) throw new Error('The old session has exist');
+      if (old_session)
+        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
       const result = await this.sessionModel.create({
         ...body,
         status: '0',
