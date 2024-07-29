@@ -20,7 +20,7 @@ export class StatusBot {
 
 export class Transaction {
   uuid: string;
-  type: number;
+  type: string;
   bot_id: string;
   player_id: string;
   player_name: string;

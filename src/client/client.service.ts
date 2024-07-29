@@ -57,7 +57,7 @@ export class ClientService {
         );
       console.log(data, new_playerName);
       switch (type) {
-        case 0:
+        case '0':
           if (old_session.type === '0') {
             this.logger.log(
               `Nap: ok|${player_id}|${old_session.id}|${old_session.type}`,
@@ -69,7 +69,7 @@ export class ClientService {
             );
             return `ok|${player_id}|${old_session.id}|${old_session.type}|${old_session.amount}`;
           }
-        case 1:
+        case '1':
           await this.sessionService.updateById(old_session.id, {
             status: '1',
           });
