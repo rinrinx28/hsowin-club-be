@@ -447,9 +447,10 @@ export class UserService {
       .limit(7)
       .exec();
     let new_data = data.map((user) => {
-      delete user.pwd_h;
-      return user;
+      const { pwd_h, ...res } = user.toObject();
+      return res;
     });
+    console.log(new_data);
     return {
       data: new_data,
       status: true,
