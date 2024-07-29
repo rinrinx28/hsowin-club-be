@@ -155,8 +155,8 @@ export class SessionService {
         orderCode: eventOrderBank.value,
         amount: amount,
         description: 'Thanh toan don hang',
-        cancelUrl: 'http://localhost:3000/user',
-        returnUrl: 'http://localhost:3000/user',
+        cancelUrl: 'https://hsowin.vip/user',
+        returnUrl: 'https://hsowin.vip/user',
       };
 
       const signature = this.createSignature(sign);
