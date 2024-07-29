@@ -435,13 +435,18 @@ export class EventService {
 
       // Get value now update
       let now = new Date();
+      let current = new Date(statusBoss?.updatedAt);
+      let hours = current.getHours();
+      let minutes = current.getMinutes();
       const result_target = await this.eventRandomDrawModel.findOne({
         betId: old_bet_sv.id,
         isEnd: false,
       });
       const result = this.handleResultBetBoss(
-        result_target.timeBoss,
-        result_target.value,
+        result_target?.timeBoss ??
+          `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+        result_target?.value ??
+          `${Math.floor(100000 + Math.random() * 900000)}`,
       );
 
       let bet_data = {};
@@ -772,14 +777,15 @@ export class EventService {
       // Get value now update
       let hours = now.getHours();
       let minutes = now.getMinutes();
-
       const result_target = await this.eventRandomDrawModel.findOne({
         betId: old_bet.id,
         isEnd: false,
       });
       const result = this.handleResultBetBoss(
-        result_target.timeBoss,
-        result_target.value,
+        result_target?.timeBoss ??
+          `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+        result_target?.value ??
+          `${Math.floor(100000 + Math.random() * 900000)}`,
       );
 
       let new_bet = null;
