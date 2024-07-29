@@ -447,8 +447,8 @@ export class UserService {
       .limit(7)
       .exec();
     let new_data = data.map((user) => {
-      const { pwd_h, ...res } = user.toObject();
-      return res;
+      const { name, totalBet, _id, username } = user.toObject();
+      return { name, totalBet, _id, username };
     });
     return {
       data: new_data,
