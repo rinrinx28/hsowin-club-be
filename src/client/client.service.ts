@@ -47,14 +47,17 @@ export class ClientService {
 
   async getTransaction(data: Transaction) {
     try {
-      const { player_name, type, player_id, service_id } = data;
-      console.log(data);
+      const { player_name, type, player_id, service_id, server } = data;
       if (type === '0') {
         let new_playerName = this.unitlService.hexToString(player_name);
         // Let find session with PlayerName
         const old_session =
           await this.sessionService.findByName(new_playerName);
         if (!old_session)
+          throw new Error(
+            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
+          );
+        if (old_session.server !== server)
           throw new Error(
             'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
           );
