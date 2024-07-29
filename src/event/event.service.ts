@@ -476,6 +476,7 @@ export class EventService {
           bet_data['boss'] = res2;
           bet_data['sv'] = res1;
           bet_data['type'] = 'old';
+          bet_data['timeBoss'] = result_target?.timeBoss;
         } else {
           // Create new Bet between Map Boss and Server
           const create_new_boss = this.betLogService.create({
@@ -500,6 +501,8 @@ export class EventService {
           bet_data['boss'] = res1;
           bet_data['sv'] = res2;
           bet_data['type'] = 'new';
+          bet_data['timeBoss'] =
+            `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`;
         }
       } else {
         if (old_bet_sv || old_bet_boss) {
@@ -584,6 +587,7 @@ export class EventService {
         type: bet_data['type'],
         sv: bet_data['sv'],
         server: `${server}-mini`,
+        timeBoss: bet_data['timeBoss'] ?? null,
       });
       return;
     } catch (err) {
@@ -652,13 +656,18 @@ export class EventService {
         bet.resultBet = result;
         newBetUser.push(bet);
       }
+      await this.eventRandomDrawModel.findOneAndUpdate(
+        { betId: data?.betId },
+        { isEnd: true },
+        { new: true, upsert: true },
+      );
       const userNoti = newBetUser.filter(
         (bet) => bet.receive >= ConfigNoti.min * precent,
       );
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
         await this.handleMessageSystem(
-          `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược ${
+          `Chúc mừng người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược ${
             bet.result === 'C'
               ? 'Chẵn'
               : bet.result === 'CT'
