@@ -443,7 +443,7 @@ export class UserService {
   async handleUserRank() {
     const data = await this.userModel
       .find()
-      .sort({ updatedAt: -1, totalBet: -1 })
+      .sort({ totalBet: -1, updatedAt: -1 })
       .limit(7)
       .exec();
     let new_data = data.map((user) => {
