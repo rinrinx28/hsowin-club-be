@@ -702,7 +702,16 @@ export class EventService {
         status: true,
         data: newBetUser,
       });
+      let resultBet = result?.split('-');
+      let new_resultBet =
+        resultBet[0] in TranslateKey
+          ? TranslateKey[`${resultBet[0]}`]
+          : resultBet[0];
+      let new_resultBet_concat = [new_resultBet, resultBet[1]].join('-');
       this.socketGateway.server.emit('re-bet-user-res-sv', msg);
+      this.handleMessageSystem(
+        `Chúc mừng người chơi đã chọn ${new_resultBet_concat}`,
+      );
       return msg;
     } catch (err) {
       this.logger.log(
@@ -1103,13 +1112,13 @@ export class EventService {
   @OnEvent('result-data-bet')
   async handleResultDataBet(data: ResultDataBet) {
     try {
-      console.log('Get random');
+      // console.log('Get random');
       const target = await this.eventRandomDrawModel.findOne({
         betId: data.betId,
         isEnd: false,
       });
       if (!target) return 'No';
-      console.log('Get random', target);
+      // console.log('Get random', target);
       this.socketGateway.server.emit('result-data-bet-re', {
         value: target.value,
         betId: data.betId,
@@ -1118,3 +1127,16 @@ export class EventService {
     } catch (err) {}
   }
 }
+
+const TranslateKey = {
+  '0': 'Khỉ Đỏ',
+  '1': 'Khỉ Đen',
+  C: 'Chẵn',
+  L: 'Lẻ',
+  T: 'Tài',
+  X: 'Xỉu',
+  CT: 'Chẵn Tài',
+  LX: 'Lẻ Xỉu',
+  LT: 'Lẻ Tài',
+  CX: 'Chẵn Xỉu',
+};
