@@ -439,7 +439,7 @@ export class EventService {
       let hours = current.getHours();
       let minutes = current.getMinutes();
       const result_target = await this.eventRandomDrawModel.findOne({
-        betId: old_bet_sv.id,
+        betId: old_bet_sv?.id,
         isEnd: false,
       });
       const result = this.handleResultBetBoss(
