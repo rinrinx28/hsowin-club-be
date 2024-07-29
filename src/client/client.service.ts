@@ -106,7 +106,7 @@ export class ClientService {
           return 'ok';
       }
     } catch (err) {
-      // throw new CatchException(err);
+      return err.message;
     }
   }
 
