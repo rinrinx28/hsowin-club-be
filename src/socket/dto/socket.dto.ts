@@ -11,3 +11,8 @@ export class DelUserBet {
   uid: any;
   userBetId: any;
 }
+
+export class ResultDataBet {
+  betId: string;
+  count: number;
+}

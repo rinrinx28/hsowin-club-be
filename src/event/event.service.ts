@@ -5,7 +5,11 @@ import { BossService } from 'src/boss/boss.service';
 import { BotService } from 'src/bot/bot.service';
 import { CronjobService } from 'src/cronjob/cronjob.service';
 import { SessionService } from 'src/session/session.service';
-import { CreateUserBet, DelUserBet } from 'src/socket/dto/socket.dto';
+import {
+  CreateUserBet,
+  DelUserBet,
+  ResultDataBet,
+} from 'src/socket/dto/socket.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
 import { UserService } from 'src/user/user.service';
@@ -22,6 +26,9 @@ import { UserBet } from 'src/user/schema/userBet.schema';
 import * as moment from 'moment';
 import { MessegesService } from 'src/messeges/messeges.service';
 import { CatchException } from 'src/common/common.exception';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { EventRandom } from './schema/eventRandom';
 
 @Injectable()
 export class EventService {
@@ -36,6 +43,8 @@ export class EventService {
     private readonly betLogService: BetLogService,
     private readonly messageService: MessegesService,
     private eventEmitter: EventEmitter2,
+    @InjectModel(EventRandom.name)
+    private readonly eventRandomDrawModel: Model<EventRandom>,
   ) {}
 
   private readonly mutexMap = new Map<string, Mutex>();
@@ -425,18 +434,23 @@ export class EventService {
       });
 
       // Get value now update
-      const now = new Date();
-      const current_now = new Date(statusBoss?.updatedAt);
-      let hours = current_now.getHours();
-      let minutes = current_now.getMinutes();
+      let now = new Date();
+      const result_target = await this.eventRandomDrawModel.findOne({
+        betId: old_bet_sv.id,
+        isEnd: false,
+      });
       const result = this.handleResultBetBoss(
-        `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+        result_target.timeBoss,
+        result_target.value,
       );
 
       let bet_data = {};
 
       // let return result to user
       if (data['type'] === 2) {
+        const current_now = new Date(statusBoss?.updatedAt);
+        let hours = current_now.getHours();
+        let minutes = current_now.getMinutes();
         if (old_bet_sv || old_bet_boss) {
           const update_old_boss = this.betLogService.update(old_bet_boss?.id, {
             server,
@@ -471,6 +485,13 @@ export class EventService {
             create_new_boss,
             create_new_sv,
           ]);
+          const result_new_sv = Math.floor(100000 + Math.random() * 900000);
+          await this.eventRandomDrawModel.create({
+            betId: res2.id,
+            isEnd: false,
+            value: result_new_sv,
+            timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+          });
           bet_data['boss'] = res1;
           bet_data['sv'] = res2;
           bet_data['type'] = 'new';
@@ -673,9 +694,9 @@ export class EventService {
     }
   }
 
-  randomResultWithTime(timeBoss: string): string {
+  randomResultWithTime(timeBoss: string, random: string): string {
     let result: string | Array<any | number>;
-    let random = Math.floor(100000 + Math.random() * 900000);
+    // let random = Math.floor(100000 + Math.random() * 900000);
     result = `${timeBoss}${random}`.split('').map((a) => Number(a));
     let new_result = result.reduce((a, b) => a + b, 0);
     return `${new_result}`;
@@ -711,8 +732,8 @@ export class EventService {
     });
   }
 
-  handleResultBetBoss(timeBoss: string) {
-    let result = this.randomResultWithTime(`${timeBoss}`);
+  handleResultBetBoss(timeBoss: string, random: string) {
+    let result = this.randomResultWithTime(`${timeBoss}`, random);
     let new_result = `${result}`.split('')[1];
     let obj_result = {
       c: Number(new_result) % 2 === 0,
@@ -751,16 +772,29 @@ export class EventService {
       // Get value now update
       let hours = now.getHours();
       let minutes = now.getMinutes();
+
+      const result_target = await this.eventRandomDrawModel.findOne({
+        betId: old_bet.id,
+        isEnd: false,
+      });
       const result = this.handleResultBetBoss(
-        `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+        result_target.timeBoss,
+        result_target.value,
       );
 
       let new_bet = null;
       // If the bet not exist > will create new
       if (!old_bet) {
-        await this.betLogService.createSv({
+        const res2 = await this.betLogService.createSv({
           server: '24',
           timeEnd: this.addSeconds(now, 60),
+        });
+        const result_new_sv = Math.floor(100000 + Math.random() * 900000);
+        await this.eventRandomDrawModel.create({
+          betId: res2.id,
+          isEnd: false,
+          value: result_new_sv,
+          timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
         });
       } else {
         // Check if the result is jack pot
@@ -798,9 +832,16 @@ export class EventService {
         ]);
         old_bet = res_old_bet;
         // Create new bet
-        new_bet = await this.betLogService.createSv({
+        const res2 = await this.betLogService.createSv({
           server: '24',
           timeEnd: this.addSeconds(now, 60),
+        });
+        const result_new_sv = Math.floor(100000 + Math.random() * 900000);
+        await this.eventRandomDrawModel.create({
+          betId: res2.id,
+          isEnd: false,
+          value: result_new_sv,
+          timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
         });
       }
 
@@ -1031,5 +1072,22 @@ export class EventService {
     this.socketGateway.server.emit('noti-bet', data);
     // save message
     await this.messageService.MessageCreate({ uid: '', content: data });
+  }
+
+  //TODO ———————————————[handle result data bet]———————————————
+  @OnEvent('result-data-bet')
+  async handleResultDataBet(data: ResultDataBet) {
+    try {
+      const target = await this.eventRandomDrawModel.findOne({
+        betId: data.betId,
+        isEnd: false,
+      });
+      if (!target) return 'No';
+      this.socketGateway.server.emit('result-data-bet-re', {
+        value: target.value,
+        betId: data.betId,
+      });
+      return target.value;
+    } catch (err) {}
   }
 }

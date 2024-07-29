@@ -11,9 +11,14 @@ import { UnitlService } from 'src/unitl/unitl.service';
 import { WebSocketModule } from 'src/socket/socket.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
 import { MessagesModule } from 'src/messeges/messeges.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { EventRandom, EventRandomSchema } from './schema/eventRandom';
 
 @Module({
   imports: [
+    MongooseModule.forFeature([
+      { name: EventRandom.name, schema: EventRandomSchema },
+    ]),
     ClientModule,
     BossModule,
     BetLogModule,
