@@ -450,7 +450,6 @@ export class UserService {
       const { pwd_h, ...res } = user.toObject();
       return res;
     });
-    console.log(new_data);
     return {
       data: new_data,
       status: true,
