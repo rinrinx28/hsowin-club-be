@@ -19,6 +19,9 @@ export class Session {
   @Prop()
   amount: number;
 
+  @Prop({ default: 0 })
+  recive: number;
+
   @Prop({ default: '0' })
   status: string;
 

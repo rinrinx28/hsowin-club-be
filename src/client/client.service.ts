@@ -93,6 +93,7 @@ export class ClientService {
         const old_session = await this.sessionService.findByID(service_id);
         await this.sessionService.updateById(old_session.id, {
           status: '2',
+          recive: +data?.gold_receive,
         });
         this.cronJobService.remove(old_session.id);
         this.logger.log(
@@ -104,10 +105,6 @@ export class ClientService {
             $inc: {
               gold: +data?.gold_receive,
             },
-          });
-          await this.sessionService.updateById(old_session.id, {
-            status: '2',
-            amount: +data?.gold_receive,
           });
         }
         return 'ok';
