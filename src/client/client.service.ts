@@ -105,6 +105,10 @@ export class ClientService {
               gold: +data?.gold_receive,
             },
           });
+          await this.sessionService.updateById(old_session.id, {
+            status: '2',
+            amount: +data?.gold_receive,
+          });
         }
         return 'ok';
       }
