@@ -574,9 +574,9 @@ export class EventService {
         }
       }
 
-      await this.handleMessageSystem(
-        `Boss Status: ${data.content} - Server: ${data?.server}`,
-      );
+      // await this.handleMessageSystem(
+      //   `Boss Status: ${data.content} - Server: ${data?.server}`,
+      // );
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
       this.socketGateway.server.emit('status-boss', {
         type: bet_data['type'],
