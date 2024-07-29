@@ -47,64 +47,66 @@ export class ClientService {
 
   async getTransaction(data: Transaction) {
     try {
-      const { player_name, type, player_id } = data;
-      let new_playerName = this.unitlService.hexToString(player_name);
-      // Let find session with PlayerName
-      const old_session = await this.sessionService.findByName(new_playerName);
-      if (!old_session)
-        throw new Error(
-          'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
+      const { player_name, type, player_id, service_id } = data;
+      console.log(data);
+      if (type === '0') {
+        let new_playerName = this.unitlService.hexToString(player_name);
+        // Let find session with PlayerName
+        const old_session =
+          await this.sessionService.findByName(new_playerName);
+        if (!old_session)
+          throw new Error(
+            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
+          );
+        if (old_session.type === '0') {
+          this.logger.log(
+            `Nap: ok|${player_id}|${old_session.id}|${old_session.type}`,
+          );
+          return `ok|${player_id}|${old_session.id}|${old_session.type}`;
+        } else {
+          this.logger.log(
+            `Rut: ok|${player_id}|${old_session.id}|${old_session.type}|${old_session.amount}`,
+          );
+          return `ok|${player_id}|${old_session.id}|${old_session.type}|${old_session.amount}`;
+        }
+      } else if (type === '1') {
+        const old_session = await this.sessionService.findByID(service_id);
+        await this.sessionService.updateById(old_session.id, {
+          status: '1',
+        });
+        //   Delete timeout transaction ...
+        this.cronJobService.remove(old_session.id);
+        this.logger.log(
+          `Transaction Cancel: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id}`,
         );
-      console.log(data, new_playerName);
-      switch (type) {
-        case '0':
-          if (old_session.type === '0') {
-            this.logger.log(
-              `Nap: ok|${player_id}|${old_session.id}|${old_session.type}`,
-            );
-            return `ok|${player_id}|${old_session.id}|${old_session.type}`;
-          } else {
-            this.logger.log(
-              `Rut: ok|${player_id}|${old_session.id}|${old_session.type}|${old_session.amount}`,
-            );
-            return `ok|${player_id}|${old_session.id}|${old_session.type}|${old_session.amount}`;
-          }
-        case '1':
-          await this.sessionService.updateById(old_session.id, {
-            status: '1',
-          });
-          //   Delete timeout transaction ...
-          this.cronJobService.remove(old_session.id);
-          this.logger.log(
-            `Transaction Cancel: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id}`,
-          );
 
-          //   Update value gold of User ...
-          if (old_session?.type === '1') {
-            await this.userService.update(old_session?.uid, {
-              $inc: {
-                gold: +old_session?.amount,
-              },
-            });
-          }
-          return 'ok';
-        default:
-          await this.sessionService.updateById(old_session.id, {
-            status: '2',
+        //   Update value gold of User ...
+        if (old_session?.type === '1') {
+          await this.userService.update(old_session?.uid, {
+            $inc: {
+              gold: +old_session?.amount,
+            },
           });
-          this.cronJobService.remove(old_session.id);
-          this.logger.log(
-            `Transaction Success: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id} - ${data?.gold_receive ?? data?.gold_trade}`,
-          );
-          //   Update value gold of User ...
-          if (old_session?.type === '0') {
-            await this.userService.update(old_session?.uid, {
-              $inc: {
-                gold: +data?.gold_receive,
-              },
-            });
-          }
-          return 'ok';
+        }
+        return 'ok';
+      } else {
+        const old_session = await this.sessionService.findByID(service_id);
+        await this.sessionService.updateById(old_session.id, {
+          status: '2',
+        });
+        this.cronJobService.remove(old_session.id);
+        this.logger.log(
+          `Transaction Success: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id} - ${data?.gold_receive ?? data?.gold_trade}`,
+        );
+        //   Update value gold of User ...
+        if (old_session?.type === '0') {
+          await this.userService.update(old_session?.uid, {
+            $inc: {
+              gold: +data?.gold_receive,
+            },
+          });
+        }
+        return 'ok';
       }
     } catch (err) {
       return err.message;
