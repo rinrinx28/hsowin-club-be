@@ -121,6 +121,7 @@ export class SessionService {
     }
     const result = await this.sessionModel.findByIdAndUpdate(id, data, {
       upsert: true,
+      new: true,
     });
     return result;
   }
