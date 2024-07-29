@@ -55,6 +55,7 @@ export class ClientService {
         throw new Error(
           'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
         );
+      console.log(data, new_playerName);
       switch (type) {
         case 0:
           if (old_session.type === '0') {
