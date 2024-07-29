@@ -858,6 +858,7 @@ export class EventService {
           value: result_new_sv,
           timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
         });
+        new_bet = res2.toObject();
       }
 
       const msg = this.handleMessageResult({
