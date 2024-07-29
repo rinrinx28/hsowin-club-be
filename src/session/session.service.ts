@@ -33,7 +33,6 @@ export class SessionService {
   async create(body: CreateSessionDto, user: PayLoad) {
     const { sub } = user;
     try {
-      console.log(body);
       // Limited Amount
       if (body.type === '0' && body.amount < 30)
         throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');

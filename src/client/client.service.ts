@@ -71,9 +71,12 @@ export class ClientService {
         }
       } else if (type === '1') {
         const old_session = await this.sessionService.findByID(service_id);
-        await this.sessionService.updateById(old_session.id, {
-          status: '1',
-        });
+        const res_session = await this.sessionService.updateById(
+          old_session.id,
+          {
+            status: '1',
+          },
+        );
         //   Delete timeout transaction ...
         this.cronJobService.remove(old_session.id);
         this.logger.log(
@@ -88,19 +91,25 @@ export class ClientService {
             },
           });
         }
+
+        this.socketGateway.server.emit('session-res', res_session.toObject());
         return 'ok';
       } else {
         const old_session = await this.sessionService.findByID(service_id);
-        await this.sessionService.updateById(old_session.id, {
-          status: '2',
-          recive: +(Number(data?.gold_receive) > 0
-            ? Number(data?.gold_receive)
-            : Number(data?.gold_trade)),
-        });
+        const res_session = await this.sessionService.updateById(
+          old_session.id,
+          {
+            status: '2',
+            recive: +(Number(data?.gold_receive) > 0
+              ? Number(data?.gold_receive)
+              : Number(data?.gold_trade)),
+          },
+        );
         this.cronJobService.remove(old_session.id);
         this.logger.log(
           `Transaction Success: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id} - ${data?.gold_receive ?? data?.gold_trade}`,
         );
+        this.socketGateway.server.emit('session-res', res_session.toObject());
         //   Update value gold of User ...
         if (old_session?.type === '0') {
           await this.userService.update(old_session?.uid, {
