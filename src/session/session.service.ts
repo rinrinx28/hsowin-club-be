@@ -38,8 +38,8 @@ export class SessionService {
       if (body.type === '0' && body.amount < 30)
         throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');
       if (
-        (body.type === '1' && body.amount <= 300) ||
-        (body.type === '1' && body.amount >= 100)
+        (body.type === '1' && body.amount > 300) ||
+        (body.type === '1' && body.amount < 100)
       )
         throw new Error(
           'Số thỏi vàng cần rút phải lớn 30 và nhỏ hon 300 thỏi vàng',
