@@ -435,9 +435,9 @@ export class EventService {
 
       // Get value now update
       let now = new Date();
-      let current = new Date(statusBoss?.updatedAt);
-      let hours = current.getHours();
-      let minutes = current.getMinutes();
+      // let current = new Date(statusBoss?.updatedAt);
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
       const result_target = await this.eventRandomDrawModel.findOne({
         betId: old_bet_sv?.id,
         isEnd: false,
@@ -453,9 +453,6 @@ export class EventService {
 
       // let return result to user
       if (data['type'] === 2) {
-        const current_now = new Date(statusBoss?.updatedAt);
-        let hours = current_now.getHours();
-        let minutes = current_now.getMinutes();
         if (old_bet_sv || old_bet_boss) {
           const update_old_boss = this.betLogService.update(old_bet_boss?.id, {
             server,
@@ -473,10 +470,22 @@ export class EventService {
             update_old_sv,
             update_old_boss,
           ]);
+          await this.eventRandomDrawModel.findOneAndUpdate(
+            {
+              betId: old_bet_sv?.id,
+              isEnd: false,
+            },
+            {
+              timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+            },
+            { upsert: true, new: true },
+          );
+
           bet_data['boss'] = res2;
           bet_data['sv'] = res1;
           bet_data['type'] = 'old';
-          bet_data['timeBoss'] = result_target?.timeBoss;
+          bet_data['timeBoss'] =
+            `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`;
         } else {
           // Create new Bet between Map Boss and Server
           const create_new_boss = this.betLogService.create({
