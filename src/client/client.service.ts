@@ -53,7 +53,7 @@ export class ClientService {
       const old_session = await this.sessionService.findByName(new_playerName);
       if (!old_session)
         throw new Error(
-          'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.club !',
+          'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
         );
       switch (type) {
         case 0:
