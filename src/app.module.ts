@@ -15,9 +15,9 @@ import { AuthModule } from './auth/auth.module';
 import { UnitlService } from './unitl/unitl.service';
 import { WebSocketModule } from './socket/socket.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { EventService } from './event/event.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CronjobModule } from './cronjob/cronjob.module';
+import { EventModule } from './event/event.module';
 
 @Module({
   imports: [
@@ -36,8 +36,9 @@ import { CronjobModule } from './cronjob/cronjob.module';
     AuthModule,
     WebSocketModule,
     CronjobModule,
+    EventModule,
   ],
   controllers: [],
-  providers: [AppService, UnitlService, EventService],
+  providers: [AppService, UnitlService],
 })
 export class AppModule {}
