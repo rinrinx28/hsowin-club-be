@@ -1094,11 +1094,13 @@ export class EventService {
   @OnEvent('result-data-bet')
   async handleResultDataBet(data: ResultDataBet) {
     try {
+      console.log('Get random');
       const target = await this.eventRandomDrawModel.findOne({
         betId: data.betId,
         isEnd: false,
       });
       if (!target) return 'No';
+      console.log('Get random', target);
       this.socketGateway.server.emit('result-data-bet-re', {
         value: target.value,
         betId: data.betId,
