@@ -93,7 +93,9 @@ export class ClientService {
         const old_session = await this.sessionService.findByID(service_id);
         await this.sessionService.updateById(old_session.id, {
           status: '2',
-          recive: +data?.gold_receive,
+          recive: +(Number(data?.gold_receive) > 0
+            ? Number(data?.gold_receive)
+            : Number(data?.gold_trade)),
         });
         this.cronJobService.remove(old_session.id);
         this.logger.log(
