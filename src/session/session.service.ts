@@ -235,9 +235,9 @@ export class SessionService {
     return true;
   }
 
-  async handleBankLogUser(page, limit, uid) {
+  async handleBankLogUser(page = 1, limit = 10, uid) {
     return await this.bankModel
-      .findOne({ uid })
+      .find({ uid })
       .sort({ updatedAt: -1 })
       .limit(limit)
       .skip((page - 1) * limit);
