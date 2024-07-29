@@ -44,7 +44,7 @@ export class SessionController {
       });
     }
     return await this.sessionService.updateById(data?.sessionId, {
-      status: '2',
+      status: '1',
     });
   }
 
