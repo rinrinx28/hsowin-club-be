@@ -14,5 +14,5 @@ export class DelUserBet {
 
 export class ResultDataBet {
   betId: string;
-  count: number;
+  counter: number;
 }

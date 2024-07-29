@@ -57,9 +57,7 @@ export class SocketGateway
 
   @SubscribeMessage('result-data-bet')
   async handleResultDataBet(@MessageBody() data: ResultDataBet) {
-    console.log(data);
-    if (data.count === 7) {
-      console.log(data);
+    if (data.counter === 7) {
       await this.eventEmitter.emitAsync('result-data-bet', data);
     }
   }
