@@ -32,7 +32,7 @@ export class CronjobService {
   handleRankDay() {
     this.eventEmitter.emit('rank-days', 'isrun');
   }
-  @Cron('0 0 0 * * *', {
+  @Cron('0 31 * * * *', {
     name: 'Reset Rank Clans',
   })
   handleRankClans() {

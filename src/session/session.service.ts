@@ -125,8 +125,10 @@ export class SessionService {
     return result;
   }
 
-  async findAllSesions() {
-    return await this.sessionModel.find();
+  async findAllSesions(user: any) {
+    return await this.sessionModel
+      .find({ uid: user?.sub })
+      .sort({ updatedAt: -1 });
   }
 
   async findSessionWithUser(page: number, limit: number, uid: string) {

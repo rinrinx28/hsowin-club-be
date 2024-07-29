@@ -56,8 +56,9 @@ export class SessionController {
   }
 
   @Get('/all')
-  async getAll() {
-    return await this.sessionService.findAllSesions();
+  async getAll(@Req() req: any) {
+    const user = req.user;
+    return await this.sessionService.findAllSesions(user);
   }
 
   @Get('/user')

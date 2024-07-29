@@ -921,8 +921,11 @@ export class EventService {
     try {
       const topUser = await this.userService.getTopUserBet();
       for (const user of topUser) {
-        console.log(user);
+        await this.userService.update(user.id, {
+          totalBet: 0,
+        });
       }
+      console.log(topUser);
     } catch (err) {
       // throw new CatchException(err);
     }
