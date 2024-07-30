@@ -40,6 +40,9 @@ export class User {
   @Prop({ default: false })
   isBan: boolean;
 
+  @Prop({ default: '' })
+  isReason: string;
+
   @Prop()
   server: string;
 

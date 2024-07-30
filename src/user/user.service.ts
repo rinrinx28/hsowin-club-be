@@ -468,4 +468,13 @@ export class UserService {
       data,
     };
   }
+
+  // async handleData() {
+  //   const users = await this.userModel.find();
+  //   for (const user of users) {
+  //     await this.userModel.findByIdAndUpdate(user.id, {
+  //       isReason: 'Nothing',
+  //     });
+  //   }
+  // }
 }

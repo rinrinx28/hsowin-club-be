@@ -132,4 +132,9 @@ export class UserController {
     const user = req.user;
     return await this.userService.handleUserBetLog(page, limit, user.sub);
   }
+
+  // @Get('/admin/add/data')
+  // async handleData() {
+  //   return await this.userService.handleData();
+  // }
 }
