@@ -124,7 +124,7 @@ export class EventService {
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
-          `Người chơi ${target.username} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
+          `Người chơi ${target.name} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
         );
       }
 
@@ -227,7 +227,7 @@ export class EventService {
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
-          `Người chơi ${target.username} đã lớn ${amount} gold khi cược ${
+          `Người chơi ${target.name} đã lớn ${amount} gold khi cược ${
             result === 'C'
               ? 'Chẵn'
               : result === 'CT'
@@ -457,7 +457,7 @@ export class EventService {
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
         await this.handleMessageSystem(
-          `Chúc mừng người chơi ${user.username} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
+          `Chúc mừng người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
         );
       }
       const msg = this.handleMessageResult({
