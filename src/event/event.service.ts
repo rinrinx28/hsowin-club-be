@@ -248,7 +248,7 @@ export class EventService {
           }`,
         );
       }
-      if ('TXCL'.indexOf(result) > -1) {
+      if ('CTCXLTLX'.indexOf(result) > -1) {
         this.socketGateway.server.emit('value-bet-user-re', {
           status: true,
           data: { result, amount, server, betId },
@@ -294,7 +294,7 @@ export class EventService {
       };
       for (const bet of target) {
         const { result, amount } = bet;
-        if ('TXCL'.indexOf(result) > -1) {
+        if ('CTCXLTLX'.indexOf(result) > -1) {
           let split_res = result.toLowerCase().split('');
           if (split_res.length > 1) {
             result_bet[split_res[0]] = amount / 2;
@@ -1164,12 +1164,12 @@ export class EventService {
     for (const betUser of old_bet_user) {
       total_bet_user += betUser.amount;
       if (!['1', '2', '3'].includes(betUser.server)) {
-        if ('TXCL'.indexOf(betUser.result) <= -1) {
+        if ('CTCXLTLX'.indexOf(betUser.result) <= -1) {
           result_number.push(betUser);
         }
       }
     }
-    if ('TXCL'.indexOf(result) <= -1 && !['1', '2', '3'].includes(server)) {
+    if ('CTCXLTLX'.indexOf(result) <= -1 && !['1', '2', '3'].includes(server)) {
       if (result_number.length + 1 > 3)
         throw new Error(`Tối đa cho cược dự đoán số là 3 lần`);
       if (
