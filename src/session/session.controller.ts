@@ -25,13 +25,13 @@ export class SessionController {
   ) {}
 
   @HttpCode(HttpStatus.OK)
-  @Post('/create/v1')
+  @Post('/create')
   create(@Body() body: CreateSessionDto, @Req() req: any) {
     const user = req.user;
     return this.sessionService.create(body, user);
   }
 
-  @Post('/cancel/v1')
+  @Post('/cancel')
   async cancel(@Body() data: CancelSession) {
     const target = await this.sessionService.findByID(data?.sessionId);
     if (!target)
