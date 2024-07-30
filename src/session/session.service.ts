@@ -150,7 +150,7 @@ export class SessionService {
       const eventOrderBank =
         await this.userService.handleGetEventModel('e-order-bank');
       let now = moment();
-      let exp = now.add(15, 'minute');
+      let exp = now.add(15, 'minutes');
       const sign = {
         orderCode: eventOrderBank.value,
         amount: amount,
