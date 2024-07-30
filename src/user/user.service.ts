@@ -428,9 +428,9 @@ export class UserService {
   }
 
   //TODO ———————————————[Non User Call]———————————————
-  async handleUserBetLogs(limit: number) {
+  async handleUserBetLogs(limit: number, server: any) {
     const data = await this.userBetModel
-      .find()
+      .find({ server: server })
       .sort({ updatedAt: -1 })
       .limit(limit)
       .exec();

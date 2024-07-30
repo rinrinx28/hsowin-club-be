@@ -16,3 +16,8 @@ export class ResultDataBet {
   betId: string;
   counter: number;
 }
+
+export class ValueBetUserSv {
+  betId: string;
+  server: string;
+}

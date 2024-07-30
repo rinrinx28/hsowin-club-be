@@ -118,8 +118,11 @@ export class UserController {
   //TODO ———————————————[Bet Log User]———————————————
 
   @Get('/log-bet/all')
-  async handleUserBetLogs(@Query('limit') limit: any) {
-    return await this.userService.handleUserBetLogs(limit);
+  async handleUserBetLogs(
+    @Query('limit') limit: any,
+    @Query('server') server: any,
+  ) {
+    return await this.userService.handleUserBetLogs(limit, server);
   }
 
   @Get('/bets/log')

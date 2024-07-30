@@ -81,13 +81,27 @@ export class SessionController {
     return await this.sessionService.handleUpdateBank(orderId, '2');
   }
 
-  @Get('/banking/log')
-  async handleBankLog(
+  @Get('/banking/log/nap')
+  async handleBankLogNap(
     @Query('page') page: number,
     @Query('limit') limit: number,
     @Req() req: any,
   ) {
     const user = req.user;
     return await this.sessionService.handleBankLogUser(page, limit, user.sub);
+  }
+
+  @Get('/banking/log/rut')
+  async handleBankLogRut(
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: any,
+  ) {
+    const user = req.user;
+    return await this.sessionService.handleBankLogUserRut(
+      page,
+      limit,
+      user.sub,
+    );
   }
 }

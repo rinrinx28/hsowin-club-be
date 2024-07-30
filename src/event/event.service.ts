@@ -9,6 +9,7 @@ import {
   CreateUserBet,
   DelUserBet,
   ResultDataBet,
+  ValueBetUserSv,
 } from 'src/socket/dto/socket.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { UnitlService } from 'src/unitl/unitl.service';
@@ -56,6 +57,9 @@ export class EventService {
   async handleBetUser(data: CreateUserBet) {
     const { uid, amount, betId, result, server } = data;
     try {
+      // Time lock
+      let lock = moment().hours();
+      if (lock >= 20) throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
       const bet_session = await this.betLogService.findById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -114,6 +118,11 @@ export class EventService {
           `Người chơi ${target.username} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
         );
       }
+
+      this.socketGateway.server.emit('value-bet-user-re', {
+        status: true,
+        data: { result, amount, server, betId },
+      });
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -130,6 +139,10 @@ export class EventService {
   async handleBetSvAuto(data: CreateUserBet) {
     const { amount, betId, result, server, uid } = data;
     try {
+      // Time lock
+      let lock = moment().hours();
+      if (lock >= 20 && server !== '24')
+        throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -215,6 +228,12 @@ export class EventService {
           }`,
         );
       }
+      if ('TXCL'.indexOf(result) > -1) {
+        this.socketGateway.server.emit('value-bet-user-re', {
+          status: true,
+          data: { result, amount, server, betId },
+        });
+      }
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -224,6 +243,55 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       // throw new CatchException(err);
+    }
+  }
+
+  @OnEvent('value-bet-users')
+  async valueBetUserSv(data: ValueBetUserSv) {
+    try {
+      const target = await this.userService.findBetWithBetId(
+        data?.betId,
+        data?.server,
+      );
+      let result_bet = {
+        t: 0,
+        x: 0,
+        c: 0,
+        l: 0,
+        0: 0,
+        1: 0,
+      };
+      for (const bet of target) {
+        const { result, amount } = bet;
+        if ('TXCL'.indexOf(result) > -1) {
+          let split_res = result.toLowerCase().split('');
+          if (split_res.length > 1) {
+            result_bet[split_res[0]] = amount / 2;
+            result_bet[split_res[1]] = amount / 2;
+          } else {
+            result_bet[split_res[0]] = amount;
+          }
+        }
+        if (
+          ['1', '2', '3'].includes(data?.server) &&
+          '01'.indexOf(result) > -1
+        ) {
+          result_bet[result] = amount;
+        }
+      }
+      const msg = this.handleMessageResult({
+        message: 'Get Value User Success',
+        status: true,
+        data: { result: result_bet, data: data?.server },
+      });
+      this.socketGateway.server.emit('value-bet-users-re', msg);
+    } catch (err) {
+      const msg = this.handleMessageResult({
+        message: err.message,
+        status: false,
+        data: null,
+      });
+      this.socketGateway.server.emit('value-bet-users-re', msg);
     }
   }
 
@@ -254,13 +322,14 @@ export class EventService {
           gold: +amount,
         },
       });
+      const { pwd_h, ...res } = user.toObject();
       // Delete UserBet
       await this.userService.deletOneUserBetWithID(userBetId);
       const msg = this.handleMessageResult({
         message: 'Đã hủy cược thành công',
         status: true,
         data: {
-          user,
+          user: res,
           userBetId,
         },
       });
@@ -270,6 +339,7 @@ export class EventService {
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
+        data: data,
       });
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
       // throw new CatchException(err);
@@ -302,13 +372,14 @@ export class EventService {
           gold: +amount,
         },
       });
+      const { pwd_h, ...res } = user.toObject();
       // Delete UserBet
       await this.userService.deletOneUserBetWithID(userBetId);
       const msg = this.handleMessageResult({
         message: 'Đã hủy cược thành công',
         status: true,
         data: {
-          user,
+          user: res,
           userBetId,
         },
       });
@@ -318,6 +389,7 @@ export class EventService {
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
+        data: data,
       });
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
       // throw new CatchException(err);
@@ -1031,7 +1103,7 @@ export class EventService {
     let total_amount = ['24', server].includes(target?.server)
       ? ConfigBet.total
       : ConfigBetDiff.total;
-    if (target.gold - amount <= 0)
+    if (target.gold - amount < 0)
       throw new Error('Tài khoản của bản không khả dụng');
 
     // Let query total amount of sesson Bet
@@ -1042,9 +1114,28 @@ export class EventService {
       server: server,
     });
     let total_bet_user = 0;
+    let result_number = [];
     for (const betUser of old_bet_user) {
       total_bet_user += betUser.amount;
+      if (!['1', '2', '3'].includes(betUser.server)) {
+        if ('TXCL'.indexOf(betUser.result) <= -1) {
+          result_number.push(betUser);
+        }
+      }
     }
+    if ('TXCL'.indexOf(result) <= -1 && !['1', '2', '3'].includes(server)) {
+      if (result_number.length + 1 > 3)
+        throw new Error(`Tối đa cho cược dự đoán số là 3 lần`);
+      if (
+        result_number.reduce((a: any, b: any) => a + (b?.amount ?? 0), 0) +
+          amount >
+        200
+      )
+        throw new Error(
+          'Tổng cược cho dự đoán số không được vượt quá 200 thỏi vàng',
+        );
+    }
+
     if (!this.isValidBet(result, old_bet_user))
       throw new Error('Bạn không được phép đặt 2 cầu');
 

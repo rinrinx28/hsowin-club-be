@@ -16,6 +16,7 @@ import * as moment from 'moment';
 import * as crypto from 'crypto';
 import { Event } from 'src/event/schema/event.schema';
 import { CatchException } from 'src/common/common.exception';
+import { UserWithDraw } from 'src/user/schema/userWithdraw';
 
 @Injectable()
 export class SessionService {
@@ -27,6 +28,8 @@ export class SessionService {
     private readonly bankModel: Model<Bank>,
     @InjectModel(Event.name)
     private readonly eventModel: Model<Event>,
+    @InjectModel(UserWithDraw.name)
+    private readonly userWithDrawModel: Model<UserWithDraw>,
     private readonly userService: UserService,
     private readonly cronJobService: CronjobService,
   ) {}
@@ -240,6 +243,14 @@ export class SessionService {
 
   async handleBankLogUser(page = 1, limit = 10, uid) {
     return await this.bankModel
+      .find({ uid })
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
+  }
+
+  async handleBankLogUserRut(page = 1, limit = 10, uid) {
+    return await this.userWithDrawModel
       .find({ uid })
       .sort({ updatedAt: -1 })
       .limit(limit)
