@@ -78,7 +78,7 @@ export class SessionController {
 
   @Post('/banking/update')
   async handleBankUpdate(@Query('orderId') orderId: any) {
-    return await this.sessionService.handleUpdateBank(orderId, '2');
+    return await this.sessionService.handleUpdateBank(orderId, '1');
   }
 
   @Get('/banking/log')

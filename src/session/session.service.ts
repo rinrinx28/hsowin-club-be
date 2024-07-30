@@ -227,11 +227,14 @@ export class SessionService {
       { new: true, upsert: true },
     );
 
-    await this.userService.update(bankInfo.uid, {
-      $inc: {
-        gold: +bankInfo.amount * eventExchangGold.value,
-      },
-    });
+    if (status === '1') {
+      await this.userService.update(bankInfo.uid, {
+        $inc: {
+          gold: +bankInfo.amount * eventExchangGold.value,
+        },
+      });
+    }
+
     return true;
   }
 
