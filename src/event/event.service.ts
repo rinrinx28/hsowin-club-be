@@ -764,8 +764,8 @@ export class EventService {
       let newBetUser = [];
       for (const bet of all_bet) {
         if (result.includes(bet.result)) {
-          if ('TXCL'.indexOf(bet.result) > -1) {
-            let split_res = result.toLowerCase().split('');
+          if ('CTCXLTLX'.indexOf(bet.result) > -1) {
+            let split_res = bet.result.toLowerCase().split('');
             if (split_res.length > 1) {
               bet.receive = bet.amount * e_xien.value;
             } else {
