@@ -55,6 +55,15 @@ export class EventService {
 
   @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
+    const parameter = `${data.server}-bet`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     const { uid, amount, betId, result, server } = data;
     try {
       // Time lock
@@ -132,11 +141,22 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       // throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
   @OnEvent('bet-user-ce-sv')
   async handleBetSvAuto(data: CreateUserBet) {
+    const parameter = `${data.server}-bet`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     const { amount, betId, result, server, uid } = data;
     try {
       // Time lock
@@ -243,11 +263,22 @@ export class EventService {
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       // throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
   @OnEvent('value-bet-users')
   async valueBetUserSv(data: ValueBetUserSv) {
+    const parameter = `${data.server}-value-bet`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const target = await this.userService.findBetWithBetId(
         data?.betId,
@@ -292,6 +323,8 @@ export class EventService {
         data: null,
       });
       this.socketGateway.server.emit('value-bet-users-re', msg);
+    } finally {
+      release();
     }
   }
 
