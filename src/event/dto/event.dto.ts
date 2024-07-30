@@ -2,6 +2,7 @@ export class MessageResult {
   message: string;
   status: boolean;
   data?: any;
+  server?: any;
 }
 
 export class ResultBet {

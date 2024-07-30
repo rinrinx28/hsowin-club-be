@@ -120,6 +120,7 @@ export class EventService {
         message: 'Tham gia cược thành công',
         status: true,
         data: [betCreate],
+        server: data?.server,
       });
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       if (amount >= ConfigNoti.min) {
@@ -223,6 +224,7 @@ export class EventService {
         message: 'Tham gia cược thành công',
         status: true,
         data: [betCreate],
+        server: server,
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       if (amount >= ConfigNoti.min) {
@@ -365,6 +367,7 @@ export class EventService {
           user: res,
           userBetId,
         },
+        server: targetBetId.server,
       });
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
       return msg;
@@ -415,6 +418,7 @@ export class EventService {
           user: res,
           userBetId,
         },
+        server: targetBetId.server,
       });
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
       return msg;
@@ -464,6 +468,7 @@ export class EventService {
         message: `result-bet-user-${server}`,
         status: true,
         data: newBetUser,
+        server: server,
       });
       this.socketGateway.server.emit('re-bet-user-res-boss', msg);
       return msg;
@@ -819,6 +824,7 @@ export class EventService {
         message: `result-bet-boss-user-${data?.server}`,
         status: true,
         data: newBetUser,
+        server: data?.server,
       });
       let resultBet = result?.split('-');
       let new_resultBet =
