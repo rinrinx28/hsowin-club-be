@@ -67,8 +67,8 @@ export class EventService {
     const { uid, amount, betId, result, server } = data;
     try {
       // Time lock
-      let lock = moment().hours();
-      if (lock >= 20) throw new Error('Thời gian hoạt động đã kết thúc');
+      // let lock = moment().hours();
+      // if (lock >= 20) throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
       const bet_session = await this.betLogService.findById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -160,9 +160,9 @@ export class EventService {
     const { amount, betId, result, server, uid } = data;
     try {
       // Time lock
-      let lock = moment().hours();
-      if (lock >= 20 && server !== '24')
-        throw new Error('Thời gian hoạt động đã kết thúc');
+      // let lock = moment().hours();
+      // if (lock >= 20 && server !== '24')
+      //   throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -172,7 +172,7 @@ export class EventService {
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
-      if (timeEnd - current_now < 10)
+      if (timeEnd - current_now < 5)
         throw new Error('Ván cược đã đóng thời gian cược');
 
       const target = await this.queryRequestUserBet(
@@ -751,6 +751,10 @@ export class EventService {
       const event_bet =
         await this.userService.handleGetEventModel('e-ti-le-bet');
       let precent = event_bet?.status ? event_bet?.value : 1.9;
+      const e_xien =
+        await this.userService.handleGetEventModel('e-percent-xien');
+      const e_result =
+        await this.userService.handleGetEventModel('e-percent-result');
 
       // Find all bet of sesson
       const all_bet = await this.userService.findBetWithBetId(
@@ -760,7 +764,16 @@ export class EventService {
       let newBetUser = [];
       for (const bet of all_bet) {
         if (result.includes(bet.result)) {
-          bet.receive = bet.amount * precent;
+          if ('TXCL'.indexOf(bet.result) > -1) {
+            let split_res = result.toLowerCase().split('');
+            if (split_res.length > 1) {
+              bet.receive = bet.amount * e_xien.value;
+            } else {
+              bet.receive = bet.amount * precent;
+            }
+          } else {
+            bet.receive = bet.amount * e_result.value;
+          }
         }
         await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
           resultBet: `${result}`,
@@ -1137,7 +1150,7 @@ export class EventService {
       ? ConfigBet.total
       : ConfigBetDiff.total;
     if (target.gold - amount < 0)
-      throw new Error('Tài khoản của bản không khả dụng');
+      throw new Error('Tài khoản của bạn không đủ số dư');
 
     // Let query total amount of sesson Bet
     const old_bet_user = await this.userService.findOneUserBet({
@@ -1174,7 +1187,9 @@ export class EventService {
 
     // console.log(total_bet_user, min_amount, max_amount, amount);
     if (total_bet_user + amount > total_amount)
-      throw new Error('Đã vượt quá giới hạn số lượng cược cho phép');
+      throw new Error(
+        `Tổng giá trị cược cho phép ở Server ${server} là ${total_amount} thỏi vàng`,
+      );
 
     // Check min limited bet amount
     if (amount < min_amount)

@@ -5,7 +5,7 @@ export const ConfigBet = {
 };
 
 export const ConfigBetDiff = {
-  min: 30,
+  min: 5,
   max: 2 * 1e3,
   total: 3 * 1e3,
 };
