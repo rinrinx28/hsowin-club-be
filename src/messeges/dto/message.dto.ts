@@ -3,4 +3,5 @@ export class CreateMessage {
   content: string;
   server: string;
   meta?: string;
+  username?: string;
 }

@@ -21,3 +21,9 @@ export class ValueBetUserSv {
   betId: string;
   server: string;
 }
+
+export class MessagesChat {
+  token: string;
+  content: string;
+  server: string;
+}

@@ -8,6 +8,7 @@ import { SessionService } from 'src/session/session.service';
 import {
   CreateUserBet,
   DelUserBet,
+  MessagesChat,
   ResultDataBet,
   ValueBetUserSv,
 } from 'src/socket/dto/socket.dto';
@@ -30,6 +31,8 @@ import { CatchException } from 'src/common/common.exception';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { EventRandom } from './schema/eventRandom';
+import { JwtService } from '@nestjs/jwt';
+import { jwtConstants } from 'src/auth/constants';
 
 @Injectable()
 export class EventService {
@@ -46,6 +49,7 @@ export class EventService {
     private eventEmitter: EventEmitter2,
     @InjectModel(EventRandom.name)
     private readonly eventRandomDrawModel: Model<EventRandom>,
+    private jwtService: JwtService,
   ) {}
 
   private readonly mutexMap = new Map<string, Mutex>();
@@ -1299,6 +1303,40 @@ export class EventService {
       });
       return target.value;
     } catch (err) {}
+  }
+
+  //TODO ———————————————[Handle Message Chat User]———————————————
+  @OnEvent('message-user')
+  async handleMessageUser(data: MessagesChat) {
+    const parameter = `message-chat`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      const payload = await this.jwtService.verifyAsync(data.token, {
+        secret: jwtConstants.secret,
+      });
+      const user = await this.userService.findById(payload?.sub);
+      const msg = await this.messageService.MessageCreate({
+        uid: user?.id,
+        content: data.content,
+        server: data.server,
+        username: user?.name ?? user?.username,
+      });
+      this.socketGateway.server.emit('message-user-re', { status: true, msg });
+    } catch (err) {
+      this.socketGateway.server.emit('message-user-re', {
+        status: false,
+        msg: err.message,
+      });
+    } finally {
+      release();
+    }
   }
 }
 

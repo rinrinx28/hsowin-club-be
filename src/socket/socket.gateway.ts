@@ -13,6 +13,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CreateUserBet,
   DelUserBet,
+  MessagesChat,
   ResultDataBet,
   ValueBetUserSv,
 } from './dto/socket.dto';
@@ -72,6 +73,11 @@ export class SocketGateway
     if (data.counter === 7) {
       await this.eventEmitter.emitAsync('result-data-bet', data);
     }
+  }
+
+  @SubscribeMessage('message-user')
+  async handleMessageUser(@MessageBody() data: MessagesChat) {
+    await this.eventEmitter.emitAsync('message-user', data);
   }
 
   afterInit(server: Server) {
