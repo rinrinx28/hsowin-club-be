@@ -25,10 +25,17 @@ export class SessionController {
   ) {}
 
   @HttpCode(HttpStatus.OK)
+  @Post('/admin/create')
+  adminCreate(@Body() body: CreateSessionDto, @Req() req: any) {
+    const user = req.user;
+    return this.sessionService.create(body, user);
+  }
+
+  @HttpCode(HttpStatus.OK)
   @Post('/create')
   create(@Body() body: CreateSessionDto, @Req() req: any) {
     const user = req.user;
-    return this.sessionService.create(body, user);
+    return this.sessionService.create({ ...body, type: '0' }, user);
   }
 
   @Post('/cancel')
