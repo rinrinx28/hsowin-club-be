@@ -1273,7 +1273,11 @@ export class EventService {
 
   //TODO ———————————————[Handle Message Event]———————————————
   async handleMessageSystem(data: string, server: any) {
-    this.socketGateway.server.emit('noti-bet', data);
+    this.socketGateway.server.emit('noti-bet', {
+      uid: '',
+      content: data,
+      server,
+    });
     // save message
     await this.messageService.MessageCreate({ uid: '', content: data, server });
   }
