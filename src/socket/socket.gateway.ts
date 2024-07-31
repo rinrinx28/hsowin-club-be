@@ -27,7 +27,7 @@ import {
     ],
     credentials: true,
   },
-  transports: ['websocket', 'polling'],
+  transports: ['websocket'],
 })
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
