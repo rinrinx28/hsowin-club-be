@@ -25,6 +25,7 @@ import {
       'https://hsowin.vip',
       'https://www.hsowin.vip',
     ],
+    credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
