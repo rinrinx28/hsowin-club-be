@@ -24,12 +24,12 @@ export class SessionController {
     private readonly userService: UserService,
   ) {}
 
-  @HttpCode(HttpStatus.OK)
-  @Post('/admin/create')
-  adminCreate(@Body() body: CreateSessionDto, @Req() req: any) {
-    const user = req.user;
-    return this.sessionService.create(body, user);
-  }
+  // @HttpCode(HttpStatus.OK)
+  // @Post('/admin/create')
+  // adminCreate(@Body() body: CreateSessionDto, @Req() req: any) {
+  //   const user = req.user;
+  //   return this.sessionService.create(body, user);
+  // }
 
   @HttpCode(HttpStatus.OK)
   @Post('/create')
@@ -37,7 +37,7 @@ export class SessionController {
     const user = req.user;
     if (user.sub !== body.uid)
       throw new BadGatewayException('Lỗi UID Người Chơi không khớp');
-    return this.sessionService.create({ ...body, type: '0' }, user);
+    return this.sessionService.create({ ...body }, user);
   }
 
   @Post('/cancel')

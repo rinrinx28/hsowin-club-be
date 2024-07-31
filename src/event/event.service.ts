@@ -1210,7 +1210,7 @@ export class EventService {
 
     // Check min limited bet amount
     if (amount < min_amount)
-      throw new Error(`Số lượng cược nhỏ nhất là ${ConfigBet.min} gold`);
+      throw new Error(`Số lượng cược nhỏ nhất là ${min_amount} gold`);
 
     // Check max limited bet amount
     if (amount > max_amount)

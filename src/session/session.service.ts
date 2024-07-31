@@ -36,6 +36,18 @@ export class SessionService {
   async create(body: CreateSessionDto, user: PayLoad) {
     const { sub } = user;
     try {
+      const e_auto_rut =
+        await this.userService.handleGetEventModel('e-auto-rut-vang');
+      const e_auto_nap =
+        await this.userService.handleGetEventModel('e-auto-nap-vang');
+      if (body.type === '0' && !e_auto_nap.status)
+        throw new Error(
+          'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
+        );
+      if (body.type === '1' && !e_auto_rut.status)
+        throw new Error(
+          'Hệ thống rút tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
+        );
       // Limited Amount
       if (body.type === '0' && body.amount < 30)
         throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');
