@@ -16,11 +16,13 @@ export class AuthService {
     private readonly autTokenhModel: Model<AuthToken>,
   ) {}
 
-  async signIn(username: string, pass: string) {
+  async signIn(username: string, pass: string, req: any) {
+    console.log(req);
     const user = await this.userService.findOne(username);
     if (!user || user.pwd_h !== pass) {
       throw new UnauthorizedException('Username hoặc password không đúng');
     }
+    // await this.userService.handleUserUpdateIp()
     const payload = { sub: user.id, username: user.username };
     const userObj = user.toObject(); // Convert Mongoose document to plain object
     const { pwd_h, ...res } = userObj;
@@ -33,13 +35,15 @@ export class AuthService {
     };
   }
 
-  async signUp(body: CreateAuthDto) {
+  async signUp(body: CreateAuthDto, req: any) {
+    console.log(req);
     const result = await this.userService.create(body);
     delete result.pwd_h;
     return result;
   }
 
-  async relogin(token: string) {
+  async relogin(token: string, req: any) {
+    console.log(req);
     try {
       const user = await this.userService.findById(token?.sub);
       const new_date = user.toObject();

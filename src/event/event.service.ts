@@ -126,7 +126,7 @@ export class EventService {
       this.socketGateway.server.emit('re-bet-user-ce-boss', msg);
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
-          `Người chơi ${target.name} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
+          `Người chơi ${target.name} đang chơi lớn ${amount} thỏi vàng vào núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
           data?.server,
         );
       }
@@ -232,7 +232,7 @@ export class EventService {
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
-          `Người chơi ${target.name} đã lớn ${amount} gold khi cược ${
+          `Người chơi ${target.name} đang chơi lớn ${amount} thỏi vàng vào ${
             result === 'C'
               ? 'Chẵn'
               : result === 'CT'

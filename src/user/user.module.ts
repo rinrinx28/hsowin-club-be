@@ -7,6 +7,7 @@ import { UserBet, UserBetSchema } from './schema/userBet.schema';
 import { ClansSchema, Clans } from './schema/clans.schema';
 import { Event, EventSchema } from 'src/event/schema/event.schema';
 import { UserWithDraw, UserWithDrawSchema } from './schema/userWithdraw';
+import { UserIp, UserIpSchema } from './schema/userIp.schema';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserWithDraw, UserWithDrawSchema } from './schema/userWithdraw';
       { name: Clans.name, schema: ClansSchema },
       { name: Event.name, schema: EventSchema },
       { name: UserWithDraw.name, schema: UserWithDrawSchema },
+      { name: UserIp.name, schema: UserIpSchema },
     ]),
   ],
   controllers: [UserController],

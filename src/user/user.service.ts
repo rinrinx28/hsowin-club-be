@@ -24,6 +24,7 @@ import { Event } from 'src/event/schema/event.schema';
 import { CreateEvent } from 'src/event/dto/event.dto';
 import { ConfigExchange } from 'src/config/config';
 import { UserWithDraw } from './schema/userWithdraw';
+import { UserIp } from './schema/userIp.schema';
 
 @Injectable()
 export class UserService {
@@ -38,6 +39,8 @@ export class UserService {
     private readonly eventModel: Model<Event>,
     @InjectModel(UserWithDraw.name)
     private readonly userWithDrawModel: Model<UserWithDraw>,
+    @InjectModel(UserIp.name)
+    private readonly userIpModel: Model<UserIp>,
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
@@ -477,4 +480,27 @@ export class UserService {
   //     });
   //   }
   // }
+
+  //TODO ———————————————[Handle IP USer]———————————————
+  async handleAddIp(uid: any, ip_address: any) {
+    const targetIp = await this.userIpModel.findOne({ ip_address });
+    if (!targetIp) {
+      return await this.userIpModel.create({ ip_address, countAccount: [uid] });
+    }
+    return await this.userIpModel.findOneAndUpdate(
+      { ip_address },
+      {
+        ip_address,
+        countAccount: [...targetIp.countAccount.filter((i) => i !== uid), uid],
+      },
+    );
+  }
+
+  async handleUserUpdateIp(ip_address: any, uid: any) {
+    return await this.userModel.findByIdAndUpdate(
+      uid,
+      { ip_address },
+      { new: true, upsert: true },
+    );
+  }
 }

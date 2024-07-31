@@ -40,6 +40,12 @@ export class SessionService {
         await this.userService.handleGetEventModel('e-auto-rut-vang');
       const e_auto_nap =
         await this.userService.handleGetEventModel('e-auto-nap-vang');
+
+      const target = await this.userService.findOne(user.username);
+      if (target.totalBet < 40 && body.type === '1')
+        throw new Error(
+          `Xin lỗi, ngày hôm nay tổng giá trị bạn chơi chưa đạt đủ trên 40 Thỏi vàng, mời bạn tiếp tục chơi để nâng điểm, chúc bạn may mắn`,
+        );
       if (body.type === '0' && !e_auto_nap.status)
         throw new Error(
           'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
@@ -61,7 +67,6 @@ export class SessionService {
 
       // Let minus gold of user
       if (body.type === '1') {
-        const target = await this.userService.findOne(user.username);
         if (target?.gold - body.amount <= 0)
           throw new Error(
             'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',

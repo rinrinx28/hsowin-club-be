@@ -19,8 +19,8 @@ export class AuthController {
 
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(signInDto.username, signInDto.password);
+  signIn(@Body() signInDto: Record<string, any>, @Req() req: any) {
+    return this.authService.signIn(signInDto.username, signInDto.password, req);
   }
 
   @HttpCode(HttpStatus.OK)
@@ -28,12 +28,12 @@ export class AuthController {
   @Get('relogin')
   reSignIn(@Req() req: any) {
     const user = req.user;
-    return this.authService.relogin(user);
+    return this.authService.relogin(user, req);
   }
 
   @HttpCode(HttpStatus.OK)
   @Post('resgiter')
-  async signUp(@Body() signUpDto: CreateAuthDto) {
-    return await this.authService.signUp(signUpDto);
+  async signUp(@Body() signUpDto: CreateAuthDto, @Req() req: any) {
+    return await this.authService.signUp(signUpDto, req);
   }
 }

@@ -46,6 +46,9 @@ export class User {
   @Prop()
   server: string;
 
+  @Prop({ default: '' })
+  ip_address: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
