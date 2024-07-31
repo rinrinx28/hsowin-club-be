@@ -35,6 +35,8 @@ export class SessionController {
   @Post('/create')
   create(@Body() body: CreateSessionDto, @Req() req: any) {
     const user = req.user;
+    if (user.sub !== body.uid)
+      throw new BadGatewayException('Lỗi UID Người Chơi không khớp');
     return this.sessionService.create({ ...body, type: '0' }, user);
   }
 

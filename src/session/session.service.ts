@@ -67,7 +67,7 @@ export class SessionService {
       const result = await this.sessionModel.create({
         ...body,
         status: '0',
-        uid: sub,
+        uid: body.uid,
       });
       // Let make auto cancel with timeout 600s = 10p
       const timeOutId = setTimeout(async () => {
