@@ -1147,14 +1147,25 @@ export class EventService {
     const target = await this.userService.findById(uid);
     if (!target) throw new Error('Người chơi không tồn tại');
 
+    //TODO ———————————————[Config Event BET]———————————————
+    const e_min = await this.userService.handleGetEventModel('e-min-bet');
+    const e_max_bet_main =
+      await this.userService.handleGetEventModel('e-max-bet-main');
+    const e_total_bet_main =
+      await this.userService.handleGetEventModel('e-total-bet-main');
+    const e_max_bet_server =
+      await this.userService.handleGetEventModel('e-max-bet-server');
+    const e_total_bet_server =
+      await this.userService.handleGetEventModel('e-total-bet-server');
+
     // Check Sv Default of user ...
-    let min_amount = ConfigBet.min;
+    let min_amount = e_min.value;
     let max_amount = ['24', server].includes(target?.server)
-      ? ConfigBet.max
-      : ConfigBetDiff.max;
+      ? e_max_bet_main.value
+      : e_max_bet_server.value;
     let total_amount = ['24', server].includes(target?.server)
-      ? ConfigBet.total
-      : ConfigBetDiff.total;
+      ? e_total_bet_main.value
+      : e_total_bet_server.value;
     if (target.gold - amount < 0)
       throw new Error('Tài khoản của bạn không đủ số dư');
 
