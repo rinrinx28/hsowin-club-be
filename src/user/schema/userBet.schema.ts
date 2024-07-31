@@ -31,6 +31,9 @@ export class UserBet {
   @Prop({ default: false })
   isEnd: boolean;
 
+  @Prop()
+  name: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

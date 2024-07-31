@@ -16,6 +16,12 @@ export class Messeges {
   @Prop()
   username?: string;
 
+  @Prop()
+  server: string;
+
+  @Prop({ default: '{}' })
+  meta: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -108,6 +108,7 @@ export class EventService {
         result,
         server,
         uid,
+        name: target.name,
       });
 
       // Let update sendIn The bet
@@ -126,6 +127,7 @@ export class EventService {
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
           `Người chơi ${target.name} đang chơi lớn cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'} ${amount} gold`,
+          data?.server,
         );
       }
 
@@ -203,6 +205,7 @@ export class EventService {
         result,
         server,
         uid,
+        name: target.name,
       });
 
       // Let update sendIn The bet
@@ -248,6 +251,7 @@ export class EventService {
                             ? 'Xĩu'
                             : result
           }`,
+          server,
         );
       }
       if ('CTCXLTLX'.indexOf(result) > -1) {
@@ -462,6 +466,7 @@ export class EventService {
         const user = await this.userService.findById(bet.uid);
         await this.handleMessageSystem(
           `Chúc mừng người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
+          server,
         );
       }
       const msg = this.handleMessageResult({
@@ -692,10 +697,6 @@ export class EventService {
           bet_data['type'] = 'old';
         }
       }
-
-      // await this.handleMessageSystem(
-      //   `Boss Status: ${data.content} - Server: ${data?.server}`,
-      // );
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
       this.socketGateway.server.emit('status-boss', {
         type: bet_data['type'],
@@ -818,6 +819,7 @@ export class EventService {
                             ? 'Xĩu'
                             : bet.result
           }`,
+          data?.server,
         );
       }
       const msg = this.handleMessageResult({
@@ -835,6 +837,7 @@ export class EventService {
       this.socketGateway.server.emit('re-bet-user-res-sv', msg);
       this.handleMessageSystem(
         `Server ${data?.server.replace('-mini', ' Sao')}: Chúc mừng người chơi đã chọn ${new_resultBet_concat}`,
+        data?.server,
       );
       return msg;
     } catch (err) {
@@ -1079,6 +1082,7 @@ export class EventService {
         });
         await this.handleMessageSystem(
           `Chúc mừng người chơi có ID: ${this.shortenString(user.uid, 3, 3)} đã trúng jackpot ${user.prize} gold`,
+          server,
         );
       }
 
@@ -1118,13 +1122,23 @@ export class EventService {
   @OnEvent('rank-days')
   async handleRankDays() {
     try {
+      let e_auto_rank_days =
+        await this.userService.handleGetEventModel('e-auto-rank-days');
+      let arr = JSON.parse(e_auto_rank_days.option);
       const topUser = await this.userService.getTopUserBet();
-      for (const user of topUser) {
+      for (let i = 0; i < topUser.length; i++) {
+        let user = topUser[i];
+        let prize = 0;
+        if (i < arr.length && e_auto_rank_days.status) {
+          prize = arr[i];
+        }
         await this.userService.update(user.id, {
           totalBet: 0,
+          $inc: {
+            gold: +prize,
+          },
         });
       }
-      console.log(topUser);
     } catch (err) {
       // throw new CatchException(err);
     }
@@ -1258,10 +1272,10 @@ export class EventService {
   }
 
   //TODO ———————————————[Handle Message Event]———————————————
-  async handleMessageSystem(data: string) {
+  async handleMessageSystem(data: string, server: any) {
     this.socketGateway.server.emit('noti-bet', data);
     // save message
-    await this.messageService.MessageCreate({ uid: '', content: data });
+    await this.messageService.MessageCreate({ uid: '', content: data, server });
   }
 
   //TODO ———————————————[handle result data bet]———————————————

@@ -14,6 +14,7 @@ export class CreateUserBetDto {
   amount: number;
   result: string;
   server: string;
+  name: string;
 }
 
 export class FindUserBetDto {
