@@ -21,7 +21,7 @@ export class AuthService {
   async signIn(username: string, pass: string, req: any) {
     const ip_address = req.headers['x-real-ip'];
     const targetIp = await this.userService.handleUserWithIp(ip_address);
-    if (targetIp.countAccount.length === 1)
+    if (targetIp.countAccount.length > 1)
       throw new UnauthorizedException(
         'Nghi vấn spam, bạn không thể đăng nhập thêm tài khoản ở trên thiết bị này',
       );
@@ -48,7 +48,7 @@ export class AuthService {
   async signUp(body: CreateAuthDto, req: any) {
     const ip_address = req.headers['x-real-ip'];
     const targetIp = await this.userService.handleUserWithIp(ip_address);
-    if (targetIp.countAccount.length === 1)
+    if (targetIp.countAccount.length > 1)
       throw new UnauthorizedException(
         'Nghi vấn spam, bạn không thể tạo thêm tài khoản ở trên thiết bị này',
       );
@@ -65,7 +65,7 @@ export class AuthService {
     this.logger.log(`[Relogin] UID:${token?.sub} - IP:${ip_address}`);
     try {
       const targetIp = await this.userService.handleUserWithIp(ip_address);
-      if (targetIp.countAccount.length === 1)
+      if (targetIp.countAccount.length > 1)
         throw new UnauthorizedException(
           'Nghi vấn spam, bạn không thể đăng nhập thêm tài khoản ở trên thiết bị này',
         );
