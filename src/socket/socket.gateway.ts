@@ -26,6 +26,7 @@ import {
       'https://www.hsowin.vip',
     ],
   },
+  transports: ['websocket', 'polling'],
 })
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
