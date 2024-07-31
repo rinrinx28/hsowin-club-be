@@ -482,6 +482,9 @@ export class UserService {
   // }
 
   //TODO ———————————————[Handle IP USer]———————————————
+  async handleUserWithIp(ip_address: any) {
+    return await this.userIpModel.findOne({ ip_address });
+  }
   async handleAddIp(uid: any, ip_address: any) {
     const targetIp = await this.userIpModel.findOne({ ip_address });
     if (!targetIp) {
@@ -496,7 +499,7 @@ export class UserService {
     );
   }
 
-  async handleUserUpdateIp(ip_address: any, uid: any) {
+  async handleUserUpdateIp(uid: any, ip_address: any) {
     return await this.userModel.findByIdAndUpdate(
       uid,
       { ip_address },

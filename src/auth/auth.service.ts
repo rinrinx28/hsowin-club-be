@@ -19,7 +19,7 @@ export class AuthService {
   private logger: Logger = new Logger('AuthService');
 
   async signIn(username: string, pass: string, req: any) {
-    const ip = req.headers['x-real-ip'];
+    const ip_address = req.headers['x-real-ip'];
     const user = await this.userService.findOne(username);
     if (!user || user.pwd_h !== pass) {
       throw new UnauthorizedException('Username hoặc password không đúng');
@@ -31,9 +31,9 @@ export class AuthService {
     if (userObj.isBan) throw Error('Tài khoản đã bị banned');
     const access_token = await this.jwtService.signAsync(payload);
     await this.autTokenhModel.create({ token: access_token, isEnd: false });
-    await this.userService.handleUserUpdateIp(ip, user.id);
-    await this.userService.handleAddIp(user.id, ip);
-    this.logger.log(`[Login] UID:${user.id} - IP:${ip}`);
+    await this.userService.handleUserUpdateIp(user.id, ip_address);
+    await this.userService.handleAddIp(user.id, ip_address);
+    this.logger.log(`[Login] UID:${user.id} - IP:${ip_address}`);
     return {
       access_token: access_token,
       user: res,
@@ -41,23 +41,28 @@ export class AuthService {
   }
 
   async signUp(body: CreateAuthDto, req: any) {
-    const ip = req.headers['x-real-ip'];
+    const ip_address = req.headers['x-real-ip'];
+    const targetIp = await this.userService.handleUserWithIp(ip_address);
+    if (targetIp.countAccount.length > 1)
+      throw new UnauthorizedException(
+        'Nghi vấn spam, bạn không thể tạo thêm tài khoản ở trên thiết bị này',
+      );
     const result = await this.userService.create(body);
-    await this.userService.handleUserUpdateIp(ip, result.id);
-    await this.userService.handleAddIp(result.id, ip);
-    this.logger.log(`[Register] UID:${result.id} - IP:${ip}`);
+    await this.userService.handleUserUpdateIp(result.id, ip_address);
+    await this.userService.handleAddIp(result.id, ip_address);
+    this.logger.log(`[Register] UID:${result.id} - IP:${ip_address}`);
     delete result.pwd_h;
     return result;
   }
 
   async relogin(token: string, req: any) {
-    const ip = req.headers['x-real-ip'];
-    this.logger.log(`[Relogin] UID:${token?.sub} - IP:${ip}`);
+    const ip_address = req.headers['x-real-ip'];
+    this.logger.log(`[Relogin] UID:${token?.sub} - IP:${ip_address}`);
     try {
       const user = await this.userService.findById(token?.sub);
       const new_date = user.toObject();
-      await this.userService.handleUserUpdateIp(ip, token?.sub);
-      await this.userService.handleAddIp(token?.sub, ip);
+      await this.userService.handleUserUpdateIp(token?.sub, ip_address);
+      await this.userService.handleAddIp(token?.sub, ip_address);
       if (new_date.isBan) throw Error('Tài khoản đã bị banned');
       delete new_date.pwd_h;
       return new_date;
