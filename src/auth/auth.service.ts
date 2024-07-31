@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/auth.dto';
@@ -16,6 +16,8 @@ export class AuthService {
     private readonly autTokenhModel: Model<AuthToken>,
   ) {}
 
+  private logger: Logger = new Logger('AuthService');
+
   async signIn(username: string, pass: string, req: any) {
     const ip = req.headers['x-real-ip'];
     const user = await this.userService.findOne(username);
@@ -31,6 +33,7 @@ export class AuthService {
     await this.autTokenhModel.create({ token: access_token, isEnd: false });
     await this.userService.handleUserUpdateIp(ip, user.id);
     await this.userService.handleAddIp(user.id, ip);
+    this.logger.log(`[Login] UID:${user.id} - IP:${ip}`);
     return {
       access_token: access_token,
       user: res,
@@ -42,12 +45,14 @@ export class AuthService {
     const result = await this.userService.create(body);
     await this.userService.handleUserUpdateIp(ip, result.id);
     await this.userService.handleAddIp(result.id, ip);
+    this.logger.log(`[Register] UID:${result.id} - IP:${ip}`);
     delete result.pwd_h;
     return result;
   }
 
   async relogin(token: string, req: any) {
     const ip = req.headers['x-real-ip'];
+    this.logger.log(`[Relogin] UID:${token?.sub} - IP:${ip}`);
     try {
       const user = await this.userService.findById(token?.sub);
       const new_date = user.toObject();
