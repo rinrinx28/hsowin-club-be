@@ -1128,13 +1128,26 @@ export class EventService {
     try {
       let e_auto_rank_days =
         await this.userService.handleGetEventModel('e-auto-rank-days');
+      let e_rule_rank_days =
+        await this.userService.handleGetEventModel('e-rule-rank-days');
       let arr = JSON.parse(e_auto_rank_days.option);
       const topUser = await this.userService.getTopUserBet();
       for (let i = 0; i < topUser.length; i++) {
         let user = topUser[i];
         let prize = 0;
-        if (i < arr.length && e_auto_rank_days.status) {
+        if (
+          i < arr.length &&
+          e_auto_rank_days.status &&
+          user.totalBet > e_rule_rank_days.value
+        ) {
           prize = arr[i];
+          await this.userService.handleUserPrizeCreate({
+            amount: arr[i],
+            rank: `${i + 1}`,
+            type: 'rank-days',
+            uid: user.id,
+            username: user.username,
+          });
         }
         await this.userService.update(user.id, {
           totalBet: 0,

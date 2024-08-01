@@ -140,4 +140,10 @@ export class UserController {
   // async handleData() {
   //   return await this.userService.handleData();
   // }
+
+  //TODO ———————————————[Get Event Config]———————————————
+  @Get('/config')
+  async handleUserEventConfig() {
+    return await this.userService.handleGetEventModels({});
+  }
 }

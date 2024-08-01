@@ -70,3 +70,11 @@ export class UserBankWithDrawUpdate {
   withdrawId: string;
   status: string;
 }
+
+export class CreateUserPrize {
+  type: string;
+  username: string;
+  uid: string;
+  amount: number;
+  rank: string;
+}

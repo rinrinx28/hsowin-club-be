@@ -7,6 +7,7 @@ import {
   CreateClans,
   CreateUserBetDto,
   CreateUserDto,
+  CreateUserPrize,
   Exchange,
   FindUserBetDto,
   MemberClans,
@@ -25,6 +26,7 @@ import { CreateEvent } from 'src/event/dto/event.dto';
 import { ConfigExchange } from 'src/config/config';
 import { UserWithDraw } from './schema/userWithdraw';
 import { UserIp } from './schema/userIp.schema';
+import { UserPrize } from './schema/prize.schema';
 
 @Injectable()
 export class UserService {
@@ -41,6 +43,8 @@ export class UserService {
     private readonly userWithDrawModel: Model<UserWithDraw>,
     @InjectModel(UserIp.name)
     private readonly userIpModel: Model<UserIp>,
+    @InjectModel(UserPrize.name)
+    private readonly userPrizeModel: Model<UserPrize>,
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
@@ -505,5 +509,10 @@ export class UserService {
       { ip_address },
       { new: true, upsert: true },
     );
+  }
+
+  //TODO ———————————————[Handle User Prize]———————————————
+  async handleUserPrizeCreate(data: CreateUserPrize) {
+    return await this.userPrizeModel.create(data);
   }
 }
