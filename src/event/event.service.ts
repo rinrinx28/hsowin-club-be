@@ -469,7 +469,7 @@ export class EventService {
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
         await this.handleMessageSystem(
-          `Chúc mừng người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
+          `Chúc mừng những người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược Boss xuất hiện ở núi khỉ ${result === '0' ? 'đỏ' : 'đen'}`,
           server,
         );
       }
@@ -702,6 +702,7 @@ export class EventService {
         }
       }
       this.logger.log(`Boss Status: ${data.content} - Server: ${data?.server}`);
+      this.handleMessageSystem(data.content, data?.server);
       this.socketGateway.server.emit('status-boss', {
         type: bet_data['type'],
         boss: bet_data['boss'],
@@ -805,7 +806,7 @@ export class EventService {
       for (const bet of userNoti) {
         const user = await this.userService.findById(bet.uid);
         await this.handleMessageSystem(
-          `Chúc mừng người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược ${
+          `Chúc mừng những người chơi ${user.name} đã trúng lớn ${bet.receive} gold khi cược ${
             bet.result === 'C'
               ? 'Chẵn'
               : bet.result === 'CT'
