@@ -842,7 +842,7 @@ export class EventService {
       let new_resultBet_concat = [new_resultBet, resultBet[1]].join('-');
       this.socketGateway.server.emit('re-bet-user-res-sv', msg);
       this.handleMessageSystem(
-        `Server ${data?.server.replace('-mini', ' Sao')}: Chúc mừng người chơi đã chọn ${new_resultBet_concat}`,
+        `Server ${data?.server.replace('-mini', ' Sao')}: Chúc mừng những người chơi đã chọn ${new_resultBet_concat}`,
         data?.server,
       );
       return msg;
