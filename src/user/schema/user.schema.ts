@@ -37,6 +37,9 @@ export class User {
   @Prop({ default: 0 })
   limitedTrade: number;
 
+  @Prop({ default: 0 })
+  trade: number;
+
   @Prop({ default: false })
   isBan: boolean;
 

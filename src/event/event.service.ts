@@ -744,6 +744,7 @@ export class EventService {
       $inc: {
         gold: +amount,
         totalBet: +amount,
+        limitedTrade: +amount,
       },
     });
     await this.betLogService.update(betId, {
@@ -859,7 +860,6 @@ export class EventService {
 
   randomResultWithTime(timeBoss: string, random: string): string {
     let result: string | Array<any | number>;
-    // let random = Math.floor(100000 + Math.random() * 900000);
     result = `${timeBoss}${random}`.split('').map((a) => Number(a));
     let new_result = result.reduce((a, b) => a + b, 0);
     return `${new_result}`;
@@ -886,6 +886,7 @@ export class EventService {
       $inc: {
         gold: +amount,
         totalBet: +amount,
+        limitedTrade: +amount,
       },
     });
     await this.betLogService.updateSv(betId, {
@@ -942,8 +943,7 @@ export class EventService {
       const result = this.handleResultBetBoss(
         result_target?.timeBoss ??
           `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
-        result_target?.value ??
-          `${Math.floor(100000 + Math.random() * 900000)}`,
+        result_target?.value ?? `${Math.floor(Math.random() * 10)}`,
       );
 
       let new_bet = null;
@@ -1151,6 +1151,8 @@ export class EventService {
         }
         await this.userService.update(user.id, {
           totalBet: 0,
+          limitedTrade: 0,
+          trade: 0,
           $inc: {
             gold: +prize,
           },

@@ -42,10 +42,8 @@ export class SessionService {
         await this.userService.handleGetEventModel('e-auto-nap-vang');
 
       const target = await this.userService.findOne(user.username);
-      if (target.totalBet < 40 && body.type === '1')
-        throw new Error(
-          `Xin lỗi, ngày hôm nay tổng giá trị bạn chơi chưa đạt đủ trên 40 Thỏi vàng, mời bạn tiếp tục chơi để nâng điểm, chúc bạn may mắn`,
-        );
+      if (body.type === '1' && target.limitedTrade - body.amount < 0)
+        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
       if (body.type === '0' && !e_auto_nap.status)
         throw new Error(
           'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
@@ -71,7 +69,13 @@ export class SessionService {
           throw new Error(
             'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
           );
-        await this.userService.update(sub, { $inc: { gold: -body.amount } });
+        await this.userService.update(sub, {
+          $inc: {
+            gold: -body.amount,
+            limitedTrade: -body.amount,
+            trade: +body.amount,
+          },
+        });
       }
       // Let find old session
       let old_session = await this.sessionModel
