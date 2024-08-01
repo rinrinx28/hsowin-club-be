@@ -13,6 +13,9 @@ export class Bank {
   @Prop()
   amount: number;
 
+  @Prop({ default: 0 })
+  revice: number;
+
   @Prop()
   status: string;
 

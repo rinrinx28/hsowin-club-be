@@ -253,6 +253,11 @@ export class SessionService {
           gold: +bankInfo.amount * eventExchangGold.value,
         },
       });
+      await this.bankModel.findOneAndUpdate(
+        { orderId: id },
+        { revice: bankInfo.amount * eventExchangGold.value },
+        { new: true, upsert: true },
+      );
     }
 
     return true;
