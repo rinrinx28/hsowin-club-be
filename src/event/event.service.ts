@@ -1005,7 +1005,7 @@ export class EventService {
           betId: res2.id,
           isEnd: false,
           value: result_new_sv,
-          timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+          timeBoss: `${Math.floor(Math.random() * 10000)}`,
         });
         new_bet = res2.toObject();
       }
