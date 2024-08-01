@@ -37,7 +37,10 @@ export class ClientService {
     let new_map = this.unitlService.hexToString(map);
     data.map = new_map;
     data.name = new_name;
-    await this.botService.createAndUpdate(data.name, data);
+    await this.botService.createAndUpdate(
+      { name: data.name, botId: data.id },
+      data,
+    );
     this.logger.log(
       `Bot Status: Bot ${data.name} - Gold Current:${data?.gold} - Server: ${data?.server}`,
     );

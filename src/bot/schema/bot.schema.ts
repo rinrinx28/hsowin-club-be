@@ -8,6 +8,8 @@ export type BotDocument = Bot & Document;
 })
 export class Bot {
   @Prop({ unique: true })
+  botId: string;
+  @Prop()
   name: string;
 
   @Prop()

@@ -10,8 +10,8 @@ export class BotService {
     private readonly botModel: Model<Bot>,
   ) {}
 
-  async createAndUpdate(botName: any, data: any) {
-    return await this.botModel.findOneAndUpdate({ name: botName }, data, {
+  async createAndUpdate(botData: any, data: any) {
+    return await this.botModel.findOneAndUpdate(botData, data, {
       new: true,
       upsert: true,
     });
