@@ -181,7 +181,7 @@ export class SessionService {
       const sign = {
         orderCode: eventOrderBank.value,
         amount: amount,
-        description: `Thanh toan don hang - ${data?.username}`,
+        description: `ORDER - ${data?.username}`,
         cancelUrl: 'https://hsowin.vip/user',
         returnUrl: 'https://hsowin.vip/user',
       };
