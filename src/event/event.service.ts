@@ -74,6 +74,11 @@ export class EventService {
       // let lock = moment().hours();
       // if (lock >= 20) throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
+      const e_auto_bet_boss =
+        await this.userService.handleGetEventModel('e-auto-bet-boss');
+      if (!e_auto_bet_boss.status)
+        throw new Error('Hệ thống Cược Server Map Boss đang bảo trì');
+
       const bet_session = await this.betLogService.findById(betId);
       if (!bet_session || bet_session.isEnd)
         throw new Error('Ván cược đã kết thúc');
@@ -171,6 +176,11 @@ export class EventService {
       // if (lock >= 20 && server !== '24')
       //   throw new Error('Thời gian hoạt động đã kết thúc');
       // Let check timeEnd
+      const e_auto_bet_sv =
+        await this.userService.handleGetEventModel('e-auto-bet-sv');
+      if (!e_auto_bet_sv.status)
+        throw new Error('Hệ thống Cược Server 1,2,3,24 đang bảo trì');
+
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
         throw new Error('Ván cược đã kết thúc');
