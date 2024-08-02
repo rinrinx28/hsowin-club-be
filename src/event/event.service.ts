@@ -1353,7 +1353,7 @@ export class EventService {
         content: data.content,
         server: data.server,
         username: user?.name ?? user?.username,
-        meta: JSON.stringify({ avatar: user?.avatarPath }),
+        meta: JSON.stringify({ avatar: user?.avatar }),
       });
       this.socketGateway.server.emit('message-user-re', { status: true, msg });
     } catch (err) {

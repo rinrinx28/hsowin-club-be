@@ -53,7 +53,7 @@ export class User {
   ip_address: string;
 
   @Prop({ default: '' })
-  avatarPath: string;
+  avatar: string;
 
   createdAt?: Date;
   updatedAt?: Date;
