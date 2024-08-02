@@ -173,12 +173,15 @@ export class SessionService {
       const { amount, uid } = data;
       const eventOrderBank =
         await this.userService.handleGetEventModel('e-order-bank');
+      const old_order = await this.bankModel.findOne({ uid: uid, status: '0' });
+      if (old_order)
+        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
       let now = moment();
       let exp = now.add(15, 'minutes');
       const sign = {
         orderCode: eventOrderBank.value,
         amount: amount,
-        description: 'Thanh toan don hang',
+        description: `Thanh toan don hang - ${data?.username}`,
         cancelUrl: 'https://hsowin.vip/user',
         returnUrl: 'https://hsowin.vip/user',
       };

@@ -383,7 +383,13 @@ export class UserService {
         return { message: 'Không tìm thấy người chơi!', status: false };
       const eventBankWithDraw =
         await this.handleGetEventModel('e-withdraw-bank');
-      let gold = amount * (eventBankWithDraw?.value ?? 6.2);
+      const old_order = await this.userWithDrawModel.findOne({
+        uid: uid,
+        status: '0',
+      });
+      if (old_order)
+        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
+      let gold = amount * (eventBankWithDraw?.value ?? 0.0062);
       if (target.gold - gold < 0)
         return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
 
@@ -465,10 +471,10 @@ export class UserService {
 
   async handleUserBetLog(page: number, limit: number, uid: string) {
     const data = await this.userBetModel
-      .find({ uid })
+      .find({ uid, isEnd: true })
       .sort({ updatedAt: -1 })
-      .limit(limit)
-      .skip((page - 1) * limit)
+      // .limit(limit)
+      // .skip((page - 1) * limit)
       .exec();
     return {
       status: true,

@@ -24,13 +24,6 @@ export class SessionController {
     private readonly userService: UserService,
   ) {}
 
-  // @HttpCode(HttpStatus.OK)
-  // @Post('/admin/create')
-  // adminCreate(@Body() body: CreateSessionDto, @Req() req: any) {
-  //   const user = req.user;
-  //   return this.sessionService.create(body, user);
-  // }
-
   @HttpCode(HttpStatus.OK)
   @Post('/create')
   create(@Body() body: CreateSessionDto, @Req() req: any) {

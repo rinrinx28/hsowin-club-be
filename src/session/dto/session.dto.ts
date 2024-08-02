@@ -15,4 +15,5 @@ export class BankCreate {
   uid: string;
   amount: number;
   orderId?: string;
+  username: string;
 }
