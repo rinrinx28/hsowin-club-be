@@ -530,10 +530,8 @@ export class EventService {
       // Check spam Boss Status
       const old_server_update = await this.bossService.findServer(server);
       if (old_server_update) {
-        let now = Math.floor(Date.now() / 1000);
-        let current_update = Math.floor(
-          new Date(old_server_update?.updatedAt).getTime() / 1000,
-        );
+        let now = moment().unix();
+        let current_update = moment(old_server_update.updatedAt).unix();
         if (now - current_update < 5) {
           throw new Error('Spam');
         }
@@ -726,7 +724,7 @@ export class EventService {
       return;
     } catch (err) {
       this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
-      // throw new CatchException(err);
+      throw new CatchException(err);
     } finally {
       release();
     }
