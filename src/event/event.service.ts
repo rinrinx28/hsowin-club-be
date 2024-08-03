@@ -87,7 +87,7 @@ export class EventService {
 
       let current_now = Math.floor(Date.now() / 1000);
       let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
-      if (timeEnd - current_now < 10)
+      if (timeEnd - current_now < 12)
         throw new Error('Ván cược đã đóng thời gian cược');
 
       const target = await this.queryRequestUserBet(
@@ -187,9 +187,9 @@ export class EventService {
 
       if (result.length < 1) throw new Error('Xin vui lòng Dự Đoán Kết Quả');
 
-      let current_now = Math.floor(Date.now() / 1000);
-      let timeEnd = Math.floor(new Date(bet_session.timeEnd).getTime() / 1000);
-      if (timeEnd - current_now < 5)
+      let current_now = moment().unix();
+      let timeEnd = moment(bet_session.timeEnd).unix();
+      if (timeEnd - current_now < 10)
         throw new Error('Ván cược đã đóng thời gian cược');
 
       const target = await this.queryRequestUserBet(
