@@ -513,7 +513,7 @@ export class EventService {
   //TODO ———————————————[Handle Status Boss]———————————————
   @OnEvent('status-boss')
   async handleStatusBoss(data: StatusBoss) {
-    const parameter = data.server; // Value will be lock
+    const parameter = `${data.server}-status-boss`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -563,10 +563,9 @@ export class EventService {
       });
 
       // Get value now update
-      let now = new Date();
-      // let current = new Date(statusBoss?.updatedAt);
-      let hours = now.getHours();
-      let minutes = now.getMinutes();
+      let current = new Date(statusBoss?.updatedAt);
+      let hours = current.getHours();
+      let minutes = current.getMinutes();
       const result_target = await this.eventRandomDrawModel.findOne({
         betId: old_bet_sv?.id,
         isEnd: false,
@@ -585,13 +584,13 @@ export class EventService {
         if (old_bet_sv || old_bet_boss) {
           const update_old_boss = this.betLogService.update(old_bet_boss?.id, {
             server,
-            timeEnd: this.addSeconds(now, 180),
+            timeEnd: this.addSeconds(current, 180),
             isEnd: false,
             result: ``,
           });
           const update_old_sv = this.betLogService.updateSv(old_bet_sv?.id, {
             server: `${server}-mini`,
-            timeEnd: this.addSeconds(now, 180),
+            timeEnd: this.addSeconds(current, 180),
             isEnd: false,
             result: ``,
           });
@@ -619,11 +618,11 @@ export class EventService {
           // Create new Bet between Map Boss and Server
           const create_new_boss = this.betLogService.create({
             server,
-            timeEnd: this.addSeconds(now, 180),
+            timeEnd: this.addSeconds(current, 180),
           });
           const create_new_sv = this.betLogService.createSv({
             server: `${server}-mini`,
-            timeEnd: this.addSeconds(now, 180),
+            timeEnd: this.addSeconds(current, 180),
           });
           const [res1, res2] = await Promise.all([
             create_new_boss,

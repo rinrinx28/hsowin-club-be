@@ -224,7 +224,6 @@ export class SessionService {
       });
       return result;
     } catch (err) {
-      console.log(err);
       throw new CatchException(err);
     }
   }
