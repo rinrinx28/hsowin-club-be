@@ -6,7 +6,6 @@ import { AuthController } from './auth.controller';
 import { jwtConstants } from './constants';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthToken, AuthTokenSchema } from './schema/auth.schema';
-import { AuthGuard } from './auth.guard';
 
 @Module({
   imports: [
@@ -20,7 +19,7 @@ import { AuthGuard } from './auth.guard';
       signOptions: { expiresIn: '30d' },
     }),
   ],
-  providers: [AuthService, AuthGuard],
+  providers: [AuthService],
   controllers: [AuthController],
   exports: [AuthService],
 })

@@ -34,7 +34,8 @@ export class AuthService {
       const payload = { sub: user.id, username: user.username };
       const userObj = user.toObject(); // Convert Mongoose document to plain object
       const { pwd_h, ...res } = userObj;
-      if (userObj.isBan) throw Error('Tài khoản đã bị banned');
+      if (userObj.isBan)
+        throw Error(`Tài khoản đã bị banned\n${userObj?.isReason}`);
 
       const targetIp = await this.userService.handleUserWithIp(ip_address);
       if (
@@ -84,7 +85,8 @@ export class AuthService {
     try {
       const user = await this.userService.findById(token?.sub);
       const new_date = user.toObject();
-      if (new_date.isBan) throw Error('Tài khoản đã bị banned');
+      if (new_date.isBan)
+        throw Error(`Tài khoản đã bị banned\n${new_date?.isReason}`);
       const targetIp = await this.userService.handleUserWithIp(ip_address);
       if (
         targetIp &&

@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Session } from './schema/session.schema';
@@ -33,6 +34,8 @@ export class SessionService {
     private readonly userService: UserService,
     private readonly cronJobService: CronjobService,
   ) {}
+
+  private logger: Logger = new Logger('SessionService');
   async create(body: CreateSessionDto, user: PayLoad) {
     const { sub } = user;
     try {
@@ -104,6 +107,9 @@ export class SessionService {
         this.cronJobService.remove(result?.id);
       }, 1e3 * 600); // 1e3 = 1000ms
       // send task to memory storage
+      this.logger.log(
+        `UID: ${sub} - ${body.type === '1' ? 'Nap' : 'Rut'} - GOLD: ${body.amount}`,
+      );
       this.cronJobService.create(result?.id, timeOutId);
       return result;
     } catch (err) {

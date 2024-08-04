@@ -2,19 +2,20 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { Request } from 'express';
-import { UserService } from 'src/user/user.service';
+// import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    // private userService: UserService,
+    // @Inject(UserService) private userService: UserService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
