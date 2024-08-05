@@ -514,7 +514,8 @@ export class EventService {
           bet.receive = bet.amount * precent;
         }
         await this.handleUpdateUserBet(bet.id, bet.uid, betId, {
-          ...bet.toObject(),
+          server: bet.server,
+          result: bet.result,
           resultBet: result,
           receive: bet.receive,
           isEnd: true,
@@ -784,7 +785,7 @@ export class EventService {
   }
   //TODO ———————————————[Handler Mini game map boss]———————————————
 
-  async handleUpdateUserBet(id: any, uid: any, betId: any, data: UserBet) {
+  async handleUpdateUserBet(id: any, uid: any, betId: any, data: any) {
     const target = await this.userService.findById(uid);
     let clansObj = JSON.parse(target?.clan);
     // Check user has in the clan
@@ -800,7 +801,7 @@ export class EventService {
     }
   }
 
-  async handleTransactionUserBet(id: any, betId: any, data: UserBet) {
+  async handleTransactionUserBet(id: any, betId: any, data: any) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
@@ -856,7 +857,8 @@ export class EventService {
           }
         }
         await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
-          ...bet.toObject(),
+          server: bet.server,
+          result: bet.result,
           resultBet: `${result}`,
           receive: bet.receive,
           isEnd: true,
@@ -935,12 +937,7 @@ export class EventService {
     return `${new_result}`;
   }
 
-  async handleUpdateUserBetWithBoss(
-    id: any,
-    uid: any,
-    betId: any,
-    data: UserBet,
-  ) {
+  async handleUpdateUserBetWithBoss(id: any, uid: any, betId: any, data: any) {
     const target = await this.userService.findById(uid);
     let clansObj = JSON.parse(target?.clan);
     // Check user has in the clan
@@ -956,8 +953,7 @@ export class EventService {
     }
   }
 
-  async handleTransactionUserBetWithBoss(id: any, betId: any, data: UserBet) {
-    console.log(data);
+  async handleTransactionUserBetWithBoss(id: any, betId: any, data: any) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
