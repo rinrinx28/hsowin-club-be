@@ -98,13 +98,6 @@ export class EventService {
         amount,
         result,
       );
-
-      await this.userService.handleCreateUserActive({
-        uid: target.id,
-        active: `Cược Server ${server} - ${result} - TV: ${Number(amount)}`,
-        currentGold: target.gold,
-        newGold: target.gold - Number(amount),
-      });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
@@ -125,6 +118,13 @@ export class EventService {
         server,
         uid,
         name: target.name,
+      });
+
+      await this.userService.handleCreateUserActive({
+        uid: target.id,
+        active: `Cược Server ${server} - Rs: ${result} - TV: ${Number(amount)} - userBetId: ${betCreate.id}`,
+        currentGold: target.gold,
+        newGold: target.gold - Number(amount),
       });
 
       // Let update sendIn The bet
@@ -206,13 +206,6 @@ export class EventService {
         amount,
         result,
       );
-
-      await this.userService.handleCreateUserActive({
-        uid: target.id,
-        active: `Cược Server ${server} - ${result} - TV:${Number(amount)}`,
-        currentGold: target.gold,
-        newGold: target.gold - Number(amount),
-      });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
@@ -233,6 +226,13 @@ export class EventService {
         server,
         uid,
         name: target.name,
+      });
+
+      await this.userService.handleCreateUserActive({
+        uid: target.id,
+        active: `Cược Server ${server} - Rs: ${result} - TV: ${Number(amount)} - userBetId: ${betCreate.id}`,
+        currentGold: target.gold,
+        newGold: target.gold - Number(amount),
       });
 
       // Let update sendIn The bet
@@ -801,6 +801,7 @@ export class EventService {
   }
 
   async handleTransactionUserBet(id: any, betId: any, data: UserBet) {
+    console.log(data);
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
@@ -957,6 +958,7 @@ export class EventService {
   }
 
   async handleTransactionUserBetWithBoss(id: any, betId: any, data: UserBet) {
+    console.log(data);
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
