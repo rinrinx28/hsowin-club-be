@@ -33,6 +33,7 @@ import { Model } from 'mongoose';
 import { EventRandom } from './schema/eventRandom';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from 'src/auth/constants';
+import seedrandom from 'seedrandom';
 
 @Injectable()
 export class EventService {
@@ -951,7 +952,7 @@ export class EventService {
   }
 
   handleResultBet24(random: string) {
-    let result = `${random}`;
+    let result = `${Number(random) > 9 ? random : `0${random}`}`;
     let new_result = `${result}`.split('')[1];
     let obj_result = {
       c: Number(new_result) % 2 === 0,
