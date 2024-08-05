@@ -925,6 +925,27 @@ export class EventService {
     return `${obj_result.total.XIEN}-${obj_result.total.result}`;
   }
 
+  handleResultBet24(random: string) {
+    let result = `${random[2]}${random[3]}`;
+    let new_result = `${result}`.split('')[1];
+    let obj_result = {
+      c: Number(new_result) % 2 === 0,
+      l: Number(new_result) % 2 !== 0,
+      x: Number(new_result) < 5,
+      t: Number(new_result) > 4,
+      total: {
+        CL: '',
+        TX: '',
+        result: `${result}`,
+        XIEN: '',
+      },
+    };
+    obj_result.total.CL = `${obj_result.c ? 'C' : 'L'}`;
+    obj_result.total.TX = `${obj_result.t ? 'T' : 'X'}`;
+    obj_result.total.XIEN = `${obj_result.total.CL}${obj_result.total.TX}`;
+    return `${obj_result.total.XIEN}-${obj_result.total.result}`;
+  }
+
   //TODO ———————————————[Handler Mini game Server 24/24]———————————————
   @OnEvent('server-24')
   async handleServerAuto() {
@@ -948,10 +969,8 @@ export class EventService {
         betId: old_bet.id,
         isEnd: false,
       });
-      const result = this.handleResultBetBoss(
-        result_target?.timeBoss ??
-          `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
-        result_target?.value ?? `${Math.floor(Math.random() * 10)}`,
+      const result = this.handleResultBet24(
+        result_target?.value ?? `${Math.floor(1000 + Math.random() * 9000)}`,
       );
 
       let new_bet = null;
@@ -961,7 +980,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(100000 + Math.random() * 900000);
+        const result_new_sv = Math.floor(1000 + Math.random() * 9000);
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
@@ -1008,12 +1027,12 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(Math.random() * 10000);
+        const result_new_sv = Math.floor(1000 + Math.random() * 9000);
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
           value: result_new_sv,
-          timeBoss: `${Math.floor(Math.random() * 10000)}`,
+          timeBoss: `${Math.floor(1000 + Math.random() * 9000)}`,
         });
         new_bet = res2.toObject();
       }
