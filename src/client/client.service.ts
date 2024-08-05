@@ -94,6 +94,8 @@ export class ClientService {
           await this.userService.update(old_session?.uid, {
             $inc: {
               gold: +old_session?.amount,
+              trade: -old_session?.amount,
+              limitedTrade: +old_session?.amount,
             },
           });
         }

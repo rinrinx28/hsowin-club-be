@@ -951,7 +951,7 @@ export class EventService {
   }
 
   handleResultBet24(random: string) {
-    let result = `${random[2]}${random[3]}`;
+    let result = `${random}`;
     let new_result = `${result}`.split('')[1];
     let obj_result = {
       c: Number(new_result) % 2 === 0,
@@ -995,7 +995,7 @@ export class EventService {
         isEnd: false,
       });
       const result = this.handleResultBet24(
-        result_target?.value ?? `${Math.floor(1000 + Math.random() * 9000)}`,
+        result_target?.value ?? `${Math.floor(Math.random() * 100)}`,
       );
 
       let new_bet = null;
@@ -1005,7 +1005,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(1000 + Math.random() * 9000);
+        const result_new_sv = Math.floor(Math.random() * 100);
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
