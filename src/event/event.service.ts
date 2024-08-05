@@ -589,11 +589,15 @@ export class EventService {
         betId: old_bet_sv?.id,
         isEnd: false,
       });
-      const result = this.handleResultBetBoss(
-        result_target?.timeBoss ??
-          `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
-        result_target?.value ??
-          `${Math.floor(100000 + Math.random() * 900000)}`,
+      // const result = this.handleResultBetBoss(
+      //   result_target?.timeBoss ??
+      //     `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+      //   result_target?.value ??
+      //     `${Math.floor(100000 + Math.random() * 900000)}`,
+      // );
+
+      const result = this.handleResultBet24(
+        result_target?.value ?? `${Math.floor(1000 + Math.random() * 9000)}`,
       );
 
       let bet_data = {};
