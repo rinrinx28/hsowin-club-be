@@ -627,7 +627,7 @@ export class EventService {
       // );
 
       const result = this.handleResultBet24(
-        result_target?.value ?? `${Math.floor(1000 + Math.random() * 9000)}`,
+        result_target?.value ?? `${Math.floor(Math.random() * 100)}`,
       );
 
       let bet_data = {};
@@ -681,7 +681,7 @@ export class EventService {
             create_new_boss,
             create_new_sv,
           ]);
-          const result_new_sv = Math.floor(100000 + Math.random() * 900000);
+          const result_new_sv = Math.floor(Math.random() * 100);
           await this.eventRandomDrawModel.create({
             betId: res2.id,
             isEnd: false,
