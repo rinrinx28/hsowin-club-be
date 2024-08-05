@@ -9,6 +9,7 @@ import { Event, EventSchema } from 'src/event/schema/event.schema';
 import { UserWithDraw, UserWithDrawSchema } from './schema/userWithdraw';
 import { UserIp, UserIpSchema } from './schema/userIp.schema';
 import { UserPrize, UserPrizeSchema } from './schema/prize.schema';
+import { UserActive, UserActiveSchema } from './schema/userActive';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UserPrize, UserPrizeSchema } from './schema/prize.schema';
       { name: UserWithDraw.name, schema: UserWithDrawSchema },
       { name: UserIp.name, schema: UserIpSchema },
       { name: UserPrize.name, schema: UserPrizeSchema },
+      { name: UserActive.name, schema: UserActiveSchema },
     ]),
   ],
   controllers: [UserController],

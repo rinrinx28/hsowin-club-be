@@ -1,29 +1,26 @@
-// import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-// import { Document, Schema as MongooseSchema } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Schema as MongooseSchema } from 'mongoose';
 
-// export type UserActiveDocument = UserActive & Document;
+export type UserActiveDocument = UserActive & Document;
 
-// @Schema({
-//   timestamps: true,
-// })
-// export class UserActive {
-//   @Prop()
-//   ownerId: string;
+@Schema({
+  timestamps: true,
+})
+export class UserActive {
+  @Prop()
+  uid: string;
 
-//   @Prop()
-//   clanName: string;
+  @Prop()
+  currentGold: number;
 
-//   @Prop()
-//   typeClan: string;
+  @Prop()
+  newGold: number;
 
-//   @Prop({ default: 0 })
-//   totalBet: number;
+  @Prop()
+  active: string;
 
-//   @Prop({ default: 1 })
-//   member: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
-//   createdAt?: Date;
-//   updatedAt?: Date;
-// }
-
-// export const UserActiveSchema = SchemaFactory.createForClass(UserActive);
+export const UserActiveSchema = SchemaFactory.createForClass(UserActive);

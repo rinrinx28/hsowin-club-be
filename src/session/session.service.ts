@@ -55,10 +55,6 @@ export class SessionService {
         await this.userService.handleGetEventModel('e-auto-rut-vang');
       const e_auto_nap =
         await this.userService.handleGetEventModel('e-auto-nap-vang');
-
-      const target = await this.userService.findOne(user.username);
-      if (body.type === '1' && target.limitedTrade - body.amount < 0)
-        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
       if (body.type === '0' && !e_auto_nap.status)
         throw new Error(
           'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
@@ -67,6 +63,20 @@ export class SessionService {
         throw new Error(
           'Hệ thống rút tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
         );
+
+      // Let find old session
+      let old_session = await this.sessionModel
+        .findOne({ uid: sub, status: '0' })
+        .sort({ updatedAt: -1 })
+        .exec();
+      // old session has exist > return error BadRequest
+      if (old_session)
+        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
+
+      const target = await this.userService.findById(body.uid);
+      if (body.type === '1' && target.limitedTrade - body.amount < 0)
+        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
+
       // Limited Amount
       if (body.type === '0' && body.amount < 30)
         throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');
@@ -80,7 +90,7 @@ export class SessionService {
 
       // Let minus gold of user
       if (body.type === '1') {
-        if (target?.gold - body.amount <= 0)
+        if (target?.gold - body.amount < 0)
           throw new Error(
             'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
           );
@@ -92,19 +102,28 @@ export class SessionService {
           },
         });
       }
-      // Let find old session
-      let old_session = await this.sessionModel
-        .findOne({ uid: sub, status: '0' })
-        .sort({ updatedAt: -1 })
-        .exec();
-      // old session has exist > return error BadRequest
-      if (old_session)
-        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
+
       const result = await this.sessionModel.create({
         ...body,
         status: '0',
         uid: body.uid,
       });
+      // Let Update Active
+      if (body.type === '1') {
+        await this.userService.handleCreateUserActive({
+          uid: body.uid,
+          active: `Tạo Rút vàng SESSION: ${result.id}`,
+          currentGold: target.gold,
+          newGold: target.gold - body?.amount,
+        });
+      } else {
+        await this.userService.handleCreateUserActive({
+          uid: body.uid,
+          active: `Tạo Nạp vàng SESSION: ${result.id}`,
+          currentGold: target.gold,
+          newGold: target.gold,
+        });
+      }
       // Let make auto cancel with timeout 600s = 10p
       const timeOutId = setTimeout(async () => {
         await this.sessionModel.findByIdAndUpdate(
@@ -291,6 +310,13 @@ export class SessionService {
     );
 
     if (status === '1') {
+      const target = await this.userService.findById(bankInfo.uid);
+      await this.userService.handleCreateUserActive({
+        uid: bankInfo.uid,
+        active: `Nạp Bank orderId: ${id}`,
+        currentGold: target.gold,
+        newGold: target.gold + bankInfo.amount * eventExchangGold.value,
+      });
       await this.userService.update(bankInfo.uid, {
         $inc: {
           gold: +bankInfo.amount * eventExchangGold.value,

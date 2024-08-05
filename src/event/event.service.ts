@@ -77,7 +77,7 @@ export class EventService {
       // Let check timeEnd
       const e_auto_bet_boss =
         await this.userService.handleGetEventModel('e-auto-bet-boss');
-      if (!e_auto_bet_boss.status)
+      if (!e_auto_bet_boss.status && uid !== '66a93f03c73cf0838db43e9a')
         throw new Error('Hệ thống Cược Server Map Boss đang bảo trì');
 
       const bet_session = await this.betLogService.findById(betId);
@@ -99,6 +99,12 @@ export class EventService {
         result,
       );
 
+      await this.userService.handleCreateUserActive({
+        uid: target.id,
+        active: `Cược Server ${data.server} - ${data.result}`,
+        currentGold: target.gold,
+        newGold: target.gold - amount,
+      });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
@@ -179,7 +185,7 @@ export class EventService {
       // Let check timeEnd
       const e_auto_bet_sv =
         await this.userService.handleGetEventModel('e-auto-bet-sv');
-      if (!e_auto_bet_sv.status)
+      if (!e_auto_bet_sv.status && uid !== '66a93f03c73cf0838db43e9a')
         throw new Error('Hệ thống Cược Server 1,2,3,24 đang bảo trì');
 
       const bet_session = await this.betLogService.findSvById(betId);
@@ -201,6 +207,12 @@ export class EventService {
         result,
       );
 
+      await this.userService.handleCreateUserActive({
+        uid: target.id,
+        active: `Cược Server ${data.server} - ${data.result}`,
+        currentGold: target.gold,
+        newGold: target.gold - amount,
+      });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
@@ -379,6 +391,13 @@ export class EventService {
       });
 
       // Update server data
+      const targetUser = await this.userService.findById(uid);
+      await this.userService.handleCreateUserActive({
+        uid: uid,
+        active: `Hủy Cược Server ${targetUserBetLog.server} - ${targetUserBetLog.result}`,
+        currentGold: targetUser.gold,
+        newGold: targetUser.gold + amount,
+      });
       const user = await this.userService.update(uid, {
         $inc: {
           gold: +amount,
@@ -441,6 +460,13 @@ export class EventService {
       });
 
       // Update server data
+      const targetUser = await this.userService.findById(uid);
+      await this.userService.handleCreateUserActive({
+        uid: uid,
+        active: `Hủy Cược Server ${targetUserBetLog.server} - ${targetUserBetLog.result}`,
+        currentGold: targetUser.gold,
+        newGold: targetUser.gold + amount,
+      });
       const user = await this.userService.update(uid, {
         $inc: {
           gold: +amount,
@@ -488,6 +514,7 @@ export class EventService {
           bet.receive = bet.amount * precent;
         }
         await this.handleUpdateUserBet(bet.id, bet.uid, betId, {
+          ...bet,
           resultBet: result,
           receive: bet.receive,
           isEnd: true,
@@ -769,21 +796,29 @@ export class EventService {
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
-      await this.handleTransactionUserBet(uid, betId, data?.receive);
+      await this.handleTransactionUserBet(uid, betId, data);
     }
   }
 
-  async handleTransactionUserBet(id: any, betId: any, amount: number) {
+  async handleTransactionUserBet(id: any, betId: any, data: any) {
+    // Update server data
+    const targetUser = await this.userService.findById(id);
+    await this.userService.handleCreateUserActive({
+      uid: id,
+      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet}`,
+      currentGold: targetUser.gold,
+      newGold: targetUser.gold + data?.receive,
+    });
     await this.userService.update(id, {
       $inc: {
-        gold: +amount,
-        totalBet: +amount,
-        limitedTrade: +amount,
+        gold: +data?.receive,
+        totalBet: +data?.receive,
+        limitedTrade: +data?.receive,
       },
     });
     await this.betLogService.update(betId, {
       $inc: {
-        sendOut: +amount,
+        sendOut: +data?.receive,
       },
     });
   }
@@ -821,6 +856,7 @@ export class EventService {
           }
         }
         await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
+          ...bet,
           resultBet: `${result}`,
           receive: bet.receive,
           isEnd: true,
@@ -915,17 +951,25 @@ export class EventService {
     }
   }
 
-  async handleTransactionUserBetWithBoss(id: any, betId: any, amount: number) {
+  async handleTransactionUserBetWithBoss(id: any, betId: any, data: any) {
+    // Update server data
+    const targetUser = await this.userService.findById(id);
+    await this.userService.handleCreateUserActive({
+      uid: id,
+      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet}`,
+      currentGold: targetUser.gold,
+      newGold: targetUser.gold + data?.receive,
+    });
     await this.userService.update(id, {
       $inc: {
-        gold: +amount,
-        totalBet: +amount,
-        limitedTrade: +amount,
+        gold: +data?.receive,
+        totalBet: +data?.receive,
+        limitedTrade: +data?.receive,
       },
     });
     await this.betLogService.updateSv(betId, {
       $inc: {
-        sendOut: +amount,
+        sendOut: +data?.receive,
       },
     });
   }
@@ -1194,6 +1238,14 @@ export class EventService {
           user.totalBet > e_rule_rank_days.value
         ) {
           prize = arr[i];
+
+          // Update server data
+          await this.userService.handleCreateUserActive({
+            uid: user.id,
+            active: `Giải thưởng top rank days`,
+            currentGold: user.gold,
+            newGold: user.gold + prize,
+          });
           await this.userService.handleUserPrizeCreate({
             amount: arr[i],
             rank: `${i + 1}`,
@@ -1390,6 +1442,12 @@ export class EventService {
         secret: jwtConstants.secret,
       });
       const user = await this.userService.findById(payload?.sub);
+      await this.userService.handleCreateUserActive({
+        uid: user.id,
+        active: `ChatBox: ${data.content}`,
+        currentGold: user.gold,
+        newGold: user.gold,
+      });
       const msg = await this.messageService.MessageCreate({
         uid: user?.id,
         content: data.content,

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import {
   CreateClans,
+  CreateUserActive,
   CreateUserBetDto,
   CreateUserDto,
   CreateUserPrize,
@@ -27,6 +28,7 @@ import { ConfigExchange } from 'src/config/config';
 import { UserWithDraw } from './schema/userWithdraw';
 import { UserIp } from './schema/userIp.schema';
 import { UserPrize } from './schema/prize.schema';
+import { UserActive } from './schema/userActive';
 
 @Injectable()
 export class UserService {
@@ -45,6 +47,8 @@ export class UserService {
     private readonly userIpModel: Model<UserIp>,
     @InjectModel(UserPrize.name)
     private readonly userPrizeModel: Model<UserPrize>,
+    @InjectModel(UserActive.name)
+    private readonly userActiveModel: Model<UserActive>,
   ) {}
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
@@ -520,5 +524,14 @@ export class UserService {
   //TODO ———————————————[Handle User Prize]———————————————
   async handleUserPrizeCreate(data: CreateUserPrize) {
     return await this.userPrizeModel.create(data);
+  }
+
+  //TODO ———————————————[Handle User Active]———————————————
+  async handleCreateUserActive(data: CreateUserActive) {
+    try {
+      return await this.userActiveModel.create(data);
+    } catch (err) {
+      return err.message;
+    }
   }
 }

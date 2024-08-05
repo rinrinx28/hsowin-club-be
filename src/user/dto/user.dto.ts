@@ -78,3 +78,10 @@ export class CreateUserPrize {
   amount: number;
   rank: string;
 }
+
+export class CreateUserActive {
+  uid: string;
+  currentGold: number;
+  newGold: number;
+  active: string;
+}

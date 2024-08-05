@@ -90,13 +90,27 @@ export class ClientService {
         );
 
         //   Update value gold of User ...
+        const target = await this.userService.findById(old_session?.uid);
         if (old_session?.type === '1') {
+          await this.userService.handleCreateUserActive({
+            uid: target?.uid,
+            active: `Hủy Rút vàng SESSION: ${service_id}`,
+            currentGold: target.gold,
+            newGold: target.gold + old_session?.amount,
+          });
           await this.userService.update(old_session?.uid, {
             $inc: {
               gold: +old_session?.amount,
               trade: -old_session?.amount,
               limitedTrade: +old_session?.amount,
             },
+          });
+        } else {
+          await this.userService.handleCreateUserActive({
+            uid: target?.uid,
+            active: `Hủy Nạp vàng SESSION: ${service_id}`,
+            currentGold: target.gold,
+            newGold: target.gold,
           });
         }
 
@@ -118,12 +132,27 @@ export class ClientService {
           `Transaction Success: type:${old_session.type} - UID:${old_session.uid} - SessionID: ${old_session.id} - ${data?.gold_receive ?? data?.gold_trade}`,
         );
         this.socketGateway.server.emit('session-res', res_session.toObject());
+
         //   Update value gold of User ...
+        const target = await this.userService.findById(old_session?.uid);
         if (old_session?.type === '0') {
+          await this.userService.handleCreateUserActive({
+            uid: target?.uid,
+            active: `Nạp vàng Thành Công SESSION: ${old_session.id}`,
+            currentGold: target.gold,
+            newGold: target.gold + data?.gold_receive,
+          });
           await this.userService.update(old_session?.uid, {
             $inc: {
               gold: +data?.gold_receive,
             },
+          });
+        } else {
+          await this.userService.handleCreateUserActive({
+            uid: target?.uid,
+            active: `Rút vàng Thành Công SESSION: ${old_session.id}`,
+            currentGold: target.gold,
+            newGold: target.gold,
           });
         }
         return 'ok';

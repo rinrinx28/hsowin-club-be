@@ -40,10 +40,10 @@ export class CronjobService {
     this.eventEmitter.emit('rank-clans', 'isrun');
   }
 
-  @Cron('* * * * * *')
-  handleTest() {
-    // let now = Date.now();
-    // let rng = seedrandom('hello.');
-    // console.log(rng());
-  }
+  // @Cron('* * * * * *')
+  // handleTest() {
+  //   let now = Date.now();
+  //   let rng = seedrandom('hello.');
+  //   console.log(rng());
+  // }
 }
