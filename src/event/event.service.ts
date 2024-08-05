@@ -514,7 +514,7 @@ export class EventService {
           bet.receive = bet.amount * precent;
         }
         await this.handleUpdateUserBet(bet.id, bet.uid, betId, {
-          ...bet,
+          ...bet.toObject(),
           resultBet: result,
           receive: bet.receive,
           isEnd: true,
@@ -801,7 +801,6 @@ export class EventService {
   }
 
   async handleTransactionUserBet(id: any, betId: any, data: UserBet) {
-    console.log(data);
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
@@ -857,7 +856,7 @@ export class EventService {
           }
         }
         await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
-          ...bet,
+          ...bet.toObject(),
           resultBet: `${result}`,
           receive: bet.receive,
           isEnd: true,
