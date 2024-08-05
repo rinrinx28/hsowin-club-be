@@ -18,6 +18,7 @@ import * as crypto from 'crypto';
 import { Event } from 'src/event/schema/event.schema';
 import { CatchException } from 'src/common/common.exception';
 import { UserWithDraw } from 'src/user/schema/userWithdraw';
+import { Mutex } from 'async-mutex';
 
 @Injectable()
 export class SessionService {
@@ -36,7 +37,18 @@ export class SessionService {
   ) {}
 
   private logger: Logger = new Logger('SessionService');
+  private readonly mutexMap = new Map<string, Mutex>();
+
   async create(body: CreateSessionDto, user: PayLoad) {
+    const parameter = `${user.sub}-session-create`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     const { sub } = user;
     try {
       const e_auto_rut =
@@ -101,7 +113,13 @@ export class SessionService {
           { upsert: true },
         );
         if (result.type === '1') {
-          await this.userService.update(sub, { $inc: { gold: +body.amount } });
+          await this.userService.update(sub, {
+            $inc: {
+              gold: +body.amount,
+              limitedTrade: +body.amount,
+              trade: -body.amount,
+            },
+          });
         }
         // remove task from memory storage
         this.cronJobService.remove(result?.id);
@@ -114,6 +132,8 @@ export class SessionService {
       return result;
     } catch (err) {
       throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
@@ -175,6 +195,15 @@ export class SessionService {
 
   //TODO ———————————————[Handle Banking]———————————————
   async handleCreateBank(data: BankCreate) {
+    const parameter = `${data.uid}-banking-create`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const { amount, uid } = data;
       const eventOrderBank =
@@ -231,6 +260,8 @@ export class SessionService {
       return result;
     } catch (err) {
       throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 

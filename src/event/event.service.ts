@@ -59,7 +59,7 @@ export class EventService {
 
   @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
-    const parameter = `${data.server}-bet`; // Value will be lock
+    const parameter = `${data.uid}-bet-user-ce-boss`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -160,7 +160,7 @@ export class EventService {
 
   @OnEvent('bet-user-ce-sv')
   async handleBetSvAuto(data: CreateUserBet) {
-    const parameter = `${data.server}-bet`; // Value will be lock
+    const parameter = `${data.uid}-bet-user-ce-sv`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -351,6 +351,15 @@ export class EventService {
   //TODO ———————————————[Handler Del Bet User]———————————————
   @OnEvent('bet-user-del-boss')
   async handleDelBetUserBoss(data: DelUserBet) {
+    const parameter = `${data.uid}-bet-user-del-boss`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const { betId, uid, userBetId } = data;
       const targetUserBetLog = await this.userService.findByIdBet(userBetId);
@@ -397,11 +406,22 @@ export class EventService {
       });
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
       // throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
   @OnEvent('bet-user-del-sv')
   async handleDelBetUserSv(data: DelUserBet) {
+    const parameter = `${data.uid}-bet-user-del-sv`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const { betId, uid, userBetId } = data;
       const targetUserBetLog = await this.userService.findByIdBet(userBetId);
@@ -448,6 +468,8 @@ export class EventService {
       });
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
       // throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
