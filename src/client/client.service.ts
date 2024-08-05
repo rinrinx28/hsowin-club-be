@@ -96,13 +96,13 @@ export class ClientService {
             uid: target?.uid,
             active: `Hủy Rút vàng SESSION: ${service_id}`,
             currentGold: target.gold,
-            newGold: target.gold + old_session?.amount,
+            newGold: target.gold + Number(old_session?.amount),
           });
           await this.userService.update(old_session?.uid, {
             $inc: {
-              gold: +old_session?.amount,
-              trade: -old_session?.amount,
-              limitedTrade: +old_session?.amount,
+              gold: +Number(old_session?.amount),
+              trade: -Number(old_session?.amount),
+              limitedTrade: +Number(old_session?.amount),
             },
           });
         } else {
@@ -140,11 +140,11 @@ export class ClientService {
             uid: target?.uid,
             active: `Nạp vàng Thành Công SESSION: ${old_session.id}`,
             currentGold: target.gold,
-            newGold: target.gold + data?.gold_receive,
+            newGold: target.gold + Number(data?.gold_receive),
           });
           await this.userService.update(old_session?.uid, {
             $inc: {
-              gold: +data?.gold_receive,
+              gold: +Number(data?.gold_receive),
             },
           });
         } else {

@@ -101,14 +101,14 @@ export class EventService {
 
       await this.userService.handleCreateUserActive({
         uid: target.id,
-        active: `Cược Server ${data.server} - ${data.result}`,
+        active: `Cược Server ${server} - ${result} - TV: ${Number(amount)}`,
         currentGold: target.gold,
-        newGold: target.gold - amount,
+        newGold: target.gold - Number(amount),
       });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
-          gold: -amount,
+          gold: -Number(amount),
         },
       });
       // let clansObj = JSON.parse(target?.clan);
@@ -209,14 +209,14 @@ export class EventService {
 
       await this.userService.handleCreateUserActive({
         uid: target.id,
-        active: `Cược Server ${data.server} - ${data.result}`,
+        active: `Cược Server ${server} - ${result} - TV:${Number(amount)}`,
         currentGold: target.gold,
-        newGold: target.gold - amount,
+        newGold: target.gold - Number(amount),
       });
       // Let minus gold of user
       await this.userService.update(uid, {
         $inc: {
-          gold: -amount,
+          gold: -Number(amount),
         },
       });
 
@@ -784,7 +784,7 @@ export class EventService {
   }
   //TODO ———————————————[Handler Mini game map boss]———————————————
 
-  async handleUpdateUserBet(id: any, uid: any, betId: any, data: any) {
+  async handleUpdateUserBet(id: any, uid: any, betId: any, data: UserBet) {
     const target = await this.userService.findById(uid);
     let clansObj = JSON.parse(target?.clan);
     // Check user has in the clan
@@ -800,25 +800,25 @@ export class EventService {
     }
   }
 
-  async handleTransactionUserBet(id: any, betId: any, data: any) {
+  async handleTransactionUserBet(id: any, betId: any, data: UserBet) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet}`,
+      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet} - TV Receive: ${Number(data?.receive)}`,
       currentGold: targetUser.gold,
-      newGold: targetUser.gold + data?.receive,
+      newGold: targetUser.gold + Number(data?.receive),
     });
     await this.userService.update(id, {
       $inc: {
-        gold: +data?.receive,
-        totalBet: +data?.receive,
-        limitedTrade: +data?.receive,
+        gold: +Number(data?.receive),
+        totalBet: +Number(data?.receive),
+        limitedTrade: +Number(data?.receive),
       },
     });
     await this.betLogService.update(betId, {
       $inc: {
-        sendOut: +data?.receive,
+        sendOut: +Number(data?.receive),
       },
     });
   }
@@ -935,7 +935,12 @@ export class EventService {
     return `${new_result}`;
   }
 
-  async handleUpdateUserBetWithBoss(id: any, uid: any, betId: any, data: any) {
+  async handleUpdateUserBetWithBoss(
+    id: any,
+    uid: any,
+    betId: any,
+    data: UserBet,
+  ) {
     const target = await this.userService.findById(uid);
     let clansObj = JSON.parse(target?.clan);
     // Check user has in the clan
@@ -947,29 +952,29 @@ export class EventService {
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
-      await this.handleTransactionUserBetWithBoss(uid, betId, data?.receive);
+      await this.handleTransactionUserBetWithBoss(uid, betId, data);
     }
   }
 
-  async handleTransactionUserBetWithBoss(id: any, betId: any, data: any) {
+  async handleTransactionUserBetWithBoss(id: any, betId: any, data: UserBet) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet}`,
+      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet} - TV Receive: ${data?.receive}`,
       currentGold: targetUser.gold,
-      newGold: targetUser.gold + data?.receive,
+      newGold: targetUser.gold + Number(data?.receive),
     });
     await this.userService.update(id, {
       $inc: {
-        gold: +data?.receive,
-        totalBet: +data?.receive,
-        limitedTrade: +data?.receive,
+        gold: +Number(data?.receive),
+        totalBet: +Number(data?.receive),
+        limitedTrade: +Number(data?.receive),
       },
     });
     await this.betLogService.updateSv(betId, {
       $inc: {
-        sendOut: +data?.receive,
+        sendOut: +Number(data?.receive),
       },
     });
   }
