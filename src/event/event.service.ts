@@ -627,7 +627,8 @@ export class EventService {
       // );
 
       const result = this.handleResultBet24(
-        result_target?.value ?? `${Math.floor(Math.random() * 100)}`,
+        result_target?.value ??
+          `${Math.floor(Math.random() * (99 - 0 + 1)) + 0}`,
       );
 
       let bet_data = {};
@@ -683,7 +684,7 @@ export class EventService {
             create_new_boss,
             create_new_sv,
           ]);
-          const result_new_sv = Math.floor(Math.random() * 100);
+          const result_new_sv = Math.floor(Math.random() * (99 - 0 + 1)) + 0;
           await this.eventRandomDrawModel.create({
             betId: res2.id,
             isEnd: false,
@@ -1046,7 +1047,8 @@ export class EventService {
         isEnd: false,
       });
       const result = this.handleResultBet24(
-        result_target?.value ?? `${Math.floor(Math.random() * 100)}`,
+        result_target?.value ??
+          `${Math.floor(Math.random() * (99 - 0 + 1)) + 0}`,
       );
 
       let new_bet = null;
@@ -1056,7 +1058,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(Math.random() * 100);
+        const result_new_sv = Math.floor(Math.random() * (99 - 0 + 1)) + 0;
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
@@ -1103,7 +1105,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(Math.random() * 100);
+        const result_new_sv = Math.floor(Math.random() * (99 - 0 + 1)) + 0;
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
