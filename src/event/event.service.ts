@@ -516,6 +516,7 @@ export class EventService {
         await this.handleUpdateUserBet(bet.id, bet.uid, betId, {
           server: bet.server,
           result: bet.result,
+          amount: bet.amount,
           resultBet: result,
           receive: bet.receive,
           isEnd: true,
@@ -806,7 +807,7 @@ export class EventService {
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet} - TV Receive: ${Number(data?.receive)}`,
+      active: `Thanh toán Cược Server ${data?.server} - Rs:${data?.result} - Rsb:${data?.resultBet} - TV:${data?.amount} - TV Receive: ${data?.receive}`,
       currentGold: targetUser.gold,
       newGold: targetUser.gold + Number(data?.receive),
     });
@@ -859,6 +860,7 @@ export class EventService {
         await this.handleUpdateUserBetWithBoss(bet.id, bet.uid, data?.betId, {
           server: bet.server,
           result: bet.result,
+          amount: bet.amount,
           resultBet: `${result}`,
           receive: bet.receive,
           isEnd: true,
@@ -958,7 +960,7 @@ export class EventService {
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - ${data?.result} - ${data?.resultBet} - TV Receive: ${data?.receive}`,
+      active: `Thanh toán Cược Server ${data?.server} - Rs:${data?.result} - Rsb:${data?.resultBet} - TV:${data?.amount} - TV Receive: ${data?.receive}`,
       currentGold: targetUser.gold,
       newGold: targetUser.gold + Number(data?.receive),
     });
