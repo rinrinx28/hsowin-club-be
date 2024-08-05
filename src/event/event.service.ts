@@ -646,6 +646,7 @@ export class EventService {
             timeEnd: this.addSeconds(current, 180),
             isEnd: false,
             result: ``,
+            timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
           });
           const [res1, res2] = await Promise.all([
             update_old_sv,
@@ -676,6 +677,7 @@ export class EventService {
           const create_new_sv = this.betLogService.createSv({
             server: `${server}-mini`,
             timeEnd: this.addSeconds(current, 180),
+            timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
           });
           const [res1, res2] = await Promise.all([
             create_new_boss,

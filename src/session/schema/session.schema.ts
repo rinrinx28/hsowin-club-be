@@ -22,6 +22,9 @@ export class Session {
   @Prop({ default: 0 })
   recive: number;
 
+  @Prop({ default: '' })
+  timeBoss: string;
+
   @Prop({ default: '0' })
   status: string;
 
