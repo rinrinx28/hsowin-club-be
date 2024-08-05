@@ -1052,7 +1052,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(1000 + Math.random() * 9000);
+        const result_new_sv = Math.floor(Math.random() * 100);
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
