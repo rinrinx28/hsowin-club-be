@@ -290,7 +290,7 @@ export class EventService {
 
   @OnEvent('value-bet-users')
   async valueBetUserSv(data: ValueBetUserSv) {
-    const parameter = `${data.server}-value-bet`; // Value will be lock
+    const parameter = `${data.server}-value-bet-users`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -322,8 +322,7 @@ export class EventService {
           } else {
             result_bet[split_res[0]] = amount;
           }
-        }
-        if (
+        } else if (
           ['1', '2', '3'].includes(data?.server) &&
           '01'.indexOf(result) > -1
         ) {
