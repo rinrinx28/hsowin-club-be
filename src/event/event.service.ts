@@ -122,7 +122,13 @@ export class EventService {
 
       await this.userService.handleCreateUserActive({
         uid: target.id,
-        active: `Cược Server ${server} - Rs: ${result} - TV: ${Number(amount)} - userBetId: ${betCreate.id}`,
+        active: JSON.stringify({
+          name: 'Cược',
+          server: server,
+          result: result,
+          amount: amount,
+          userBetId: betCreate.id,
+        }),
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
@@ -230,7 +236,13 @@ export class EventService {
 
       await this.userService.handleCreateUserActive({
         uid: target.id,
-        active: `Cược Server ${server} - Rs: ${result} - TV: ${Number(amount)} - userBetId: ${betCreate.id}`,
+        active: JSON.stringify({
+          name: 'Cược',
+          server: server,
+          result: result,
+          amount: amount,
+          userBetId: betCreate.id,
+        }),
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
@@ -394,7 +406,12 @@ export class EventService {
       const targetUser = await this.userService.findById(uid);
       await this.userService.handleCreateUserActive({
         uid: uid,
-        active: `Hủy Cược Server ${targetUserBetLog.server} - ${targetUserBetLog.result}`,
+        active: JSON.stringify({
+          name: 'Hủy Cược',
+          server: targetUserBetLog.server,
+          result: targetUserBetLog.result,
+          userBetId: userBetId,
+        }),
         currentGold: targetUser.gold,
         newGold: targetUser.gold + amount,
       });
@@ -463,7 +480,12 @@ export class EventService {
       const targetUser = await this.userService.findById(uid);
       await this.userService.handleCreateUserActive({
         uid: uid,
-        active: `Hủy Cược Server ${targetUserBetLog.server} - ${targetUserBetLog.result}`,
+        active: JSON.stringify({
+          name: 'Hủy Cược',
+          server: targetUserBetLog.server,
+          result: targetUserBetLog.result,
+          userBetId: userBetId,
+        }),
         currentGold: targetUser.gold,
         newGold: targetUser.gold + amount,
       });
@@ -801,16 +823,29 @@ export class EventService {
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
-      await this.handleTransactionUserBet(uid, betId, data);
+      await this.handleTransactionUserBet(uid, betId, data, id);
     }
   }
 
-  async handleTransactionUserBet(id: any, betId: any, data: any) {
+  async handleTransactionUserBet(
+    id: any,
+    betId: any,
+    data: any,
+    userBetId: any,
+  ) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - Rs:${data?.result} - Rsb:${data?.resultBet} - TV:${data?.amount} - TV Receive: ${data?.receive}`,
+      active: JSON.stringify({
+        name: 'Thanh toán Cược',
+        server: data?.server,
+        result: data?.result,
+        resultBet: data?.resultBet,
+        amount: data?.amount,
+        receive: data?.receive,
+        userBetId: userBetId,
+      }),
       currentGold: targetUser.gold,
       newGold: targetUser.gold + Number(data?.receive),
     });
@@ -954,16 +989,29 @@ export class EventService {
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
-      await this.handleTransactionUserBetWithBoss(uid, betId, data);
+      await this.handleTransactionUserBetWithBoss(uid, betId, data, id);
     }
   }
 
-  async handleTransactionUserBetWithBoss(id: any, betId: any, data: any) {
+  async handleTransactionUserBetWithBoss(
+    id: any,
+    betId: any,
+    data: any,
+    userBetId: any,
+  ) {
     // Update server data
     const targetUser = await this.userService.findById(id);
     await this.userService.handleCreateUserActive({
       uid: id,
-      active: `Thanh toán Cược Server ${data?.server} - Rs:${data?.result} - Rsb:${data?.resultBet} - TV:${data?.amount} - TV Receive: ${data?.receive}`,
+      active: JSON.stringify({
+        name: 'Thanh toán Cược',
+        server: data?.server,
+        result: data?.result,
+        resultBet: data?.resultBet,
+        amount: data?.amount,
+        receive: data?.receive,
+        userBetId: userBetId,
+      }),
       currentGold: targetUser.gold,
       newGold: targetUser.gold + Number(data?.receive),
     });
@@ -1250,7 +1298,12 @@ export class EventService {
           // Update server data
           await this.userService.handleCreateUserActive({
             uid: user.id,
-            active: `Giải thưởng top rank days`,
+            // active: `Giải thưởng top rank days`,
+            active: JSON.stringify({
+              name: 'rank days',
+              rank: i + 1,
+              prize: prize,
+            }),
             currentGold: user.gold,
             newGold: user.gold + prize,
           });
@@ -1452,7 +1505,10 @@ export class EventService {
       const user = await this.userService.findById(payload?.sub);
       await this.userService.handleCreateUserActive({
         uid: user.id,
-        active: `ChatBox: ${data.content}`,
+        active: JSON.stringify({
+          name: 'Chat',
+          content: data.content,
+        }),
         currentGold: user.gold,
         newGold: user.gold,
       });

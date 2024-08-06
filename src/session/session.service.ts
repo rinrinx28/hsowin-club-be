@@ -112,14 +112,20 @@ export class SessionService {
       if (body.type === '1') {
         await this.userService.handleCreateUserActive({
           uid: body.uid,
-          active: `Tạo Rút vàng SESSION: ${result.id}`,
+          active: JSON.stringify({
+            name: 'Tạo Rút vàng',
+            id: result.id,
+          }),
           currentGold: target.gold,
           newGold: target.gold - body?.amount,
         });
       } else {
         await this.userService.handleCreateUserActive({
           uid: body.uid,
-          active: `Tạo Nạp vàng SESSION: ${result.id}`,
+          active: JSON.stringify({
+            name: 'Tạo nạp vàng',
+            id: result.id,
+          }),
           currentGold: target.gold,
           newGold: target.gold,
         });
@@ -313,7 +319,10 @@ export class SessionService {
       const target = await this.userService.findById(bankInfo.uid);
       await this.userService.handleCreateUserActive({
         uid: bankInfo.uid,
-        active: `Nạp Bank orderId: ${id}`,
+        active: JSON.stringify({
+          name: 'Nạp bank',
+          id: bankInfo.id,
+        }),
         currentGold: target.gold,
         newGold: target.gold + bankInfo.amount * eventExchangGold.value,
       });

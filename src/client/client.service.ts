@@ -94,7 +94,10 @@ export class ClientService {
         if (old_session?.type === '1') {
           await this.userService.handleCreateUserActive({
             uid: old_session?.uid,
-            active: `Hủy Rút vàng SESSION: ${service_id}`,
+            active: JSON.stringify({
+              name: 'Hủy rút vàng',
+              id: service_id,
+            }),
             currentGold: target.gold,
             newGold: target.gold + Number(old_session?.amount),
           });
@@ -108,7 +111,10 @@ export class ClientService {
         } else {
           await this.userService.handleCreateUserActive({
             uid: old_session?.uid,
-            active: `Hủy Nạp vàng SESSION: ${service_id}`,
+            active: JSON.stringify({
+              name: 'Hủy nạp vàng',
+              id: service_id,
+            }),
             currentGold: target.gold,
             newGold: target.gold,
           });
@@ -137,8 +143,11 @@ export class ClientService {
         const target = await this.userService.findById(old_session?.uid);
         if (old_session?.type === '0') {
           await this.userService.handleCreateUserActive({
-            uid: old_session.uid,
-            active: `Nạp vàng Thành Công SESSION: ${old_session.id}`,
+            uid: target.id,
+            active: JSON.stringify({
+              name: 'Nạp vàng thành công',
+              id: service_id,
+            }),
             currentGold: target.gold,
             newGold: target.gold + Number(data?.gold_receive),
           });
@@ -149,8 +158,11 @@ export class ClientService {
           });
         } else {
           await this.userService.handleCreateUserActive({
-            uid: old_session.uid,
-            active: `Rút vàng Thành Công SESSION: ${old_session.id}`,
+            uid: target.id,
+            active: JSON.stringify({
+              name: 'Rút vàng thành công',
+              id: service_id,
+            }),
             currentGold: target.gold,
             newGold: target.gold,
           });
