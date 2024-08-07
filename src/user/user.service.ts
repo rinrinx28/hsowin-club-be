@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import {
   CreateClans,
@@ -9,9 +10,12 @@ import {
   CreateUserBetDto,
   CreateUserDto,
   CreateUserPrize,
+  CreateUserVip,
   Exchange,
   FindUserBetDto,
   MemberClans,
+  StopUserVip,
+  UpdateUserVip,
   UserBankWithDraw,
   UserBankWithDrawUpdate,
   UserTrade,
@@ -29,6 +33,8 @@ import { UserWithDraw } from './schema/userWithdraw';
 import { UserIp } from './schema/userIp.schema';
 import { UserPrize } from './schema/prize.schema';
 import { UserActive } from './schema/userActive';
+import { UserVip } from './schema/userVip.schema';
+import * as moment from 'moment';
 
 @Injectable()
 export class UserService {
@@ -49,7 +55,10 @@ export class UserService {
     private readonly userPrizeModel: Model<UserPrize>,
     @InjectModel(UserActive.name)
     private readonly userActiveModel: Model<UserActive>,
+    @InjectModel(UserVip.name)
+    private readonly userVipModel: Model<UserVip>,
   ) {}
+  private logger: Logger = new Logger('UserService');
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
     try {
@@ -391,9 +400,13 @@ export class UserService {
         uid: uid,
         status: '0',
       });
+      let gold = amount * (eventBankWithDraw?.value ?? 0.0062);
+      if (target.vip > 0)
+        throw new Error(`Xin lỗi, bạn phải đạt tối thiểu VIP 1 mới có thể rút`);
       if (old_order)
         throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
-      let gold = amount * (eventBankWithDraw?.value ?? 0.0062);
+      if (target.limitedTrade - gold < 0)
+        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
       if (target.gold - gold < 0)
         return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
 
@@ -404,7 +417,7 @@ export class UserService {
       });
       return await this.userWithDrawModel.create({ ...data, gold });
     } catch (err) {
-      throw new CatchException(err);
+      throw new BadRequestException(err.message);
     }
   }
 
@@ -533,5 +546,168 @@ export class UserService {
     } catch (err) {
       return err.message;
     }
+  }
+
+  //TODO ———————————————[Handle Vip]———————————————
+  async handleCreateUserVip(data: CreateUserVip) {
+    try {
+      return await this.userVipModel.create(data);
+    } catch (err) {}
+  }
+
+  async handleUpdateUserVip(uid: any, data: UpdateUserVip) {
+    try {
+      return await this.userVipModel
+        .findOneAndUpdate({ uid }, data, { new: true, upsert: true })
+        .exec();
+    } catch (err) {}
+  }
+
+  async handleStopUserVip(data: StopUserVip) {
+    try {
+      return await this.userVipModel
+        .findOneAndUpdate(
+          { uid: data.uid },
+          { isEnd: data.isEnd },
+          { new: true, upsert: true },
+        )
+        .exec();
+    } catch (err) {}
+  }
+
+  async handleFindUserVip(uid: any) {
+    try {
+      return await this.userVipModel.findOne({ uid });
+    } catch (err) {}
+  }
+
+  async handleClaimVip(uid: any, date: any) {
+    try {
+      const user = await this.userModel.findById(uid);
+      const e_rule_vip_claim =
+        await this.handleGetEventModel('e-rule-vip-claim');
+      const e_value_vip_claim =
+        await this.handleGetEventModel('e-value-vip-claim');
+      const rule_value_claim = JSON.parse(e_rule_vip_claim.option);
+      const value_claim = JSON.parse(e_value_vip_claim.option);
+      const targetVip = await this.handleFindUserVip(user.id);
+      if (!user) throw new Error('Không tìm thấy Người Chơi');
+      if (!targetVip || user.vip === 0)
+        throw new Error('Người chơi không có VIP');
+      const rule_value = rule_value_claim[user.vip - 1];
+      if (user.totalBet < rule_value)
+        throw new Error(
+          `Tổng cược chơi hôm nay của bạn phải đạt ${rule_value} thỏi vàng mới được điểm danh VIP`,
+        );
+      const list_date = JSON.parse(targetVip.data);
+      let new_data = [...list_date];
+      const find_date_claim = new_data?.find((d) => d.date === date);
+      if (!find_date_claim)
+        throw new Error(
+          'Đã xảy ra lỗi khi điểm danh VIP, xin vui lòng liên hệ fanpage',
+        );
+      if (find_date_claim?.isClaim) throw new Error('Hôm nay bạn đã điểm danh');
+      if (find_date_claim?.isNext)
+        throw new Error('Bạn không thể điểm danh bù');
+      const claim = value_claim[user.vip - 1];
+      // Update claim VIP
+      let indexClaimNow = new_data?.findIndex((d) => d.date === date);
+      new_data[indexClaimNow] = {
+        ...new_data[indexClaimNow],
+        isClaim: true,
+        isNext: true,
+      };
+      const newTargetVip = await this.userVipModel.findOneAndUpdate(
+        { uid },
+        {
+          data: JSON.stringify(new_data),
+        },
+        { new: true, upsert: true },
+      );
+
+      // Update user claim
+      const userTaget = await this.userModel.findByIdAndUpdate(
+        uid,
+        {
+          $inc: {
+            gold: +claim,
+          },
+        },
+        { new: true, upsert: true },
+      );
+
+      await this.handleCreateUserActive({
+        active: JSON.stringify({
+          name: 'CLAIM VIP',
+          value: claim,
+        }),
+        uid: uid,
+        currentGold: user.gold,
+        newGold: user.gold + claim,
+      });
+
+      let result_user = userTaget.toObject();
+      delete result_user.pwd_h;
+      return {
+        message: 'Bạn đã điểm danh thành công!',
+        data: {
+          user: result_user,
+          vip: newTargetVip,
+        },
+      };
+    } catch (err) {
+      this.logger.log(`${err.message} - ${uid}`);
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  handleGenVipClaim(timeStart: any, timeEnd: any) {
+    try {
+      let data = [];
+      let start = moment(timeStart, 'DD/MM/YYYY');
+      let end = moment(timeEnd, 'DD/MM/YYYY').endOf('day'); // Ensure end date includes the whole day
+
+      while (start.isBefore(end)) {
+        // Perform your actions with the current date
+        data.push({
+          date: start.format('DD/MM/YYYY'),
+          isClaim: false,
+          isNext: false,
+        });
+
+        // Increment the date by one day
+        start.add(1, 'days');
+      }
+
+      // Perform actions for the last day if necessary
+      if (start.isSame(end, 'day')) {
+        data.push({
+          date: start.format('DD/MM/YYYY'),
+          isClaim: false,
+          isNext: false,
+        });
+      }
+
+      // Do something with the data array
+      return data;
+    } catch (err) {}
+  }
+
+  findPosition(array: any, val: any) {
+    for (let i = 0; i < array.length - 1; i++) {
+      if (val >= array[i] && val < array[i + 1]) {
+        return i;
+      }
+    }
+    // Nếu giá trị lớn hơn tất cả các phần tử trong mảng
+    if (val >= array[array.length - 1]) {
+      return array.length - 1;
+    }
+    // Nếu giá trị nhỏ hơn tất cả các phần tử trong mảng
+    if (val < array[0]) {
+      return 0;
+    }
+    // Trường hợp giá trị không nằm trong phạm vi của mảng
+    return -1;
   }
 }

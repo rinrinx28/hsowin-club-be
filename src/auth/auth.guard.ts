@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new BadRequestException('Token không khớp', {
+      throw new BadRequestException('Mã xác thực không hợp lệ', {
         cause: new Error(),
         description: 'Xin vui lòng đăng nhập lại',
       });
@@ -33,7 +33,7 @@ export class AuthGuard implements CanActivate {
       });
       request['user'] = payload;
     } catch {
-      throw new BadRequestException('Token không khớp', {
+      throw new BadRequestException('Mã xác thực không hợp lệ', {
         cause: new Error(),
         description: 'Xin vui lòng đăng nhập lại',
       });

@@ -10,6 +10,7 @@ import { UserWithDraw, UserWithDrawSchema } from './schema/userWithdraw';
 import { UserIp, UserIpSchema } from './schema/userIp.schema';
 import { UserPrize, UserPrizeSchema } from './schema/prize.schema';
 import { UserActive, UserActiveSchema } from './schema/userActive';
+import { UserVip, UserVipSchema } from './schema/userVip.schema';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserActive, UserActiveSchema } from './schema/userActive';
       { name: UserIp.name, schema: UserIpSchema },
       { name: UserPrize.name, schema: UserPrizeSchema },
       { name: UserActive.name, schema: UserActiveSchema },
+      { name: UserVip.name, schema: UserVipSchema },
     ]),
   ],
   controllers: [UserController],

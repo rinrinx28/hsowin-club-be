@@ -326,9 +326,71 @@ export class SessionService {
         currentGold: target.gold,
         newGold: target.gold + bankInfo.amount * eventExchangGold.value,
       });
+
+      // Check vip
+      const e_value_vip =
+        await this.userService.handleGetEventModel('e-value-vip');
+      const value_vip = JSON.parse(e_value_vip.option);
+      const targetBank = target.totalBank + bankInfo.amount;
+      // Find Level VIP 0 - 6 ( 1 - 7 )
+      const targetVip = this.userService.findPosition(value_vip, targetBank);
+      // Set Level VIP
+      let start_data = moment();
+      let end_data = moment().add(1, 'month');
+      let data = this.userService.handleGenVipClaim(start_data, end_data);
+      // Update Level VIP
+      await this.userService.update(bankInfo.uid, {
+        vip: targetVip + 1,
+      });
+      // Check OLD VIP in user
+      if (target.vip !== 0 && target.vip !== targetVip + 1) {
+        await this.userService.handleCreateUserActive({
+          uid: bankInfo.uid,
+          active: JSON.stringify({
+            name: 'VIP Upgrade',
+            currentVip: target.vip,
+            newVip: targetVip + 1,
+          }),
+          currentGold: target.gold,
+          newGold: target.gold,
+        });
+      } else {
+        // Check Old VIP in db
+        const old_targetVip = await this.userService.handleFindUserVip(
+          bankInfo.uid,
+        );
+        if (!old_targetVip) {
+          // Create new VIP in db
+          await this.userService.handleCreateUserVip({
+            data: JSON.stringify(data),
+            timeEnd: end_data,
+            uid: bankInfo.uid,
+          });
+        } else {
+          // Update VIP in db
+          await this.userService.handleUpdateUserVip(bankInfo.uid, {
+            data: JSON.stringify(data),
+            timeEnd: end_data,
+            isEnd: false,
+          });
+        }
+
+        await this.userService.handleCreateUserActive({
+          uid: bankInfo.uid,
+          active: JSON.stringify({
+            name: 'Set VIP',
+            currentVip: target.vip,
+            newVip: targetVip + 1,
+          }),
+          currentGold: target.gold,
+          newGold: target.gold,
+        });
+      }
+
       await this.userService.update(bankInfo.uid, {
         $inc: {
           gold: +bankInfo.amount * eventExchangGold.value,
+          totalBank: +bankInfo.amount,
         },
       });
       await this.bankModel.findOneAndUpdate(

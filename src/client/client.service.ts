@@ -189,8 +189,6 @@ export class ClientService {
         data?.data?.paymentLinkId,
         '1',
       );
-    } catch (err) {
-      // throw new CatchException(err);
-    }
+    } catch (err) {}
   }
 }

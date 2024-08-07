@@ -85,3 +85,29 @@ export class CreateUserActive {
   newGold: number;
   active: string;
 }
+
+export class CreateUserVip {
+  uid: string;
+  timeEnd: any;
+  data: string;
+}
+
+export class UpdateUserVip {
+  timeEnd?: any;
+  data?: string;
+  isEnd?: boolean;
+}
+
+export class StopUserVip {
+  uid: string;
+  isEnd: boolean;
+}
+
+interface userVip {
+  uid: string;
+  totalBank: number;
+}
+
+export class SetVip {
+  data: userVip[];
+}

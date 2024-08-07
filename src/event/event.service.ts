@@ -804,7 +804,6 @@ export class EventService {
       return;
     } catch (err) {
       this.logger.log(`Boss Status: ${err.message} - Server: ${data?.server}`);
-      throw new CatchException(err);
     } finally {
       release();
     }
@@ -1284,6 +1283,7 @@ export class EventService {
       let e_rule_rank_days =
         await this.userService.handleGetEventModel('e-rule-rank-days');
       let arr = JSON.parse(e_auto_rank_days.option);
+      let now = moment();
       const topUser = await this.userService.getTopUserBet();
       for (let i = 0; i < topUser.length; i++) {
         let user = topUser[i];
@@ -1323,6 +1323,35 @@ export class EventService {
             gold: +prize,
           },
         });
+
+        // Check VIP is expired
+        const targetVip = await this.userService.handleFindUserVip(user.id);
+        if (targetVip && targetVip.isEnd) {
+          if (now.isAfter(moment(targetVip.timeEnd).endOf('day'))) {
+            // Reset VIP User
+            await this.userService.update(user.id, {
+              vip: 0,
+              totalBank: 0,
+            });
+            await this.userService.handleStopUserVip({
+              isEnd: true,
+              uid: user.id,
+            });
+          } else {
+            //
+            let new_data = JSON.parse(targetVip.data);
+            let find_index_data_now = new_data?.findIndex(
+              (d) => d.date === now.add(-1, 'day').format('DD/MM/YYYY'),
+            );
+            new_data[find_index_data_now] = {
+              ...new_data[find_index_data_now],
+              isNext: true,
+            };
+            await this.userService.handleUpdateUserVip(user.id, {
+              data: JSON.stringify(new_data),
+            });
+          }
+        }
       }
     } catch (err) {
       // throw new CatchException(err);

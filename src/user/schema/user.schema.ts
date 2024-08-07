@@ -55,6 +55,15 @@ export class User {
   @Prop({ default: '' })
   avatar: string;
 
+  @Prop({ default: '0' })
+  type: string;
+
+  @Prop({ default: 0 })
+  vip: number;
+
+  @Prop({ default: 0 })
+  totalBank: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

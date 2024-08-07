@@ -16,11 +16,13 @@ import {
   CreateUserDto,
   Exchange,
   MemberClans,
+  SetVip,
   UserBankWithDraw,
   UserTrade,
 } from './dto/user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateEvent } from 'src/event/dto/event.dto';
+import * as moment from 'moment';
 
 @Controller('user')
 export class UserController {
@@ -145,5 +147,65 @@ export class UserController {
   @Get('/config')
   async handleUserEventConfig() {
     return await this.userService.handleGetEventModels({});
+  }
+
+  //TODO ———————————————[Handle VIP Claim]———————————————
+  @Post('/vip/claim')
+  @UseGuards(AuthGuard)
+  async handleClaimVip(@Req() req: any) {
+    const user = req.user;
+    const now = moment().format('DD/MM/YYYY');
+    return await this.userService.handleClaimVip(user.sub, now);
+  }
+
+  @Get('/vip/info')
+  @UseGuards(AuthGuard)
+  async handleGetUserInfoVip(@Req() req: any) {
+    const user = req.user;
+    const targetVip = await this.userService.handleFindUserVip(user.sub);
+    return targetVip ?? {};
+  }
+
+  //TODO ———————————————[Handle Test API]———————————————
+  @Post('/set/vip')
+  async handleGenVipClaim(@Body() data: SetVip) {
+    // Check vip
+    const e_value_vip =
+      await this.userService.handleGetEventModel('e-value-vip');
+    const value_vip = JSON.parse(e_value_vip.option);
+    for (const vip of data.data) {
+      const targetBank = vip.totalBank;
+      // Find Level VIP 0 - 6 ( 1 - 7 )
+      const targetVip = this.userService.findPosition(value_vip, targetBank);
+      // Set Level VIP
+      let start_data = moment();
+      let end_data = moment().add(1, 'month');
+      let data = this.userService.handleGenVipClaim(start_data, end_data);
+
+      // Update Level VIP
+      await this.userService.update(vip.uid, {
+        vip: targetVip + 1,
+        totalBank: targetBank,
+      });
+
+      // Check Old VIP in db
+      const old_targetVip = await this.userService.handleFindUserVip(vip.uid);
+      if (!old_targetVip) {
+        // Create new VIP in db
+        await this.userService.handleCreateUserVip({
+          data: JSON.stringify(data),
+          timeEnd: end_data,
+          uid: vip.uid,
+        });
+      } else {
+        // Update VIP in db
+        await this.userService.handleUpdateUserVip(vip.uid, {
+          data: JSON.stringify(data),
+          timeEnd: end_data,
+          isEnd: false,
+        });
+      }
+    }
+    return 'ok';
   }
 }
