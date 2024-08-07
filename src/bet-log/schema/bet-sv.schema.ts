@@ -25,6 +25,9 @@ export class BetServer {
   @Prop()
   server: string;
 
+  @Prop({ default: '' })
+  timeBoss?: string;
+
   @Prop()
   timeEnd: Date;
 

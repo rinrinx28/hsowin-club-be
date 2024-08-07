@@ -309,6 +309,9 @@ export class SessionService {
     const eventExchangGold = await this.eventModel.findOne({
       name: 'e-bank-gold',
     });
+    const e_value_diamom_claim = await this.eventModel.findOne({
+      name: 'e-value-diamon-claim',
+    });
     const bankInfo = await this.bankModel.findOneAndUpdate(
       { orderId: id },
       { status },
@@ -391,6 +394,7 @@ export class SessionService {
         $inc: {
           gold: +bankInfo.amount * eventExchangGold.value,
           totalBank: +bankInfo.amount,
+          diamon: +e_value_diamom_claim.value * bankInfo.amount,
         },
       });
       await this.bankModel.findOneAndUpdate(

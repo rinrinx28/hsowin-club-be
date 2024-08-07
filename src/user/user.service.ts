@@ -601,7 +601,9 @@ export class UserService {
         );
       const list_date = JSON.parse(targetVip.data);
       let new_data = [...list_date];
-      const find_date_claim = new_data?.find((d) => d.date === date);
+      const find_date_claim = new_data?.find((d) =>
+        moment(d.date).isSame(moment(date)),
+      );
       if (!find_date_claim)
         throw new Error(
           'Đã xảy ra lỗi khi điểm danh VIP, xin vui lòng liên hệ fanpage',
@@ -654,6 +656,7 @@ export class UserService {
           user: result_user,
           vip: newTargetVip,
         },
+        status: 200,
       };
     } catch (err) {
       this.logger.log(`${err.message} - ${uid}`);
@@ -664,15 +667,16 @@ export class UserService {
   handleGenVipClaim(timeStart: any, timeEnd: any) {
     try {
       let data = [];
-      let start = moment(timeStart, 'DD/MM/YYYY');
-      let end = moment(timeEnd, 'DD/MM/YYYY').endOf('day'); // Ensure end date includes the whole day
+      let start = moment(timeStart);
+      let end = moment(timeEnd).endOf('day'); // Ensure end date includes the whole day
 
       while (start.isBefore(end)) {
         // Perform your actions with the current date
         data.push({
-          date: start.format('DD/MM/YYYY'),
+          date: moment(start),
           isClaim: false,
           isNext: false,
+          isCancel: false,
         });
 
         // Increment the date by one day
@@ -682,7 +686,7 @@ export class UserService {
       // Perform actions for the last day if necessary
       if (start.isSame(end, 'day')) {
         data.push({
-          date: start.format('DD/MM/YYYY'),
+          date: moment(start),
           isClaim: false,
           isNext: false,
         });
@@ -704,9 +708,9 @@ export class UserService {
       return array.length - 1;
     }
     // Nếu giá trị nhỏ hơn tất cả các phần tử trong mảng
-    if (val < array[0]) {
-      return 0;
-    }
+    // if (val < array[0]) {
+    //   return 0;
+    // }
     // Trường hợp giá trị không nằm trong phạm vi của mảng
     return -1;
   }

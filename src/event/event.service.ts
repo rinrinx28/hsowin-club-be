@@ -34,6 +34,7 @@ import { EventRandom } from './schema/eventRandom';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from 'src/auth/constants';
 import seedrandom from 'seedrandom';
+import { CreateUserActive } from 'src/user/dto/user.dto';
 
 @Injectable()
 export class EventService {
@@ -1296,7 +1297,7 @@ export class EventService {
           prize = arr[i];
 
           // Update server data
-          await this.userService.handleCreateUserActive({
+          await this.handleCreateUserActive({
             uid: user.id,
             // active: `Giải thưởng top rank days`,
             active: JSON.stringify({
@@ -1315,18 +1316,10 @@ export class EventService {
             username: user.username,
           });
         }
-        await this.userService.update(user.id, {
-          totalBet: 0,
-          limitedTrade: 0,
-          trade: 0,
-          $inc: {
-            gold: +prize,
-          },
-        });
 
         // Check VIP is expired
         const targetVip = await this.userService.handleFindUserVip(user.id);
-        if (targetVip && targetVip.isEnd) {
+        if (targetVip && !targetVip.isEnd) {
           if (now.isAfter(moment(targetVip.timeEnd).endOf('day'))) {
             // Reset VIP User
             await this.userService.update(user.id, {
@@ -1337,21 +1330,70 @@ export class EventService {
               isEnd: true,
               uid: user.id,
             });
+
+            // Update server data
+            await this.handleCreateUserActive({
+              uid: user.id,
+              active: JSON.stringify({
+                name: 'Reset VIP',
+                date: moment(),
+              }),
+              currentGold: user.gold,
+              newGold: user.gold,
+            });
           } else {
             //
             let new_data = JSON.parse(targetVip.data);
             let find_index_data_now = new_data?.findIndex(
-              (d) => d.date === now.add(-1, 'day').format('DD/MM/YYYY'),
+              (d: any) => d.date === now.add(-1, 'day').format('DD/MM/YYYY'),
             );
-            new_data[find_index_data_now] = {
-              ...new_data[find_index_data_now],
-              isNext: true,
-            };
-            await this.userService.handleUpdateUserVip(user.id, {
-              data: JSON.stringify(new_data),
-            });
+            let find_isCancel = new_data?.reduce(
+              (a: any, b: any) => a + (b?.isCancel ? 1 : 0),
+              0,
+            );
+            if (find_isCancel >= 7) {
+              // Reset VIP User
+              await this.userService.update(user.id, {
+                vip: 0,
+                totalBank: 0,
+              });
+              await this.userService.handleStopUserVip({
+                isEnd: true,
+                uid: user.id,
+              });
+
+              // Update server data
+              await this.handleCreateUserActive({
+                uid: user.id,
+                active: JSON.stringify({
+                  name: 'Reset VIP',
+                  date: moment(),
+                }),
+                currentGold: user.gold,
+                newGold: user.gold,
+              });
+            } else {
+              new_data[find_index_data_now] = {
+                ...new_data[find_index_data_now],
+                isNext: true,
+                isCancel: user?.totalBet > 0 ? false : true,
+              };
+              await this.userService.handleUpdateUserVip(user.id, {
+                data: JSON.stringify(new_data),
+              });
+            }
           }
         }
+
+        // Update user totalBet and limited Trade
+        await this.userService.update(user.id, {
+          totalBet: 0,
+          limitedTrade: 0,
+          trade: 0,
+          $inc: {
+            gold: +prize,
+          },
+        });
       }
     } catch (err) {
       // throw new CatchException(err);
@@ -1546,7 +1588,7 @@ export class EventService {
         content: data.content,
         server: data.server,
         username: user?.name ?? user?.username,
-        meta: JSON.stringify({ avatar: user?.avatar }),
+        meta: JSON.stringify({ avatar: user?.avatar, vip: user?.vip }),
       });
       this.socketGateway.server.emit('message-user-re', { status: true, msg });
     } catch (err) {
@@ -1557,6 +1599,10 @@ export class EventService {
     } finally {
       release();
     }
+  }
+
+  async handleCreateUserActive(data: CreateUserActive) {
+    return await this.userService.handleCreateUserActive(data);
   }
 }
 

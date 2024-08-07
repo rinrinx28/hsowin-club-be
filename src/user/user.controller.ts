@@ -152,10 +152,15 @@ export class UserController {
   //TODO ———————————————[Handle VIP Claim]———————————————
   @Post('/vip/claim')
   @UseGuards(AuthGuard)
-  async handleClaimVip(@Req() req: any) {
+  async handleClaimVip(@Req() req: any, @Body() data: any) {
     const user = req.user;
-    const now = moment().format('DD/MM/YYYY');
-    return await this.userService.handleClaimVip(user.sub, now);
+    const now = moment();
+    const date = data.date;
+    if (now.isBefore(moment(date)))
+      throw new BadRequestException(
+        'Xin lỗi bạn không thể điểm danh cho ngày khác',
+      );
+    return await this.userService.handleClaimVip(user.sub, date);
   }
 
   @Get('/vip/info')
@@ -179,31 +184,38 @@ export class UserController {
       const targetVip = this.userService.findPosition(value_vip, targetBank);
       // Set Level VIP
       let start_data = moment();
-      let end_data = moment().add(1, 'month');
-      let data = this.userService.handleGenVipClaim(start_data, end_data);
+      let end_data = moment().add(30, 'days');
+      let data_vip = this.userService.handleGenVipClaim(start_data, end_data);
 
-      // Update Level VIP
-      await this.userService.update(vip.uid, {
-        vip: targetVip + 1,
-        totalBank: targetBank,
-      });
+      let targetUser = await this.userService.findById(vip.uid);
+      if (targetUser) {
+        // Update Level VIP
+        await this.userService.update(vip.uid, {
+          vip: targetVip + 1,
+          totalBank: targetBank,
+        });
 
-      // Check Old VIP in db
-      const old_targetVip = await this.userService.handleFindUserVip(vip.uid);
-      if (!old_targetVip) {
-        // Create new VIP in db
-        await this.userService.handleCreateUserVip({
-          data: JSON.stringify(data),
-          timeEnd: end_data,
-          uid: vip.uid,
-        });
-      } else {
-        // Update VIP in db
-        await this.userService.handleUpdateUserVip(vip.uid, {
-          data: JSON.stringify(data),
-          timeEnd: end_data,
-          isEnd: false,
-        });
+        // Check Old VIP in db
+        if (targetVip + 1 > 0) {
+          const old_targetVip = await this.userService.handleFindUserVip(
+            vip.uid,
+          );
+          if (!old_targetVip) {
+            // Create new VIP in db
+            await this.userService.handleCreateUserVip({
+              data: JSON.stringify(data_vip),
+              timeEnd: end_data,
+              uid: vip.uid,
+            });
+          } else {
+            // Update VIP in db
+            await this.userService.handleUpdateUserVip(vip.uid, {
+              data: JSON.stringify(data_vip),
+              timeEnd: end_data,
+              isEnd: false,
+            });
+          }
+        }
       }
     }
     return 'ok';
