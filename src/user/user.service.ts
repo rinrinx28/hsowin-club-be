@@ -401,7 +401,7 @@ export class UserService {
         status: '0',
       });
       let gold = amount * (eventBankWithDraw?.value ?? 0.0062);
-      if (target.vip > 0)
+      if (target.vip < 1)
         throw new Error(`Xin lỗi, bạn phải đạt tối thiểu VIP 1 mới có thể rút`);
       if (old_order)
         throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
