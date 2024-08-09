@@ -14,8 +14,8 @@ async function bootstrap() {
   const allowedOrigins = ['https://hsowin.vip'];
 
   app.enableCors({
-    origin: allowedOrigins,
-    // credentials: true,
+    origin: 'https://hsowin.vip',
+    credentials: true,
   });
 
   app.useGlobalFilters(new ValidationFilter());
