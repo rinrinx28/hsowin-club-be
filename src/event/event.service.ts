@@ -1096,7 +1096,7 @@ export class EventService {
       });
       const result = this.handleResultBet24(
         result_target?.value ??
-          `${Math.floor(Math.random() * (99 - 0 + 1)) + 0}`,
+          `${Math.floor(Math.random() * (98 - 0 + 1)) + 0}`,
       );
 
       let new_bet = null;
@@ -1106,7 +1106,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(Math.random() * (99 - 0 + 1)) + 0;
+        const result_new_sv = Math.floor(Math.random() * (98 - 0 + 1)) + 0;
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,
@@ -1115,13 +1115,13 @@ export class EventService {
         });
       } else {
         // Check if the result is jack pot
-        if (result.includes('99')) {
-          await this.handleJackPotServerAuto({
-            betId: old_bet?.id,
-            result: result,
-            server: `24`,
-          });
-        }
+        // if (result.includes('99')) {
+        //   await this.handleJackPotServerAuto({
+        //     betId: old_bet?.id,
+        //     result: result,
+        //     server: `24`,
+        //   });
+        // }
 
         // Send result for user bet the sv
         await this.handleResultServerWithBoss({
@@ -1153,7 +1153,7 @@ export class EventService {
           server: '24',
           timeEnd: this.addSeconds(now, 60),
         });
-        const result_new_sv = Math.floor(Math.random() * (99 - 0 + 1)) + 0;
+        const result_new_sv = Math.floor(Math.random() * (98 - 0 + 1)) + 0;
         await this.eventRandomDrawModel.create({
           betId: res2.id,
           isEnd: false,

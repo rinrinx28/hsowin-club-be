@@ -599,10 +599,14 @@ export class UserService {
         throw new Error(
           `Tổng cược chơi hôm nay của bạn phải đạt ${rule_value} thỏi vàng mới được điểm danh VIP`,
         );
+      const currentNow = moment().format('DD/MM/YYYY');
+      const dateMoment = moment(date).format('DD/MM/YYYY');
+      if (currentNow !== dateMoment)
+        throw new Error('Bạn không thể điểm danh bù');
       const list_date = JSON.parse(targetVip.data);
       let new_data = [...list_date];
-      const find_date_claim = new_data?.find((d) =>
-        moment(d.date).isSame(moment(date)),
+      const find_date_claim = new_data?.find(
+        (d) => moment(d.date).format('DD/MM/YYYY') === dateMoment,
       );
       if (!find_date_claim)
         throw new Error(
@@ -651,7 +655,7 @@ export class UserService {
       let result_user = userTaget.toObject();
       delete result_user.pwd_h;
       return {
-        message: 'Bạn đã điểm danh thành công!',
+        message: `Bạn đã điểm danh thành công và được nhận ${claim} thỏi vàng từ VIP ${user.vip}`,
         data: {
           user: result_user,
           vip: newTargetVip,
