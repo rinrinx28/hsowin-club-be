@@ -13,13 +13,19 @@ async function bootstrap() {
   // Define an array of allowed origins
   const allowedOrigins = [
     // 'http://localhost:3000',
-    'http://localhost',
+    // 'http://localhost',
     'https://hsowin.vip',
     'https://www.hsowin.vip',
   ];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
