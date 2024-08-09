@@ -18,8 +18,9 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: allowedOrigins,
-    // credentials: true,
+    origin: 'https://hsowin.vip', // Replace with your allowed origin
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
   });
 
   app.useGlobalFilters(new ValidationFilter());
