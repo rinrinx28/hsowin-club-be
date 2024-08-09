@@ -593,7 +593,7 @@ export class UserService {
       const targetVip = await this.handleFindUserVip(user.id);
       if (!user) throw new Error('Không tìm thấy Người Chơi');
       if (!targetVip || user.vip === 0)
-        throw new Error('Người chơi không có VIP');
+        throw new Error('Người chơi phải đạt ít nhất là VIP 1');
       const rule_value = rule_value_claim[user.vip - 1];
       if (user.totalBet < rule_value)
         throw new Error(

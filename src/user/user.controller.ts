@@ -184,7 +184,7 @@ export class UserController {
       const targetVip = this.userService.findPosition(value_vip, targetBank);
       // Set Level VIP
       let start_data = moment();
-      let end_data = moment().add(30, 'days');
+      let end_data = moment().add(29, 'days');
       let data_vip = this.userService.handleGenVipClaim(start_data, end_data);
 
       let targetUser = await this.userService.findById(vip.uid);

@@ -233,6 +233,10 @@ export class SessionService {
       const { amount, uid } = data;
       const eventOrderBank =
         await this.userService.handleGetEventModel('e-order-bank');
+      const e_auto_bank =
+        await this.userService.handleGetEventModel('e-auto-bank');
+      if (e_auto_bank.status)
+        throw new Error('Xin lỗi bạn, hệ thống bank hiện tại đang bảo trì!');
       const old_order = await this.bankModel.findOne({ uid: uid, status: '0' });
       if (old_order)
         throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
