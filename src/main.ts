@@ -7,16 +7,15 @@ import { UtilCommonTemplate } from './common/ultis/utils.common';
 import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const logger = new Logger('AppLogger');
-
-  // Define an array of allowed origins
+  // // Define an array of allowed origins
   const allowedOrigins = ['https://hsowin.vip'];
-
-  app.enableCors({
-    origin: 'https://hsowin.vip',
-    credentials: true,
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      credentials: true,
+      origin: allowedOrigins,
+    },
   });
+  const logger = new Logger('AppLogger');
 
   app.useGlobalFilters(new ValidationFilter());
   app.useGlobalPipes(
