@@ -8,11 +8,10 @@ import { ValidationError } from 'class-validator';
 
 async function bootstrap() {
   // // Define an array of allowed origins
-  const allowedOrigins = ['https://hsowin.vip'];
   const app = await NestFactory.create(AppModule, {
     cors: {
       credentials: true,
-      origin: allowedOrigins,
+      origin: ['https://hsowin.vip', '*'],
     },
   });
   const logger = new Logger('AppLogger');
