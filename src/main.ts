@@ -18,9 +18,16 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: 'https://hsowin.vip', // Replace with your allowed origin
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Authorization',
+    origin: function (origin, callback) {
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        console.log('allowed cors for:', origin);
+        callback(null, true);
+      } else {
+        console.log('blocked cors for:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
   });
 
   app.useGlobalFilters(new ValidationFilter());
