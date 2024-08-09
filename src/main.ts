@@ -18,15 +18,8 @@ async function bootstrap() {
   ];
 
   app.enableCors({
-    origin: (origin, callback) => {
-      console.log(origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
+    origin: allowedOrigins,
+    // credentials: true,
   });
 
   app.useGlobalFilters(new ValidationFilter());
