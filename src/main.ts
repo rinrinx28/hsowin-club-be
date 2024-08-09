@@ -26,7 +26,7 @@ async function bootstrap() {
         callback(new Error('Not allowed by CORS'));
       }
     },
-    credentials: true,
+    // credentials: true,
   });
 
   app.useGlobalFilters(new ValidationFilter());

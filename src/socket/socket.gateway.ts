@@ -22,7 +22,7 @@ import {
   cors: {
     origin: [
       // 'http://localhost:3000',
-      'http://localhost',
+      // 'http://localhost',
       'https://hsowin.vip',
       'https://www.hsowin.vip',
     ],
