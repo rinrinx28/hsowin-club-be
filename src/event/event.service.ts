@@ -133,14 +133,14 @@ export class EventService {
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
-      // let new_resultUser = bet_session.resultUser ?? '{}';
-      // new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) + amount;
+      let new_resultUser = JSON.parse(bet_session.resultUser ?? '{}');
+      new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) + amount;
       // Let update sendIn The bet
       const e_mainBet = await this.betLogService.update(betId, {
         $inc: {
           sendIn: +amount,
         },
-        // resultUser: JSON.stringify(new_resultUser),
+        resultUser: JSON.stringify(new_resultUser),
       });
       const msg = this.handleMessageResult({
         message: 'Tham gia cược thành công',
@@ -163,6 +163,7 @@ export class EventService {
       this.socketGateway.server.emit('mainBet-up', e_mainBet);
       return msg;
     } catch (err) {
+      console.log(err);
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
@@ -250,22 +251,22 @@ export class EventService {
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
-      let new_resultUser = bet_session.resultUser ?? '{}';
+      let new_resultUser = JSON.parse(bet_session.resultUser ?? '{}');
       if ('CTCXLTLX'.indexOf(result) > -1) {
         this.socketGateway.server.emit('value-bet-user-re', {
           status: true,
           data: { result, amount, server, betId },
         });
-        // let res = result.toLowerCase();
-        // // XIEN
-        // if (result.length === 2) {
-        //   for (const str of res) {
-        //     new_resultUser[str] = (new_resultUser[str] ?? 0) + amount / 2;
-        //   }
-        // } else {
-        //   // CLTX
-        //   new_resultUser[res] = (new_resultUser[res] ?? 0) + amount;
-        // }
+        let res = result.toLowerCase();
+        // XIEN
+        if (result.length === 2) {
+          for (const str of res) {
+            new_resultUser[str] = (new_resultUser[str] ?? 0) + amount / 2;
+          }
+        } else {
+          // CLTX
+          new_resultUser[res] = (new_resultUser[res] ?? 0) + amount;
+        }
       }
       // Let update sendIn The bet
       const e_mainBet = await this.betLogService.updateSv(betId, {
@@ -609,7 +610,7 @@ export class EventService {
   //TODO ———————————————[Handle Status Boss]———————————————
   @OnEvent('status-boss')
   async handleStatusBoss(data: StatusBoss) {
-    const parameter = `${data.server}-status-boss`; // Value will be lock
+    const parameter = `${data.server}-status-boss-server`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -628,7 +629,7 @@ export class EventService {
       if (old_server_update) {
         let now = moment().unix();
         let current_update = moment(old_server_update.updatedAt).unix();
-        if (now - current_update < 5) {
+        if (now - current_update < 10) {
           throw new Error('Spam');
         }
       }
