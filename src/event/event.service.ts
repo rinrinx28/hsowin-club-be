@@ -1353,6 +1353,9 @@ export class EventService {
             uid: user.id,
             username: user.username,
           });
+          await this.handleMessageSystemNoti(
+            `Chúc mừng người chơi ${user.name} đã đạt TOP ${i + 1} Ranks Days với giải thưởng là ${prize} thỏi vàng`,
+          );
         }
 
         // Check VIP is expired
@@ -1574,6 +1577,21 @@ export class EventService {
     });
     // save message
     await this.messageService.MessageCreate({ uid: '', content: data, server });
+  }
+
+  @OnEvent('noti-system')
+  async handleMessageSystemNoti(data: string) {
+    this.socketGateway.server.emit('noti-system', {
+      uid: '',
+      content: data,
+      server: 'all',
+    });
+    // save message
+    await this.messageService.MessageCreate({
+      uid: '',
+      content: data,
+      server: 'all',
+    });
   }
 
   //TODO ———————————————[handle result data bet]———————————————
