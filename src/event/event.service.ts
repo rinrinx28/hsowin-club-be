@@ -61,7 +61,7 @@ export class EventService {
 
   @OnEvent('bet-user-ce-boss')
   async handleBetUser(data: CreateUserBet) {
-    const parameter = `${data.uid}-bet-user-ce-boss`; // Value will be lock
+    const parameter = `${data.server}-bet-user-ce-boss`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -177,7 +177,7 @@ export class EventService {
 
   @OnEvent('bet-user-ce-sv')
   async handleBetSvAuto(data: CreateUserBet) {
-    const parameter = `${data.uid}-bet-user-ce-sv`; // Value will be lock
+    const parameter = `${data.server}-bet-user-ce-sv`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
