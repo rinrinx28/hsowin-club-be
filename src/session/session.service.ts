@@ -71,7 +71,9 @@ export class SessionService {
         .exec();
       // old session has exist > return error BadRequest
       if (old_session)
-        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
+        throw new Error(
+          `Bạn vui lòng hoàn thành đơn ${body.type === '1' ? 'rút' : 'nạp'} trước đó!`,
+        );
 
       const target = await this.userService.findById(body.uid);
       if (body.type === '1' && target.limitedTrade - body.amount < 0)
@@ -239,7 +241,7 @@ export class SessionService {
         throw new Error('Xin lỗi bạn, hệ thống bank hiện tại đang bảo trì!');
       const old_order = await this.bankModel.findOne({ uid: uid, status: '0' });
       if (old_order)
-        throw new Error('Phiên trước chưa kết thúc, xin vui lòng kiểm tra lại');
+        throw new Error('Bạn vui lòng hoàn thành đơn nạp trước đó!');
       let now = moment();
       let exp = now.add(15, 'minutes');
       const sign = {
