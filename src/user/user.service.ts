@@ -35,6 +35,7 @@ import { UserPrize } from './schema/prize.schema';
 import { UserActive } from './schema/userActive';
 import { UserVip } from './schema/userVip.schema';
 import * as moment from 'moment';
+import { Mutex } from 'async-mutex';
 
 @Injectable()
 export class UserService {
@@ -59,6 +60,7 @@ export class UserService {
     private readonly userVipModel: Model<UserVip>,
   ) {}
   private logger: Logger = new Logger('UserService');
+  private readonly mutexMap = new Map<string, Mutex>();
   //TODO ———————————————[User Model]———————————————
   async create(createUserDto: CreateUserDto) {
     try {
@@ -582,6 +584,15 @@ export class UserService {
   }
 
   async handleClaimVip(uid: any, date: any) {
+    const parameter = `user-claim-vip`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const user = await this.userModel.findById(uid);
       const e_rule_vip_claim =
@@ -665,6 +676,8 @@ export class UserService {
     } catch (err) {
       this.logger.log(`${err.message} - ${uid}`);
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
