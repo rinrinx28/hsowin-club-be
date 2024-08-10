@@ -22,6 +22,9 @@ export class BetLog {
   @Prop({ default: false })
   isEnd: boolean;
 
+  @Prop({ default: '{}' })
+  resultUser?: string;
+
   @Prop()
   server: string;
 

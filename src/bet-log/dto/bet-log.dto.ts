@@ -2,6 +2,7 @@ export class CreateBetLogDto {
   server: string;
   timeEnd: Date;
   timeBoss?: string;
+  resultUser?: string;
 }
 
 export class CreateBetHistory {

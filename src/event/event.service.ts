@@ -133,12 +133,14 @@ export class EventService {
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
-
+      let new_resultUser = bet_session.resultUser ?? '{}';
+      new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) + amount;
       // Let update sendIn The bet
-      await this.betLogService.update(betId, {
+      const e_mainBet = await this.betLogService.update(betId, {
         $inc: {
           sendIn: +amount,
         },
+        resultUser: JSON.stringify(new_resultUser),
       });
       const msg = this.handleMessageResult({
         message: 'Tham gia cược thành công',
@@ -158,6 +160,7 @@ export class EventService {
         status: true,
         data: { result, amount, server, betId },
       });
+      this.socketGateway.server.emit('mainBet-up', e_mainBet);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -247,21 +250,45 @@ export class EventService {
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
-
+      let new_resultUser = bet_session.resultUser ?? '{}';
+      if ('CTCXLTLX'.indexOf(result) > -1) {
+        this.socketGateway.server.emit('value-bet-user-re', {
+          status: true,
+          data: { result, amount, server, betId },
+        });
+        let res = result.toLowerCase();
+        // XIEN
+        if (result.length === 2) {
+          for (const str of res) {
+            new_resultUser[str] = (new_resultUser[str] ?? 0) + amount / 2;
+          }
+        } else {
+          // CLTX
+          new_resultUser[res] = (new_resultUser[res] ?? 0) + amount;
+        }
+      }
       // Let update sendIn The bet
-      await this.betLogService.updateSv(betId, {
+      const e_mainBet = await this.betLogService.updateSv(betId, {
         $inc: {
           sendIn: +amount,
         },
+        resultUser: JSON.stringify(new_resultUser),
       });
+
+      this.socketGateway.server.emit('');
 
       // Update jackpot if it is the server 24/24
       if (bet_session.server === '24') {
-        await this.betLogService.createAndUpdateBetHistory(bet_session.server, {
-          $inc: {
-            jackpot: +amount * 0.1,
-          },
-        });
+        const historyServer =
+          await this.betLogService.createAndUpdateBetHistory(
+            bet_session.server,
+            {
+              $inc: {
+                jackpot: +amount * 0.1,
+              },
+            },
+          );
+        this.socketGateway.server.emit('jackpot-up', historyServer);
       }
       const msg = this.handleMessageResult({
         message: 'Tham gia cược thành công',
@@ -270,6 +297,7 @@ export class EventService {
         server: server,
       });
       this.socketGateway.server.emit('re-bet-user-ce-sv', msg);
+      this.socketGateway.server.emit('mainBet-up', e_mainBet);
       if (amount >= ConfigNoti.min) {
         await this.handleMessageSystem(
           `Người chơi ${target.name} đang chơi lớn ${amount} thỏi vàng vào ${
@@ -293,12 +321,6 @@ export class EventService {
           }`,
           server,
         );
-      }
-      if ('CTCXLTLX'.indexOf(result) > -1) {
-        this.socketGateway.server.emit('value-bet-user-re', {
-          status: true,
-          data: { result, amount, server, betId },
-        });
       }
       return msg;
     } catch (err) {
@@ -697,11 +719,21 @@ export class EventService {
           const create_new_boss = this.betLogService.create({
             server,
             timeEnd: this.addSeconds(current, 180),
+            resultUser: JSON.stringify({
+              1: 0,
+              0: 0,
+            }),
           });
           const create_new_sv = this.betLogService.createSv({
             server: `${server}-mini`,
             timeEnd: this.addSeconds(current, 180),
             timeBoss: `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
+            resultUser: JSON.stringify({
+              t: 0,
+              l: 0,
+              c: 0,
+              x: 0,
+            }),
           });
           const [res1, res2] = await Promise.all([
             create_new_boss,
@@ -1105,6 +1137,12 @@ export class EventService {
         const res2 = await this.betLogService.createSv({
           server: '24',
           timeEnd: this.addSeconds(now, 60),
+          resultUser: JSON.stringify({
+            t: 0,
+            l: 0,
+            c: 0,
+            x: 0,
+          }),
         });
         const result_new_sv = Math.floor(Math.random() * (98 - 0 + 1)) + 0;
         await this.eventRandomDrawModel.create({

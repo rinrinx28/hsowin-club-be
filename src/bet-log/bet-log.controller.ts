@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { BetLogService } from './bet-log.service';
 import { TopBetServer } from './dto/bet-log.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -24,5 +32,13 @@ export class BetLogController {
   @Get('/all/boss')
   async handleGetAllBoss() {
     return await this.betLogService.handleGetAllBoss();
+  }
+
+  @Get('/history/server/:id')
+  async handleGetHistoryServer(@Param('id') id: any) {
+    if (id === '24') {
+      return await this.betLogService.findBetHistoryByServer(id);
+    }
+    return;
   }
 }
