@@ -133,14 +133,14 @@ export class EventService {
         currentGold: target.gold,
         newGold: target.gold - Number(amount),
       });
-      let new_resultUser = bet_session.resultUser ?? '{}';
-      new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) + amount;
+      // let new_resultUser = bet_session.resultUser ?? '{}';
+      // new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) + amount;
       // Let update sendIn The bet
       const e_mainBet = await this.betLogService.update(betId, {
         $inc: {
           sendIn: +amount,
         },
-        resultUser: JSON.stringify(new_resultUser),
+        // resultUser: JSON.stringify(new_resultUser),
       });
       const msg = this.handleMessageResult({
         message: 'Tham gia cược thành công',
@@ -256,16 +256,16 @@ export class EventService {
           status: true,
           data: { result, amount, server, betId },
         });
-        let res = result.toLowerCase();
-        // XIEN
-        if (result.length === 2) {
-          for (const str of res) {
-            new_resultUser[str] = (new_resultUser[str] ?? 0) + amount / 2;
-          }
-        } else {
-          // CLTX
-          new_resultUser[res] = (new_resultUser[res] ?? 0) + amount;
-        }
+        // let res = result.toLowerCase();
+        // // XIEN
+        // if (result.length === 2) {
+        //   for (const str of res) {
+        //     new_resultUser[str] = (new_resultUser[str] ?? 0) + amount / 2;
+        //   }
+        // } else {
+        //   // CLTX
+        //   new_resultUser[res] = (new_resultUser[res] ?? 0) + amount;
+        // }
       }
       // Let update sendIn The bet
       const e_mainBet = await this.betLogService.updateSv(betId, {
