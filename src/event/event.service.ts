@@ -629,7 +629,7 @@ export class EventService {
       if (old_server_update) {
         let now = moment().unix();
         let current_update = moment(old_server_update.updatedAt).unix();
-        if (now - current_update < 10) {
+        if (now - current_update < 5) {
           throw new Error('Spam');
         }
       }
