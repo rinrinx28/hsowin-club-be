@@ -163,7 +163,6 @@ export class EventService {
       this.socketGateway.server.emit('mainBet-up', e_mainBet);
       return msg;
     } catch (err) {
-      console.log(err);
       const msg = this.handleMessageResult({
         message: err.message,
         status: false,
