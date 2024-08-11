@@ -1386,7 +1386,9 @@ export class EventService {
             //
             let new_data = JSON.parse(targetVip.data);
             let find_index_data_now = new_data?.findIndex(
-              (d: any) => d.date === now.add(-1, 'day').format('DD/MM/YYYY'),
+              (d: any) =>
+                moment(d.date).format('DD/MM/YYYY') ===
+                now.add(-1, 'day').format('DD/MM/YYYY'),
             );
             let find_isCancel = new_data?.reduce(
               (a: any, b: any) => a + (b?.isCancel ? 1 : 0),
