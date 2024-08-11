@@ -1677,6 +1677,7 @@ export class EventService {
       this.socketGateway.server.emit('message-user-re', {
         status: false,
         msg: err.message,
+        token: data.token,
       });
     } finally {
       release();
