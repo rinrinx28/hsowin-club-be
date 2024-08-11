@@ -5,3 +5,9 @@ export class CreateMessage {
   meta?: string;
   username?: string;
 }
+
+export class CreateMessagesBan {
+  uid: string;
+  isBan: boolean;
+  isReason?: string;
+}

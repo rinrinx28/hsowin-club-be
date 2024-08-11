@@ -10,7 +10,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { MessegesService } from './messeges.service';
-import { CreateMessage } from './dto/message.dto';
+import { CreateMessage, CreateMessagesBan } from './dto/message.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
 import { AuthGuard } from 'src/auth/auth.guard';
 
@@ -32,5 +32,10 @@ export class MessagesController {
     const msg = await this.messegesService.MessageCreate(data);
     this.socketGateway.server.emit('system-message', msg);
     return 'ok';
+  }
+
+  @Post('/ban')
+  async handleMessegesBan(@Body() data: CreateMessagesBan) {
+    return await this.messegesService.MessegeBan(data);
   }
 }

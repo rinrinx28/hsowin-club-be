@@ -4,11 +4,13 @@ import { Messeges, MessegesSchema } from './schema/messeges.schema';
 import { MessegesService } from './messeges.service';
 import { MessagesController } from './messages.controller';
 import { WebSocketModule } from 'src/socket/socket.module';
+import { MessegesBan, MessegesBanSchema } from './schema/messegesBan.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Messeges.name, schema: MessegesSchema },
+      { name: MessegesBan.name, schema: MessegesBanSchema },
     ]),
     WebSocketModule,
   ],
