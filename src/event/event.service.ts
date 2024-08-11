@@ -59,7 +59,7 @@ export class EventService {
 
   //TODO ———————————————[Handle Create Bet User]———————————————
 
-  @OnEvent('bet-user-ce-boss')
+  @OnEvent('bet-user-ce-boss', { async: true })
   async handleBetUser(data: CreateUserBet) {
     const parameter = `${data.server}-bet-user-ce-boss`; // Value will be lock
 
@@ -175,7 +175,7 @@ export class EventService {
     }
   }
 
-  @OnEvent('bet-user-ce-sv')
+  @OnEvent('bet-user-ce-sv', { async: true })
   async handleBetSvAuto(data: CreateUserBet) {
     const parameter = `${data.server}-bet-user-ce-sv`; // Value will be lock
 
@@ -330,7 +330,7 @@ export class EventService {
     }
   }
 
-  @OnEvent('value-bet-users')
+  @OnEvent('value-bet-users', { async: true })
   async valueBetUserSv(data: ValueBetUserSv) {
     const parameter = `${data.server}-value-bet-users`; // Value will be lock
 
@@ -390,7 +390,7 @@ export class EventService {
   }
 
   //TODO ———————————————[Handler Del Bet User]———————————————
-  @OnEvent('bet-user-del-boss')
+  @OnEvent('bet-user-del-boss', { async: true })
   async handleDelBetUserBoss(data: DelUserBet) {
     const parameter = `${data.uid}-bet-user-del-boss`; // Value will be lock
 
@@ -470,7 +470,7 @@ export class EventService {
     }
   }
 
-  @OnEvent('bet-user-del-sv')
+  @OnEvent('bet-user-del-sv', { async: true })
   async handleDelBetUserSv(data: DelUserBet) {
     const parameter = `${data.uid}-bet-user-del-sv`; // Value will be lock
 
@@ -624,7 +624,7 @@ export class EventService {
   }
 
   //TODO ———————————————[Handle Status Boss]———————————————
-  @OnEvent('status-boss')
+  @OnEvent('status-boss', { async: true })
   async handleStatusBoss(data: StatusBoss) {
     const parameter = `${data.server}-status-boss-server`; // Value will be lock
 
@@ -1121,7 +1121,7 @@ export class EventService {
   }
 
   //TODO ———————————————[Handler Mini game Server 24/24]———————————————
-  @OnEvent('server-24')
+  @OnEvent('server-24', { async: true })
   async handleServerAuto() {
     try {
       // Let config
@@ -1312,7 +1312,7 @@ export class EventService {
   }
 
   //TODO ———————————————[Handle System Clans]———————————————
-  @OnEvent('rank-clans')
+  @OnEvent('rank-clans', { async: true })
   async handleRankClans() {
     try {
       // Let find top 10 rank clans with totalBet
@@ -1331,7 +1331,7 @@ export class EventService {
     }
   }
 
-  @OnEvent('rank-days')
+  @OnEvent('rank-days', { async: true })
   async handleRankDays() {
     try {
       let e_auto_rank_days =
@@ -1598,7 +1598,7 @@ export class EventService {
     await this.messageService.MessageCreate({ uid: '', content: data, server });
   }
 
-  @OnEvent('noti-system')
+  @OnEvent('noti-system', { async: true })
   async handleMessageSystemNoti(data: string) {
     this.socketGateway.server.emit('noti-system', {
       uid: '',
@@ -1614,7 +1614,7 @@ export class EventService {
   }
 
   //TODO ———————————————[handle result data bet]———————————————
-  @OnEvent('result-data-bet')
+  @OnEvent('result-data-bet', { async: true })
   async handleResultDataBet(data: ResultDataBet) {
     try {
       // console.log('Get random');
@@ -1633,7 +1633,7 @@ export class EventService {
   }
 
   //TODO ———————————————[Handle Message Chat User]———————————————
-  @OnEvent('message-user')
+  @OnEvent('message-user', { async: true })
   async handleMessageUser(data: MessagesChat) {
     const parameter = `message-chat`; // Value will be lock
 
