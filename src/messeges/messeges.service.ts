@@ -34,4 +34,8 @@ export class MessegesService {
       { new: true, upsert: true },
     );
   }
+
+  async FindMessegesBanUser(uid: string) {
+    return await this.messageBanModel.findOne({ uid: uid });
+  }
 }

@@ -1649,6 +1649,13 @@ export class EventService {
         secret: jwtConstants.secret,
       });
       const user = await this.userService.findById(payload?.sub);
+      const findUserMsgBan = await this.messageService.FindMessegesBanUser(
+        user.id,
+      );
+      if (findUserMsgBan && findUserMsgBan.isBan)
+        throw new Error(
+          `Bạn đã bị cấm chat ${findUserMsgBan?.isReason.length > 0 ? `Bởi vì ${findUserMsgBan?.isReason}` : ''}`,
+        );
       await this.userService.handleCreateUserActive({
         uid: user.id,
         active: JSON.stringify({
