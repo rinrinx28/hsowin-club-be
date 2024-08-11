@@ -252,10 +252,6 @@ export class EventService {
       });
       let new_resultUser = JSON.parse(bet_session.resultUser ?? '{}');
       if ('CTCXLTLX'.indexOf(result) > -1) {
-        this.socketGateway.server.emit('value-bet-user-re', {
-          status: true,
-          data: { result, amount, server, betId },
-        });
         let res = result.toLowerCase();
         // XIEN
         if (result.length === 2) {
@@ -274,8 +270,6 @@ export class EventService {
         },
         resultUser: JSON.stringify(new_resultUser),
       });
-
-      this.socketGateway.server.emit('');
 
       // Update jackpot if it is the server 24/24
       if (bet_session.server === '24') {
@@ -410,7 +404,7 @@ export class EventService {
     try {
       const { betId, uid, userBetId } = data;
       const targetUserBetLog = await this.userService.findByIdBet(userBetId);
-      const { amount } = targetUserBetLog;
+      const { amount, result } = targetUserBetLog;
       const targetBetId = await this.betLogService.findById(betId);
       const { timeEnd } = targetBetId;
       let now = moment(new Date()).unix();
@@ -419,10 +413,15 @@ export class EventService {
         throw new Error('Không thể hủy cược vào lúc này');
 
       // Update BetLog Chung
-      await this.betLogService.update(betId, {
+
+      let new_resultUser = JSON.parse(targetBetId.resultUser ?? '{}');
+      new_resultUser[`${result}`] = (new_resultUser[`${result}`] ?? 0) - amount;
+      // Let update sendIn The bet
+      const e_mainBet = await this.betLogService.update(betId, {
         $inc: {
           sendIn: -amount,
         },
+        resultUser: JSON.stringify(new_resultUser),
       });
 
       // Update server data
@@ -456,6 +455,7 @@ export class EventService {
         server: targetBetId.server,
       });
       this.socketGateway.server.emit('bet-user-del-boss-re', msg);
+      this.socketGateway.server.emit('mainBet-up', e_mainBet);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
@@ -484,7 +484,7 @@ export class EventService {
     try {
       const { betId, uid, userBetId } = data;
       const targetUserBetLog = await this.userService.findByIdBet(userBetId);
-      const { amount } = targetUserBetLog;
+      const { amount, result } = targetUserBetLog;
       const targetBetId = await this.betLogService.findSvById(betId);
       const { timeEnd } = targetBetId;
       let now = moment(new Date()).unix();
@@ -493,10 +493,25 @@ export class EventService {
         throw new Error('Không thể hủy cược vào lúc này');
 
       // Update BetLog Chung
-      await this.betLogService.updateSv(betId, {
+      let new_resultUser = JSON.parse(targetBetId.resultUser ?? '{}');
+      if ('CTCXLTLX'.indexOf(result) > -1) {
+        let res = result.toLowerCase();
+        // XIEN
+        if (result.length === 2) {
+          for (const str of res) {
+            new_resultUser[str] = (new_resultUser[str] ?? 0) - amount / 2;
+          }
+        } else {
+          // CLTX
+          new_resultUser[res] = (new_resultUser[res] ?? 0) - amount;
+        }
+      }
+      // Let update sendIn The bet
+      const e_mainBet = await this.betLogService.updateSv(betId, {
         $inc: {
           sendIn: -amount,
         },
+        resultUser: JSON.stringify(new_resultUser),
       });
 
       // Update server data
@@ -512,6 +527,7 @@ export class EventService {
         currentGold: targetUser.gold,
         newGold: targetUser.gold + amount,
       });
+
       const user = await this.userService.update(uid, {
         $inc: {
           gold: +amount,
@@ -530,6 +546,7 @@ export class EventService {
         server: targetBetId.server,
       });
       this.socketGateway.server.emit('bet-user-del-sv-re', msg);
+      this.socketGateway.server.emit('mainBet-up', e_mainBet);
       return msg;
     } catch (err) {
       const msg = this.handleMessageResult({
