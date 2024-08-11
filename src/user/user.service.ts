@@ -412,6 +412,17 @@ export class UserService {
       if (target.gold - gold < 0)
         return { message: 'Tài khoản không đủ số dư để thực hiện lệnh rút!' };
 
+      await this.handleCreateUserActive({
+        active: JSON.stringify({
+          name: 'Tạo Rút BANK',
+          amount: amount,
+          gold: gold,
+        }),
+        uid: uid,
+        currentGold: target.gold,
+        newGold: target.gold - gold,
+      });
+
       await this.userModel.findByIdAndUpdate(uid, {
         $inc: {
           gold: -gold,
