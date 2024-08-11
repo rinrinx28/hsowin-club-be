@@ -111,3 +111,8 @@ interface userVip {
 export class SetVip {
   data: userVip[];
 }
+
+export class ChangePassword {
+  old_pwd: string;
+  new_pwd: string;
+}

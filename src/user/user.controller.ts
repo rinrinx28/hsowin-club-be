@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import {
+  ChangePassword,
   CreateClans,
   CreateUserDto,
   Exchange,
@@ -27,6 +28,22 @@ import * as moment from 'moment';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  //TODO ———————————————[User Password]———————————————
+  @UseGuards(AuthGuard)
+  @Post('/change-password')
+  async changePassword(@Req() req: any, @Body() data: ChangePassword) {
+    const user = req.user;
+    const target = await this.userService.findById(user.sub);
+    if (target.pwd_h !== data.old_pwd)
+      throw new BadRequestException(
+        'Mật khẩu cũ không đúng, xin vui lòng kiểm tra lại!',
+      );
+    await this.userService.update(user?.sub, {
+      pwd_h: data.new_pwd,
+    });
+    return 'Bạn đã đổi mật khẩu thành công';
+  }
 
   //TODO ———————————————[Path Clans]———————————————
   @UseGuards(AuthGuard)
