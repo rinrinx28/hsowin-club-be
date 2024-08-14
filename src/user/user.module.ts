@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -11,6 +11,7 @@ import { UserIp, UserIpSchema } from './schema/userIp.schema';
 import { UserPrize, UserPrizeSchema } from './schema/prize.schema';
 import { UserActive, UserActiveSchema } from './schema/userActive';
 import { UserVip, UserVipSchema } from './schema/userVip.schema';
+import { MissionDaily, MissionDailySchema } from './schema/missionDaily.schema';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UserVip, UserVipSchema } from './schema/userVip.schema';
       { name: UserPrize.name, schema: UserPrizeSchema },
       { name: UserActive.name, schema: UserActiveSchema },
       { name: UserVip.name, schema: UserVipSchema },
+      { name: MissionDaily.name, schema: MissionDailySchema },
     ]),
   ],
   controllers: [UserController],

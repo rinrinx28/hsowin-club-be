@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
+  ClaimMission,
   CreateClans,
   CreateUserActive,
   CreateUserBetDto,
@@ -34,6 +35,7 @@ import { UserIp } from './schema/userIp.schema';
 import { UserPrize } from './schema/prize.schema';
 import { UserActive } from './schema/userActive';
 import { UserVip } from './schema/userVip.schema';
+import { MissionDaily } from './schema/missionDaily.schema';
 import * as moment from 'moment';
 import { Mutex } from 'async-mutex';
 
@@ -58,6 +60,8 @@ export class UserService {
     private readonly userActiveModel: Model<UserActive>,
     @InjectModel(UserVip.name)
     private readonly userVipModel: Model<UserVip>,
+    @InjectModel(MissionDaily.name)
+    private readonly missionDailyModel: Model<MissionDaily>,
   ) {}
   private logger: Logger = new Logger('UserService');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -324,23 +328,37 @@ export class UserService {
   }
 
   //TODO ———————————————[Handle Exchange]———————————————
-  async handleExchangeGold(data: Exchange, user) {
+  async handleExchangeGold(data: Exchange, token) {
     try {
-      const min = ConfigExchange.diamon;
-      const percent = ConfigExchange.gold;
-      if (data.diamon < min)
-        throw new Error(
-          'Bạn không đủ kim cương để đổi, tối thiêu 50 kim cương',
-        );
-      let value = (data.diamon / min) * percent;
-      const target = await this.update(user.sub, {
+      const percent = await this.handleGetEventModel('e-percent-diamon-trade');
+      const user = await this.findById(token?.sub);
+      if (user.vip === 0)
+        throw new Error('Bạn phải đạt tối thiểu VIP 1 để dùng chức năng này');
+      if (user.diamon - data.diamon < 0)
+        throw new Error('Bạn không đủ lục bảo để đổi');
+      let value = data.diamon / percent.value;
+      const target = await this.update(user.id, {
         $inc: {
           gold: +value,
           diamon: -data.diamon,
         },
       });
-      delete target.pwd_h;
-      return target;
+      const result = target.toObject();
+      await this.handleCreateUserActive({
+        uid: target.id,
+        currentGold: target.gold,
+        newGold: target.gold + value,
+        active: JSON.stringify({
+          name: 'Exchange Gold',
+          diamon: data.diamon,
+        }),
+      });
+      delete result.pwd_h;
+      return {
+        message: `Đã đổi thành công ${data.diamon} Lục Bảo thành ${value} Thỏi Vàng`,
+        status: true,
+        data: result,
+      };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -358,10 +376,19 @@ export class UserService {
   async handleUserTrade(data: UserTrade) {
     try {
       const target = await this.userModel.findById(data?.targetId);
-      if (!target) throw new ForbiddenException();
+      if (!target) throw new ForbiddenException('Không tìm thấy người chơi');
       const user = await this.userModel.findById(data?.userId);
-      if (!user) throw new ForbiddenException();
-      if (user.gold - data?.amount <= 0) throw new BadRequestException();
+      if (!user) throw new ForbiddenException('Không tìm thấy người chơi');
+      if (user.vip === 0)
+        throw new BadRequestException(
+          'Xin lỗi, bạn phải đạt tối thiểu VIP 1 mới có thể dùng chức năng này',
+        );
+      if (user.gold - data?.amount <= 0)
+        throw new BadRequestException(
+          'Xin lỗi, tài khoản của bạn không đủ thỏi vàng để chuyển',
+        );
+      if (user.server !== target.server)
+        throw new BadRequestException('Bạn và người nhận không chung Server');
       const res = await this.userModel.findByIdAndUpdate(
         data?.userId,
         {
@@ -380,10 +407,32 @@ export class UserService {
         },
         { new: true, upsert: true },
       );
+      await this.handleCreateUserActive({
+        uid: user.id,
+        currentGold: user.gold,
+        newGold: user.gold - data.amount,
+        active: JSON.stringify({
+          name: 'Trade',
+          targetId: data.targetId,
+          amount: data.amount,
+        }),
+      });
+      await this.handleCreateUserActive({
+        uid: target.id,
+        currentGold: target.gold,
+        newGold: target.gold + data.amount,
+        active: JSON.stringify({
+          name: 'Re-Trade',
+          targetId: user.id,
+          amount: data.amount,
+        }),
+      });
+      const result = res.toObject();
+      delete result.pwd_h;
       return {
-        message: 'Đã chuyển thành công',
+        message: `Đã chuyển ${data.amount} Thỏi vàng cho ${target.name} thành công`,
         status: true,
-        data: res,
+        data: result,
       };
     } catch (err) {
       throw new CatchException(err);
@@ -511,15 +560,6 @@ export class UserService {
       data,
     };
   }
-
-  // async handleData() {
-  //   const users = await this.userModel.find();
-  //   for (const user of users) {
-  //     await this.userModel.findByIdAndUpdate(user.id, {
-  //       isReason: 'Nothing',
-  //     });
-  //   }
-  // }
 
   //TODO ———————————————[Handle IP USer]———————————————
   async handleUserWithIp(ip_address: any) {
@@ -725,6 +765,10 @@ export class UserService {
     } catch (err) {}
   }
 
+  async handleGetAllVip() {
+    return await this.userVipModel.find();
+  }
+
   findPosition(array: any, val: any) {
     for (let i = 0; i < array.length - 1; i++) {
       if (val >= array[i] && val < array[i + 1]) {
@@ -741,5 +785,113 @@ export class UserService {
     // }
     // Trường hợp giá trị không nằm trong phạm vi của mảng
     return -1;
+  }
+
+  //TODO ———————————————[Handle Mission]———————————————
+  async handleClaimMission(data, claim: ClaimMission) {
+    try {
+      const user = await this.findById(data.sub);
+      const e_value_mission = await this.handleGetEventModel(
+        'e-value-mission-daily',
+      );
+      const e_claim_mission = await this.handleGetEventModel(
+        'e-claim-mission-daily',
+      );
+      const value_mission = JSON.parse(e_value_mission.option);
+      const claim_mission = JSON.parse(e_claim_mission.option);
+      const index = this.findPosition(value_mission, user.totalBet);
+      if (index === -1)
+        throw new BadRequestException('Bạn không đủ điểm để nhận quà');
+
+      // Let find data mission
+      let old_mission = await this.missionDailyModel.findOne({ uid: user.id });
+      if (!old_mission) {
+        let new_mission = await this.handleCreateDataMissionUser(user.id);
+        old_mission = new_mission;
+      }
+      let data_misson = JSON.parse(old_mission.data);
+
+      if (claim.index > index)
+        throw new BadRequestException(
+          'Bạn chưa đạt điều kiện để nhận phần thưởng này',
+        );
+
+      if (data_misson[claim.index]?.isClaim)
+        throw new BadRequestException('Xin lỗi, phần thưởng này đã được nhận');
+
+      data_misson[claim.index].isClaim = true;
+
+      const res = await this.update(user.id, {
+        $inc: {
+          gold: +claim_mission[claim.index],
+        },
+      });
+      const data_new_mission = await this.handleUpdateDataMissionUser(
+        user.id,
+        JSON.stringify(data_misson),
+      );
+      await this.handleCreateUserActive({
+        uid: user.id,
+        currentGold: user.gold,
+        newGold: user.gold + claim_mission[claim.index],
+        active: JSON.stringify({
+          name: 'Claim Mission',
+          value: claim.index + 1,
+          gold: claim_mission[claim.index],
+        }),
+      });
+      const result = res.toObject();
+      delete result.pwd_h;
+      return {
+        message: `Chúc mừng bạn đã hoàn thành điểm danh với phần quà ${claim_mission[claim.index]} thỏi vàng`,
+        status: true,
+        data: result,
+        mission: data_new_mission,
+      };
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async handleCreateDataMissionUser(uid: string) {
+    try {
+      let data = [];
+      for (let i = 0; i < 7; i++) {
+        data.push({ isClaim: false, step: i });
+      }
+      const res = await this.missionDailyModel.create({
+        uid,
+        data: JSON.stringify(data),
+      });
+      return res;
+    } catch (err) {}
+  }
+
+  async handleUpdateDataMissionUser(uid: string, data: string) {
+    try {
+      return await this.missionDailyModel.findOneAndUpdate(
+        { uid },
+        { data },
+        { new: true, upsert: true },
+      );
+    } catch (err) {}
+  }
+
+  async handleFindMissionUser(uid: any) {
+    try {
+      let mission = await this.missionDailyModel.findOne({ uid });
+      if (!mission) {
+        let new_mission = await this.handleCreateDataMissionUser(uid);
+        mission = new_mission;
+      }
+      const result = mission.toObject();
+      return result;
+    } catch (err: any) {
+      throw new BadRequestException(err?.message);
+    }
+  }
+
+  async handleGetAllMissionData() {
+    return await this.missionDailyModel.find();
   }
 }

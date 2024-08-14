@@ -13,6 +13,7 @@ import {
 import { UserService } from './user.service';
 import {
   ChangePassword,
+  ClaimMission,
   CreateClans,
   CreateUserDto,
   Exchange,
@@ -21,17 +22,18 @@ import {
   UserBankWithDraw,
   UserTrade,
 } from './dto/user.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateEvent } from 'src/event/dto/event.dto';
 import * as moment from 'moment';
+import { isUser, isAdmin, Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   //TODO ———————————————[User Password]———————————————
-  @UseGuards(AuthGuard)
+
   @Post('/change-password')
+  @isUser()
   async changePassword(@Req() req: any, @Body() data: ChangePassword) {
     const user = req.user;
     const target = await this.userService.findById(user.sub);
@@ -46,38 +48,39 @@ export class UserController {
   }
 
   //TODO ———————————————[Path Clans]———————————————
-  @UseGuards(AuthGuard)
+
   @Post('/clans/create')
+  @isUser()
   async clansCreate(@Body() data: CreateClans) {
     return await this.userService.createClans(data);
   }
 
-  @UseGuards(AuthGuard)
   @Post('/clans/join')
+  @isUser()
   async clansJoin(@Body() data: MemberClans) {
     const user = await this.userService.addMemberClans(data);
     delete user.pwd_h;
     return user;
   }
 
-  @UseGuards(AuthGuard)
   @Post('/clans/leave')
+  @isUser()
   async clansLeave(@Body() data: MemberClans) {
     const user = await this.userService.removeMemberClans(data);
     delete user.pwd_h;
     return user;
   }
 
-  @UseGuards(AuthGuard)
   @Post('/clans/delete')
+  @isUser()
   async clansDelete(@Body() data: MemberClans) {
     return await this.userService.deleteClanWithOwner(data);
   }
 
   //TODO ———————————————[Path Info]———————————————
 
-  @UseGuards(AuthGuard)
   @Get('/profile')
+  @isUser()
   getProfile(@Request() req: any) {
     const user: PayLoad = req.user;
     return user;
@@ -85,39 +88,42 @@ export class UserController {
 
   //TODO ———————————————[Path Event]———————————————
 
-  @UseGuards(AuthGuard)
   @Post('/create-event')
+  @isAdmin()
   async handleCreateEventModel(@Body() data: CreateEvent) {
     return await this.userService.handleCreateEventModel(data);
   }
 
-  @UseGuards(AuthGuard)
   @Get('/events')
+  @isAdmin()
   async getEvents() {
     return await this.userService.handleGetEventModels({});
   }
 
   //TODO ———————————————[Exchange]———————————————
-  @UseGuards(AuthGuard)
+
   @Post('/exchange-gold')
+  @isUser()
   async handleExchangeGold(@Body() data: Exchange, @Request() req: any) {
     return await this.userService.handleExchangeGold(data, req.user);
   }
 
   //TODO ———————————————[Admin Controller]———————————————
-  @UseGuards(AuthGuard)
+
   @Get('/all/users')
+  @isAdmin()
   async handleGetUser() {
     return await this.userService.handleGetAllUser();
   }
 
-  @UseGuards(AuthGuard)
   @Get('/all/users/bet')
+  @isAdmin()
   async handleGetUserBet() {
     return await this.userService.handleGetAllUserbet();
   }
 
   @Get('/rank')
+  @Public()
   async handleUserRank() {
     return await this.userService.handleUserRank();
   }
@@ -125,11 +131,13 @@ export class UserController {
   //TODO ———————————————[User bank and trade]———————————————
 
   @Post('/trade')
+  @isUser()
   async handleUserTrade(@Body() data: UserTrade) {
     return await this.userService.handleUserTrade(data);
   }
 
   @Post('/bank/withdraw')
+  @isUser()
   async handleUserBankWithdraw(@Body() data: UserBankWithDraw) {
     return await this.userService.handleUserBankWithdraw(data);
   }
@@ -137,6 +145,7 @@ export class UserController {
   //TODO ———————————————[Bet Log User]———————————————
 
   @Get('/log-bet/all')
+  @Public()
   async handleUserBetLogs(
     @Query('limit') limit: any,
     @Query('server') server: any,
@@ -145,7 +154,7 @@ export class UserController {
   }
 
   @Get('/bets/log')
-  @UseGuards(AuthGuard)
+  @isUser()
   async handleUserBetLog(
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -155,20 +164,16 @@ export class UserController {
     return await this.userService.handleUserBetLog(page, limit, user.sub);
   }
 
-  // @Get('/admin/add/data')
-  // async handleData() {
-  //   return await this.userService.handleData();
-  // }
-
   //TODO ———————————————[Get Event Config]———————————————
   @Get('/config')
+  @Public()
   async handleUserEventConfig() {
     return await this.userService.handleGetEventModels({});
   }
 
   //TODO ———————————————[Handle VIP Claim]———————————————
   @Post('/vip/claim')
-  @UseGuards(AuthGuard)
+  @isUser()
   async handleClaimVip(@Req() req: any, @Body() data: any) {
     const user = req.user;
     const now = moment();
@@ -181,7 +186,7 @@ export class UserController {
   }
 
   @Get('/vip/info')
-  @UseGuards(AuthGuard)
+  @isUser()
   async handleGetUserInfoVip(@Req() req: any) {
     const user = req.user;
     const targetVip = await this.userService.handleFindUserVip(user.sub);
@@ -190,6 +195,7 @@ export class UserController {
 
   //TODO ———————————————[Handle Test API]———————————————
   @Post('/set/vip')
+  @isAdmin()
   async handleGenVipClaim(@Body() data: SetVip) {
     // Check vip
     const e_value_vip =
@@ -236,5 +242,20 @@ export class UserController {
       }
     }
     return 'ok';
+  }
+
+  //TODO ———————————————[Handle Mission Daily]———————————————
+  @Post('/mission/claim')
+  @isUser()
+  async handleClaimMission(@Req() req: any, @Body() data: ClaimMission) {
+    const user = req.user;
+    return await this.userService.handleClaimMission(user, data);
+  }
+
+  @Get('/mission')
+  @isUser()
+  async handleGetMissionDataUser(@Req() req: any) {
+    const user = req.user;
+    return await this.userService.handleFindMissionUser(user.sub);
   }
 }

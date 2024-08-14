@@ -1,22 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 
-export type AuthTokenDocument = AuthToken & Document;
+export type MissionDailyDocument = MissionDaily & Document;
 
 @Schema({
   timestamps: true,
 })
-export class AuthToken {
+export class MissionDaily {
   @Prop({ unique: true })
   uid: string;
-  @Prop()
-  token: string;
 
-  @Prop()
-  isEnd: boolean;
+  @Prop({ default: '[]' })
+  data: string;
 
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-export const AuthTokenSchema = SchemaFactory.createForClass(AuthToken);
+export const MissionDailySchema = SchemaFactory.createForClass(MissionDaily);

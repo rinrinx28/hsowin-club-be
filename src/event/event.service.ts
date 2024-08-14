@@ -1339,7 +1339,6 @@ export class EventService {
       let e_rule_rank_days =
         await this.userService.handleGetEventModel('e-rule-rank-days');
       let arr = JSON.parse(e_auto_rank_days.option);
-      let now = moment();
       const topUser = await this.userService.getTopUserBet();
       for (let i = 0; i < topUser.length; i++) {
         let user = topUser[i];
@@ -1374,34 +1373,46 @@ export class EventService {
             `Chúc mừng người chơi ${user.name} đã đạt TOP ${i + 1} Ranks Days với giải thưởng là ${prize} thỏi vàng`,
           );
         }
-
-        // Check VIP is expired
-        const targetVip = await this.userService.handleFindUserVip(user.id);
-        if (targetVip && !targetVip.isEnd) {
-          if (now.isAfter(moment(targetVip.timeEnd).endOf('day'))) {
-            // Reset VIP User
-            await this.userService.update(user.id, {
+        // Update user totalBet and limited Trade
+        await this.userService.update(user.id, {
+          totalBet: 0,
+          limitedTrade: 0,
+          trade: 0,
+          $inc: {
+            gold: +prize,
+          },
+        });
+      }
+      // Reset Mission day
+      const missions = await this.userService.handleGetAllMissionData();
+      for (const mission of missions) {
+        let data = JSON.parse(mission.data);
+        let new_data = data?.map((d: any) => {
+          return { ...d, isClaim: false };
+        });
+        await this.userService.handleUpdateDataMissionUser(
+          mission.uid,
+          JSON.stringify(new_data),
+        );
+      }
+      // Check VIP is expired
+      let now = moment();
+      const vips = await this.userService.handleGetAllVip();
+      for (const vip of vips) {
+        if (!vip.isEnd) {
+          const user = await this.userService.findById(vip.uid);
+          if (now.isAfter(moment(vip.timeEnd).endOf('day'))) {
+            await this.userService.update(vip.uid, {
               vip: 0,
               totalBank: 0,
             });
             await this.userService.handleStopUserVip({
               isEnd: true,
-              uid: user.id,
-            });
-
-            // Update server data
-            await this.handleCreateUserActive({
-              uid: user.id,
-              active: JSON.stringify({
-                name: 'Reset VIP',
-                date: moment(),
-              }),
-              currentGold: user.gold,
-              newGold: user.gold,
+              uid: vip.uid,
             });
           } else {
             //
-            let new_data = JSON.parse(targetVip.data);
+            let new_data = JSON.parse(vip.data);
             let find_index_data_now = new_data?.findIndex(
               (d: any) =>
                 moment(d.date).format('DD/MM/YYYY') ===
@@ -1413,18 +1424,17 @@ export class EventService {
             );
             if (find_isCancel >= 7) {
               // Reset VIP User
-              await this.userService.update(user.id, {
+              await this.userService.update(vip.uid, {
                 vip: 0,
                 totalBank: 0,
               });
               await this.userService.handleStopUserVip({
                 isEnd: true,
-                uid: user.id,
+                uid: vip.uid,
               });
-
               // Update server data
               await this.handleCreateUserActive({
-                uid: user.id,
+                uid: vip.uid,
                 active: JSON.stringify({
                   name: 'Reset VIP',
                   date: moment(),
@@ -1444,19 +1454,9 @@ export class EventService {
             }
           }
         }
-
-        // Update user totalBet and limited Trade
-        await this.userService.update(user.id, {
-          totalBet: 0,
-          limitedTrade: 0,
-          trade: 0,
-          $inc: {
-            gold: +prize,
-          },
-        });
       }
     } catch (err) {
-      // throw new CatchException(err);
+      throw new CatchException(err);
     }
   }
 

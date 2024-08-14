@@ -12,7 +12,7 @@ import {
 import { MessegesService } from './messeges.service';
 import { CreateMessage, CreateMessagesBan } from './dto/message.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { Public, isAdmin } from 'src/auth/decorators/public.decorator';
 
 @Controller('message')
 export class MessagesController {
@@ -22,12 +22,13 @@ export class MessagesController {
   ) {}
 
   @Get('/all')
+  @Public()
   async handleGetMessage(@Query('page') page: any, @Query('limit') limit: any) {
     return await this.messegesService.MessageGetAll(page, limit);
   }
 
   @Post('/system')
-  @UseGuards(AuthGuard)
+  @isAdmin()
   async handleSendMessage(@Body() data: CreateMessage) {
     const msg = await this.messegesService.MessageCreate(data);
     this.socketGateway.server.emit('system-message', msg);
@@ -35,6 +36,7 @@ export class MessagesController {
   }
 
   @Post('/ban')
+  @Public()
   async handleMessegesBan(@Body() data: CreateMessagesBan) {
     return await this.messegesService.MessegeBan(data);
   }

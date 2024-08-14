@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { BetLogModule } from 'src/bet-log/bet-log.module';
-import { BillModule } from 'src/bill/bill.module';
 import { BossModule } from 'src/boss/boss.module';
 import { BotModule } from 'src/bot/bot.module';
 import { ClientModule } from 'src/client/client.module';
@@ -22,7 +21,6 @@ import { EventRandom, EventRandomSchema } from './schema/eventRandom';
     ClientModule,
     BossModule,
     BetLogModule,
-    BillModule,
     BotModule,
     SessionModule,
     UserModule,

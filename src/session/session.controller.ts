@@ -13,19 +13,18 @@ import {
 } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { BankCreate, CancelSession, CreateSessionDto } from './dto/session.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { UserService } from 'src/user/user.service';
+import { isUser } from 'src/auth/decorators/public.decorator';
 
 @Controller('session')
-@UseGuards(AuthGuard)
 export class SessionController {
   constructor(
     private readonly sessionService: SessionService,
     private readonly userService: UserService,
   ) {}
 
-  @HttpCode(HttpStatus.OK)
   @Post('/create')
+  @isUser()
   create(@Body() body: CreateSessionDto, @Req() req: any) {
     const user = req.user;
     if (user.sub !== body.uid)
@@ -34,6 +33,7 @@ export class SessionController {
   }
 
   @Post('/cancel')
+  @isUser()
   async cancel(@Body() data: CancelSession) {
     const target = await this.sessionService.findByID(data?.sessionId);
     if (!target)
@@ -50,20 +50,22 @@ export class SessionController {
     });
   }
 
-  @HttpCode(HttpStatus.OK)
   @Get('/find')
+  @isUser()
   find(@Req() req: any) {
     const user = req.user;
     return this.sessionService.findAllByUID(user);
   }
 
   @Get('/all')
+  @isUser()
   async getAll(@Req() req: any) {
     const user = req.user;
     return await this.sessionService.findAllSesions(user);
   }
 
   @Get('/user')
+  @isUser()
   async handleUserSession(
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -74,16 +76,19 @@ export class SessionController {
   }
 
   @Post('/banking/create')
+  @isUser()
   async handleBankCreate(@Body() data: BankCreate) {
     return await this.sessionService.handleCreateBank(data);
   }
 
   @Post('/banking/update')
+  @isUser()
   async handleBankUpdate(@Query('orderId') orderId: any) {
     return await this.sessionService.handleUpdateBank(orderId, '2');
   }
 
   @Get('/banking/log/nap')
+  @isUser()
   async handleBankLogNap(
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -94,6 +99,7 @@ export class SessionController {
   }
 
   @Get('/banking/log/rut')
+  @isUser()
   async handleBankLogRut(
     @Query('page') page: number,
     @Query('limit') limit: number,

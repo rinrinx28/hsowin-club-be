@@ -116,3 +116,8 @@ export class ChangePassword {
   old_pwd: string;
   new_pwd: string;
 }
+
+export class ClaimMission {
+  @IsNotEmpty({ message: 'Mã nhận thưởng không thể để trống' })
+  index: number;
+}

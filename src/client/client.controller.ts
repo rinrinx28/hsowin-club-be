@@ -1,11 +1,13 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ClientService } from './client.service';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('/api/client')
 export class ClientController {
   constructor(private readonly clientService: ClientService) {}
 
   @Get('/:UUID/boss')
+  @Public()
   getStatusBoss(
     @Param('UUID') uuid: any,
     @Query('content') content: any,
@@ -16,6 +18,7 @@ export class ClientController {
   }
 
   @Get('/:UUID/bot')
+  @Public()
   getStatusBot(
     @Param('UUID') uuid: any,
     @Query('id') id: any,
@@ -30,6 +33,7 @@ export class ClientController {
   }
 
   @Get('/:UUID/service')
+  @Public()
   getStatusProduct(
     @Param('UUID') uuid: any,
     @Query('type') type: any,
@@ -60,6 +64,7 @@ export class ClientController {
   }
 
   @Post('/hsowin-bank')
+  @Public()
   async handleDoiThe(@Body() data: any) {
     const res = await this.clientService.handleBankUpdate(data);
     console.log(res, data);

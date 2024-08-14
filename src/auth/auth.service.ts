@@ -46,8 +46,15 @@ export class AuthService {
         throw new UnauthorizedException(
           'Nghi vấn spam, bạn không thể đăng nhập thêm tài khoản ở trên thiết bị này',
         );
-      const access_token = await this.jwtService.signAsync(payload);
-      await this.autTokenhModel.create({ token: access_token, isEnd: false });
+      // Check old access_token
+      const old_token = await this.autTokenhModel.findOne({ uid: user.id });
+      const access_token =
+        old_token?.token || (await this.jwtService.signAsync(payload));
+      await this.autTokenhModel.create({
+        token: access_token,
+        isEnd: false,
+        uid: user.id,
+      });
       await this.userService.handleUserUpdateIp(user.id, ip_address);
       await this.userService.handleAddIp(user.id, ip_address);
       this.logger.log(`[Login] UID:${user.id} - IP:${ip_address}`);
@@ -69,8 +76,6 @@ export class AuthService {
           'Nghi vấn spam, bạn không thể tạo thêm tài khoản ở trên thiết bị này',
         );
       const result = await this.userService.create(body);
-      await this.userService.handleUserUpdateIp(result.id, ip_address);
-      await this.userService.handleAddIp(result.id, ip_address);
       this.logger.log(`[Register] UID:${result.id} - IP:${ip_address}`);
       delete result.pwd_h;
       return result;

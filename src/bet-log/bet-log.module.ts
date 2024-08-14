@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { BetLogService } from './bet-log.service';
 import { BetLogController } from './bet-log.controller';
 import { MongooseModule } from '@nestjs/mongoose';
