@@ -114,6 +114,10 @@ export class UserService {
     return user;
   }
 
+  async updateAll(updateUserDto: any) {
+    return await this.userModel.updateMany({}, updateUserDto);
+  }
+
   async remove(id: any) {
     return await this.userModel.findByIdAndDelete(id);
   }

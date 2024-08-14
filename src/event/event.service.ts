@@ -1339,9 +1339,9 @@ export class EventService {
       let e_rule_rank_days =
         await this.userService.handleGetEventModel('e-rule-rank-days');
       let arr = JSON.parse(e_auto_rank_days.option);
-      const topUser = await this.userService.getTopUserBet();
-      for (let i = 0; i < topUser.length; i++) {
-        let user = topUser[i];
+      const { data } = await this.userService.handleUserRank();
+      for (let i = 0; i < data.length; i++) {
+        const user = await this.userService.findById(data[i]._id);
         let prize = 0;
         if (
           i < arr.length &&
@@ -1369,19 +1369,16 @@ export class EventService {
             uid: user.id,
             username: user.username,
           });
+          // Update user totalBet and limited Trade
+          await this.userService.update(user.id, {
+            $inc: {
+              gold: +prize,
+            },
+          });
           await this.handleMessageSystemNoti(
             `Chúc mừng người chơi ${user.name} đã đạt TOP ${i + 1} Ranks Days với giải thưởng là ${prize} thỏi vàng`,
           );
         }
-        // Update user totalBet and limited Trade
-        await this.userService.update(user.id, {
-          totalBet: 0,
-          limitedTrade: 0,
-          trade: 0,
-          $inc: {
-            gold: +prize,
-          },
-        });
       }
       // Reset Mission day
       const missions = await this.userService.handleGetAllMissionData();
@@ -1397,6 +1394,7 @@ export class EventService {
       }
       // Check VIP is expired
       let now = moment();
+      let yesterday = moment().add(-1, 'day');
       const vips = await this.userService.handleGetAllVip();
       for (const vip of vips) {
         if (!vip.isEnd) {
@@ -1410,13 +1408,14 @@ export class EventService {
               isEnd: true,
               uid: vip.uid,
             });
+            console.log(`reset vip ${vip.id}`);
           } else {
             //
             let new_data = JSON.parse(vip.data);
             let find_index_data_now = new_data?.findIndex(
               (d: any) =>
                 moment(d.date).format('DD/MM/YYYY') ===
-                now.add(-1, 'day').format('DD/MM/YYYY'),
+                yesterday.format('DD/MM/YYYY'),
             );
             let find_isCancel = new_data?.reduce(
               (a: any, b: any) => a + (b?.isCancel ? 1 : 0),
@@ -1442,7 +1441,9 @@ export class EventService {
                 currentGold: user.gold,
                 newGold: user.gold,
               });
-            } else {
+              console.log(`reset vip ${vip.id}`);
+            }
+            if (find_index_data_now > -1) {
               new_data[find_index_data_now] = {
                 ...new_data[find_index_data_now],
                 isNext: true,
@@ -1451,10 +1452,19 @@ export class EventService {
               await this.userService.handleUpdateUserVip(user.id, {
                 data: JSON.stringify(new_data),
               });
+              console.log(`isNext vip ${vip.id}`, new_data);
             }
           }
         }
       }
+      // Reset all data user
+      await this.userService.updateAll({
+        $set: {
+          totalBet: 0,
+          limitedTrade: 0,
+          trade: 0,
+        },
+      });
     } catch (err) {
       throw new CatchException(err);
     }
