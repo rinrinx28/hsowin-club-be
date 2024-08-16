@@ -1740,6 +1740,7 @@ export class EventService {
         status: true,
         msg: 'Bạn đã tham gia điểm danh thành công',
         uid: data.uid,
+        length: this.diem_danh.size,
       });
       if (this.diem_danh.size === e_limited_diem_danh.value) {
         this.socketGateway.server.emit('diem-danh-live', '1');
@@ -1752,6 +1753,7 @@ export class EventService {
         status: false,
         msg: err.message,
         uid: data.uid,
+        length: this.diem_danh.size,
       });
     } finally {
       release();
@@ -1812,6 +1814,7 @@ export class EventService {
         `Điểm danh sẽ mở lại sau ${moment.utc(e_time_delay_diem_danh.value).format('mm:ss')} phút nữa`,
       );
       this.socketGateway.server.emit('diem-danh-live', '2');
+      this.diem_danh.clear();
       setTimeout(async () => {
         await this.handleMessageSystemNoti(
           'Điểm danh đã mở lại, xin mời những người chơi cùng tham gia!',
