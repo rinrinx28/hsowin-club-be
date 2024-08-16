@@ -1325,7 +1325,7 @@ export class EventService {
         const users = await this.userService.getUserWithClansId(id);
         list_clans_users[id] = users;
       }
-      console.log(list_clans_users);
+      // console.log(list_clans_users);
     } catch (err) {
       // throw new CatchException(err);
     }
@@ -1408,7 +1408,6 @@ export class EventService {
               isEnd: true,
               uid: vip.uid,
             });
-            console.log(`reset vip ${vip.id}`);
           } else {
             //
             let new_data = JSON.parse(vip.data);
@@ -1441,7 +1440,6 @@ export class EventService {
                 currentGold: user.gold,
                 newGold: user.gold,
               });
-              console.log(`reset vip ${vip.id}`);
             }
             if (find_index_data_now > -1) {
               new_data[find_index_data_now] = {
@@ -1452,7 +1450,6 @@ export class EventService {
               await this.userService.handleUpdateUserVip(user.id, {
                 data: JSON.stringify(new_data),
               });
-              console.log(`isNext vip ${vip.id}`, new_data);
             }
           }
         }
