@@ -8,6 +8,7 @@ import { SessionService } from 'src/session/session.service';
 import {
   CreateUserBet,
   DelUserBet,
+  DiemDanh,
   MessagesChat,
   ResultDataBet,
   ValueBetUserSv,
@@ -55,6 +56,7 @@ export class EventService {
   ) {}
 
   private readonly mutexMap = new Map<string, Mutex>();
+  private diem_danh = new Map<string, string>();
   private logger: Logger = new Logger('Events');
 
   //TODO ———————————————[Handle Create Bet User]———————————————
@@ -1693,6 +1695,153 @@ export class EventService {
 
   async handleCreateUserActive(data: CreateUserActive) {
     return await this.userService.handleCreateUserActive(data);
+  }
+
+  //TODO ———————————————[Handle Diem Danh]———————————————
+  @OnEvent('diem-danh', { async: true })
+  async handleDiemDanh(data: DiemDanh) {
+    const parameter = `diem-danh`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      // Check diem danh co hoat dong khong
+      const e_is_diem_danh =
+        await this.userService.handleGetEventModel('e-turn-diem-danh');
+      const e_limited_diem_danh = await this.userService.handleGetEventModel(
+        'e-limited-diem-danh',
+      );
+      const e_delay_prize_diem_danh =
+        await this.userService.handleGetEventModel('e-delay-prize-diem-danh');
+      if (!e_is_diem_danh.status)
+        throw new Error('Xin lỗi, điểm danh đang đóng');
+      // Check is user?
+      const payload = await this.jwtService.verifyAsync(data.token, {
+        secret: jwtConstants.secret,
+      });
+      if (data.uid !== payload?.sub)
+        throw new Error('Bạn không phải là người chơi');
+      // check diem danh
+      if (this.diem_danh.has(data.uid))
+        throw new Error('Xin lỗi, bạn đã tham gia điểm danh');
+      this.diem_danh.set(data.uid, data.uid);
+
+      if (this.diem_danh.size > e_limited_diem_danh.value)
+        throw new Error(
+          'Hệ thống điểm danh đang tìm người chơi may mắn, xin vui lòng thử lại ở lượt điểm danh kế tiếp',
+        );
+
+      this.socketGateway.server.emit('diem-danh-re', {
+        status: true,
+        msg: 'Bạn đã tham gia điểm danh thành công',
+        uid: data.uid,
+      });
+      if (this.diem_danh.size === e_limited_diem_danh.value) {
+        this.socketGateway.server.emit('diem-danh-live', '1');
+        setTimeout(() => {
+          this.eventEmitter.emit('start-diem-danh');
+        }, e_delay_prize_diem_danh.value);
+      }
+    } catch (err: any) {
+      this.socketGateway.server.emit('diem-danh-re', {
+        status: false,
+        msg: err.message,
+        uid: data.uid,
+      });
+    } finally {
+      release();
+    }
+  }
+
+  @OnEvent('start-diem-danh', { async: true })
+  async handleStartDiemDanh() {
+    try {
+      // Close diem danh
+      await this.userService.handleUpdateEventModel('e-turn-diem-danh', {
+        status: false,
+      });
+      const e_prize_diem_danh =
+        await this.userService.handleGetEventModel('e-prize-diem-danh');
+      const e_time_delay_diem_danh = await this.userService.handleGetEventModel(
+        'e-time-delay-diem-danh',
+      );
+      const e_winner_diem_danh = await this.userService.handleGetEventModel(
+        'e-number-winner-diem-danh',
+      );
+      const diem_danh = this.diem_danh;
+      const data = [];
+      diem_danh.forEach((value, key) => {
+        data.push(value);
+      });
+      const targets = [];
+      for (let i = 0; i < e_winner_diem_danh.value; i++) {
+        let index = Math.floor(Math.random() * data.length);
+        let item = data[index];
+        targets.push(item);
+        data.splice(index, index);
+      }
+      for (const target of targets) {
+        const user = await this.userService.findById(target);
+        const res = await this.userService.update(user.id, {
+          $inc: {
+            gold: +e_prize_diem_danh.value,
+          },
+        });
+        await this.handleMessageSystemNoti(
+          `Chúc mừng người chơi ${user.name} đã trúng ${e_prize_diem_danh.value} thỏi vàng từ quà điểm danh`,
+        );
+        await this.userService.handleCreateUserActive({
+          uid: user.id,
+          currentGold: user.gold,
+          newGold: user.gold + e_prize_diem_danh.value,
+          active: JSON.stringify({
+            name: 'Diem danh',
+            amount: e_prize_diem_danh.value,
+          }),
+        });
+        const result = res.toObject();
+        delete result.pwd_h;
+        this.socketGateway.server.emit('diem-danh-result', result);
+      }
+      await this.handleMessageSystemNoti(
+        `Điểm danh sẽ mở lại sau ${moment.utc(e_time_delay_diem_danh.value).format('mm:ss')} phút nữa`,
+      );
+      this.socketGateway.server.emit('diem-danh-live', '2');
+      setTimeout(async () => {
+        await this.handleMessageSystemNoti(
+          'Điểm danh đã mở lại, xin mời những người chơi cùng tham gia!',
+        );
+        this.socketGateway.server.emit('diem-danh-live', '0');
+        await this.userService.handleUpdateEventModel('e-turn-diem-danh', {
+          status: true,
+        });
+      }, e_time_delay_diem_danh.value);
+    } catch (err) {}
+  }
+
+  @OnEvent('diem-danh-got', { async: true })
+  async handleDiemDanhGot(data: DiemDanh) {
+    try {
+      return this.socketGateway.server.emit('diem-danh-got-re', {
+        length: this.diem_danh.size,
+        status: true,
+        msg: 'OK',
+        uid: data.uid,
+        token: data.token,
+      });
+    } catch (err) {
+      this.socketGateway.server.emit('diem-danh-got-re', {
+        status: false,
+        msg: err.message,
+        uid: data.uid,
+        token: data.token,
+      });
+    }
   }
 }
 

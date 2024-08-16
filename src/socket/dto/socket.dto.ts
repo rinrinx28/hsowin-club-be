@@ -27,3 +27,8 @@ export class MessagesChat {
   content: string;
   server: string;
 }
+
+export class DiemDanh {
+  uid: string;
+  token: string;
+}

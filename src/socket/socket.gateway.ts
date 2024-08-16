@@ -13,6 +13,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CreateUserBet,
   DelUserBet,
+  DiemDanh,
   MessagesChat,
   ResultDataBet,
   ValueBetUserSv,
@@ -77,6 +78,16 @@ export class SocketGateway
   @SubscribeMessage('message-user')
   async handleMessageUser(@MessageBody() data: MessagesChat) {
     await this.eventEmitter.emitAsync('message-user', data);
+  }
+
+  @SubscribeMessage('diem-danh')
+  async handleDiemDanh(@MessageBody() data: DiemDanh) {
+    await this.eventEmitter.emitAsync('diem-danh', data);
+  }
+
+  @SubscribeMessage('diem-danh-got')
+  async handleDiemDanhGot(@MessageBody() data: DiemDanh) {
+    await this.eventEmitter.emitAsync('diem-danh-got');
   }
 
   afterInit(server: Server) {
