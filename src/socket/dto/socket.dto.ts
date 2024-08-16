@@ -29,6 +29,6 @@ export class MessagesChat {
 }
 
 export class DiemDanh {
-  uid: string;
-  token: string;
+  uid?: string;
+  token?: string;
 }

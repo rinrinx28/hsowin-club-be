@@ -1831,15 +1831,15 @@ export class EventService {
         length: this.diem_danh.size,
         status: true,
         msg: 'OK',
-        uid: data.uid,
-        token: data.token,
+        uid: data?.uid ?? '',
+        token: data?.token ?? '',
       });
     } catch (err) {
       this.socketGateway.server.emit('diem-danh-got-re', {
         status: false,
         msg: err.message,
-        uid: data.uid,
-        token: data.token,
+        uid: data?.uid ?? '',
+        token: data?.token ?? '',
       });
     }
   }
