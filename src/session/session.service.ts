@@ -55,6 +55,15 @@ export class SessionService {
         await this.userService.handleGetEventModel('e-auto-rut-vang');
       const e_auto_nap =
         await this.userService.handleGetEventModel('e-auto-nap-vang');
+      const e_min_withdraw = await this.userService.handleGetEventModel(
+        'e-min-withdraw-gold',
+      );
+      const e_max_withdraw = await this.userService.handleGetEventModel(
+        'e-max-withdraw-gold',
+      );
+      const e_min_deposit =
+        await this.userService.handleGetEventModel('e-min-deposit-gold');
+
       if (body.type === '0' && !e_auto_nap.status)
         throw new Error(
           'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
@@ -80,14 +89,16 @@ export class SessionService {
         throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
 
       // Limited Amount
-      if (body.type === '0' && body.amount < 30)
-        throw new Error('Số thỏi vàng cần nạp phải lớn 30 thỏi vàng');
+      if (body.type === '0' && body.amount < e_min_deposit.value)
+        throw new Error(
+          `Số thỏi vàng cần nạp phải lớn ${e_min_deposit.value} thỏi vàng`,
+        );
       if (
-        (body.type === '1' && body.amount > 300) ||
-        (body.type === '1' && body.amount < 30)
+        (body.type === '1' && body.amount > e_max_withdraw.value) ||
+        (body.type === '1' && body.amount < e_min_withdraw.value)
       )
         throw new Error(
-          'Số thỏi vàng cần rút phải lớn 30 và nhỏ hon 300 thỏi vàng',
+          `Số thỏi vàng cần rút phải lớn ${e_min_withdraw.value} và nhỏ hon ${e_max_withdraw.value} thỏi vàng`,
         );
 
       // Let minus gold of user
