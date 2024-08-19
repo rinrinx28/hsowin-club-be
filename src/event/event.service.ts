@@ -1726,6 +1726,12 @@ export class EventService {
       });
       if (data.uid !== payload?.sub)
         throw new Error('Bạn không phải là người chơi');
+      const user = await this.userService.findById(data.uid);
+
+      if (user.totalBet === 0)
+        throw new Error(
+          'Xin lỗi, Bạn cần tham gia cược ít nhất 1 lần trong ngày!',
+        );
       // check diem danh
       if (this.diem_danh.has(data.uid))
         throw new Error('Xin lỗi, bạn đã tham gia điểm danh');
