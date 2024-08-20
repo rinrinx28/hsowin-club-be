@@ -1829,6 +1829,13 @@ export class EventService {
         await this.userService.handleUpdateEventModel('e-turn-diem-danh', {
           status: true,
         });
+        this.socketGateway.server.emit('diem-danh-got-re', {
+          length: this.diem_danh.size,
+          status: true,
+          msg: 'OK',
+          uid: '',
+          token: '',
+        });
       }, e_time_delay_diem_danh.value);
     } catch (err) {}
   }
