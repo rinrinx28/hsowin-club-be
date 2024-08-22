@@ -363,7 +363,7 @@ export class SessionService {
         vip: targetVip + 1,
       });
       // Check OLD VIP in user
-      if (target.vip !== 0 && target.vip !== targetVip + 1) {
+      if (target.vip !== 0) {
         await this.userService.handleCreateUserActive({
           uid: bankInfo.uid,
           active: JSON.stringify({
