@@ -42,10 +42,10 @@ export class EventService {
   constructor(
     private readonly socketGateway: SocketGateway,
     private readonly unitlService: UnitlService,
-    private readonly botService: BotService,
+    // private readonly botService: BotService,
     private readonly bossService: BossService,
-    private readonly sessionService: SessionService,
-    private readonly cronJobService: CronjobService,
+    // private readonly sessionService: SessionService,
+    // private readonly cronJobService: CronjobService,
     private readonly userService: UserService,
     private readonly betLogService: BetLogService,
     private readonly messageService: MessegesService,
@@ -198,7 +198,7 @@ export class EventService {
       const e_auto_bet_sv =
         await this.userService.handleGetEventModel('e-auto-bet-sv');
       if (!e_auto_bet_sv.status && uid !== '66a93f03c73cf0838db43e9a')
-        throw new Error('Hệ thống Cược Server 1,2,3,24 đang bảo trì');
+        throw new Error('Hệ thống Cược Server 24 đang bảo trì');
 
       const bet_session = await this.betLogService.findSvById(betId);
       if (!bet_session || bet_session.isEnd)
@@ -679,10 +679,11 @@ export class EventService {
       let current = new Date(statusBoss?.updatedAt);
       let hours = current.getHours();
       let minutes = current.getMinutes();
-      const result_target = await this.eventRandomDrawModel.findOne({
-        betId: old_bet_sv?.id,
-        isEnd: false,
-      });
+      const result_target =
+        (await this.eventRandomDrawModel.findOne({
+          betId: old_bet_sv?.id,
+          isEnd: false,
+        })) ?? null;
       // const result = this.handleResultBetBoss(
       //   result_target?.timeBoss ??
       //     `${hours > 9 ? hours : `0${hours}`}${minutes > 9 ? minutes : `0${minutes}`}`,
@@ -1141,10 +1142,11 @@ export class EventService {
       // Get value now update
       let hours = now.getHours();
       let minutes = now.getMinutes();
-      const result_target = await this.eventRandomDrawModel.findOne({
-        betId: old_bet.id,
-        isEnd: false,
-      });
+      const result_target =
+        (await this.eventRandomDrawModel.findOne({
+          betId: old_bet?.id,
+          isEnd: false,
+        })) ?? null;
       const result = this.handleResultBet24(
         result_target?.value ??
           `${Math.floor(Math.random() * (98 - 0 + 1)) + 0}`,
@@ -1241,7 +1243,7 @@ export class EventService {
         status: false,
         data: '',
       });
-      // throw new CatchException(err);
+      throw new CatchException(err);
     }
   }
 

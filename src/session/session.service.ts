@@ -164,7 +164,7 @@ export class SessionService {
       }, 1e3 * 600); // 1e3 = 1000ms
       // send task to memory storage
       this.logger.log(
-        `UID: ${sub} - ${body.type === '1' ? 'Nap' : 'Rut'} - GOLD: ${body.amount}`,
+        `UID: ${sub} - ${body.type === '1' ? 'Rut' : 'Nạp'} - GOLD: ${body.amount}`,
       );
       this.cronJobService.create(result?.id, timeOutId);
       return result;

@@ -10,6 +10,10 @@ import { UserService } from 'src/user/user.service';
 import { BetLogService } from 'src/bet-log/bet-log.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CatchException } from 'src/common/common.exception';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Event } from 'src/event/schema/event.schema';
+import * as moment from 'moment';
 
 @Injectable()
 export class ClientService {
@@ -23,6 +27,8 @@ export class ClientService {
     private readonly userService: UserService,
     private readonly betLogService: BetLogService,
     private eventEmitter: EventEmitter2,
+    @InjectModel(Event.name)
+    private readonly eventModel: Model<Event>,
   ) {}
   private logger: Logger = new Logger('Client Auto');
 
@@ -51,6 +57,9 @@ export class ClientService {
   async getTransaction(data: Transaction) {
     try {
       const { player_name, type, player_id, service_id, server } = data;
+      const e_value_diamom_claim = await this.eventModel.findOne({
+        name: 'e-value-diamon-claim',
+      });
       if (type === '0') {
         let new_playerName = this.unitlService.hexToString(player_name);
         // Let find session with PlayerName
@@ -151,9 +160,78 @@ export class ClientService {
             currentGold: target.gold,
             newGold: target.gold + Number(data?.gold_receive),
           });
+          //TODO ———————————————[Handle VIP]———————————————
+          // Check vip
+          const e_value_vip =
+            await this.userService.handleGetEventModel('e-value-vip');
+          const value_vip = JSON.parse(e_value_vip.option);
+          const targetBank = target.totalBank + data?.gold_receive;
+          // Find Level VIP 0 - 6 ( 1 - 7 )
+          const targetVip = this.userService.findPosition(
+            value_vip,
+            targetBank,
+          );
+          // Set Level VIP
+          let start_data = moment();
+          let end_data = moment().add(1, 'month');
+          let data_vip = this.userService.handleGenVipClaim(
+            start_data,
+            end_data,
+          );
+          // Update Level VIP
+          await this.userService.update(old_session?.uid, {
+            vip: targetVip + 1,
+          });
+          // Check OLD VIP in user
+          if (target.vip !== 0) {
+            await this.userService.handleCreateUserActive({
+              uid: old_session?.uid,
+              active: JSON.stringify({
+                name: 'VIP Upgrade',
+                currentVip: target.vip,
+                newVip: targetVip + 1,
+              }),
+              currentGold: target.gold,
+              newGold: target.gold,
+            });
+          } else {
+            // Check Old VIP in db
+            const old_targetVip = await this.userService.handleFindUserVip(
+              old_session?.uid,
+            );
+            if (!old_targetVip) {
+              // Create new VIP in db
+              await this.userService.handleCreateUserVip({
+                data: JSON.stringify(data_vip),
+                timeEnd: end_data,
+                uid: old_session?.uid,
+              });
+            } else {
+              // Update VIP in db
+              await this.userService.handleUpdateUserVip(old_session?.uid, {
+                data: JSON.stringify(data_vip),
+                timeEnd: end_data,
+                isEnd: false,
+              });
+            }
+
+            await this.userService.handleCreateUserActive({
+              uid: old_session?.uid,
+              active: JSON.stringify({
+                name: 'Set VIP',
+                currentVip: target.vip,
+                newVip: targetVip + 1,
+              }),
+              currentGold: target.gold,
+              newGold: target.gold,
+            });
+          }
+
           await this.userService.update(old_session?.uid, {
             $inc: {
               gold: +Number(data?.gold_receive),
+              totalBank: +Number(data?.gold_receive),
+              diamon: +e_value_diamom_claim.value * Number(data?.gold_receive),
             },
           });
         } else {

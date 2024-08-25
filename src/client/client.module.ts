@@ -9,6 +9,8 @@ import { UnitlService } from 'src/unitl/unitl.service';
 import { WebSocketModule } from 'src/socket/socket.module';
 import { BetLogModule } from 'src/bet-log/bet-log.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Event, EventSchema } from 'src/event/schema/event.schema';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { CronjobModule } from 'src/cronjob/cronjob.module';
     WebSocketModule,
     BetLogModule,
     CronjobModule,
+    MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
   ],
   controllers: [ClientController],
   providers: [ClientService, UnitlService],
