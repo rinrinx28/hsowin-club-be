@@ -13,8 +13,8 @@ async function bootstrap() {
   // Define an array of allowed origins
   const allowedOrigins = [
     'http://localhost:3000',
-    'https://hsowin.vip',
-    'https://www.hsowin.vip',
+    'https://hsgame.me',
+    'https://www.hsgame.me',
   ];
 
   app.enableCors({

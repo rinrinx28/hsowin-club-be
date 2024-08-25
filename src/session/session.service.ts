@@ -259,8 +259,8 @@ export class SessionService {
         orderCode: eventOrderBank.value,
         amount: amount,
         description: `ORDER - ${data?.username}`,
-        cancelUrl: 'https://hsowin.vip/user',
-        returnUrl: 'https://hsowin.vip/user',
+        cancelUrl: 'https://hsgame.me/user',
+        returnUrl: 'https://hsgame.me/user',
       };
 
       const signature = this.createSignature(sign);

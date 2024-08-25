@@ -65,11 +65,9 @@ export class AuthGuard implements CanActivate {
       // check path admin
       if (isAdmin && ['1'].includes(user.type)) return true;
 
-      throw new ForbiddenException('Quyền của bạn không đủ');
-    } catch (err) {
-      throw new BadRequestException(
-        'Mã thông báo xác thực không hợp lệ hoặc đã hết hạn',
-      );
+      throw new BadRequestException('Quyền của bạn không đủ');
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
     }
   }
 

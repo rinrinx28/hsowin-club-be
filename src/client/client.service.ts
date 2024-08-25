@@ -58,11 +58,11 @@ export class ClientService {
           await this.sessionService.findByName(new_playerName);
         if (!old_session)
           throw new Error(
-            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
+            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsgame.me !',
           );
         if (old_session.server !== server)
           throw new Error(
-            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsowin.vip !',
+            'no|Bạn chưa tạo lệnh, xin vui lòng tạo lệnh tại hsgame.me !',
           );
         if (old_session.type === '0') {
           this.logger.log(
