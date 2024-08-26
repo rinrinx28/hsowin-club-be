@@ -80,6 +80,11 @@ export class SocketGateway
     await this.eventEmitter.emitAsync('message-user', data);
   }
 
+  @SubscribeMessage('message-admin')
+  async handleMessageAdmin(@MessageBody() data: string) {
+    await this.eventEmitter.emitAsync('noti-system', data);
+  }
+
   @SubscribeMessage('diem-danh')
   async handleDiemDanh(@MessageBody() data: DiemDanh) {
     await this.eventEmitter.emitAsync('diem-danh', data);
