@@ -165,7 +165,7 @@ export class ClientService {
           const e_value_vip =
             await this.userService.handleGetEventModel('e-value-vip');
           const value_vip = JSON.parse(e_value_vip.option);
-          const targetBank = target.totalBank + data?.gold_receive;
+          const targetBank = target.totalBank + Number(data?.gold_receive);
           // Find Level VIP 0 - 6 ( 1 - 7 )
           const targetVip = this.userService.findPosition(
             value_vip,
