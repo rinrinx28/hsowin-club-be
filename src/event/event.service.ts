@@ -1461,9 +1461,11 @@ export class EventService {
                 isNext: true,
                 isCancel: user?.totalBet > 0 ? false : true,
               };
-              await this.userService.handleUpdateUserVip(user.id, {
-                data: JSON.stringify(new_data),
-              });
+              if (user) {
+                await this.userService.handleUpdateUserVip(user.id, {
+                  data: JSON.stringify(new_data),
+                });
+              }
             }
           }
         }
