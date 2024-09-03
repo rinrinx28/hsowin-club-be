@@ -253,7 +253,9 @@ export class UserService {
       if ('clanId' in targetClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
         if (target?.id === OwnerTargetClan.ownerId)
-          throw new Error('Bạn là chủ của một Clan');
+          throw new Error(
+            'Bạn là chủ của một Clan, bạn không thể rời bỏ Clan của mình!',
+          );
       }
       // Update member into clans
       await this.clansModel.findByIdAndUpdate(
@@ -312,6 +314,46 @@ export class UserService {
     }
   }
 
+  async clansGet(find = {}) {
+    return await this.clansModel.find(find);
+  }
+
+  async clansInfo(id: any) {
+    try {
+      const clan_data = await this.clansModel.findById(id);
+      if (!clan_data) throw new Error('Bang hội không tồn tại!');
+      // Fetch User of Clans
+      const clan_users = await this.userModel.find({
+        clan: {
+          $regex: `${clan_data.id}`,
+        },
+      });
+      const users = clan_users.map((u) => {
+        const {
+          pwd_h,
+          username,
+          email,
+          gold,
+          totalBank,
+          diamon,
+          trade,
+          limitedTrade,
+          isBan,
+          isReason,
+          createdAt,
+          updatedAt,
+          ip_address,
+          _id,
+          ...res
+        } = u.toObject();
+        return res;
+      });
+      return users;
+    } catch (err) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
   //TODO ———————————————[Handle Event Model]———————————————
   async handleCreateEventModel(data: CreateEvent) {
     return await this.eventModel.create(data);
@@ -333,6 +375,15 @@ export class UserService {
 
   //TODO ———————————————[Handle Exchange]———————————————
   async handleExchangeGold(data: Exchange, token) {
+    const parameter = `user-exchange`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const percent = await this.handleGetEventModel('e-percent-diamon-trade');
       const user = await this.findById(token?.sub);
@@ -365,6 +416,8 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 

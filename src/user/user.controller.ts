@@ -51,7 +51,13 @@ export class UserController {
 
   @Post('/clans/create')
   @isUser()
-  async clansCreate(@Body() data: CreateClans) {
+  async clansCreate(@Body() data: CreateClans, @Req() req: any) {
+    const user = req.user;
+    if (data.ownerId !== user.sub)
+      throw new BadRequestException(
+        'Bạn đã bị từ chối dịch vụ, vì bạn không phải chủ nhân của Token!',
+      );
+
     return await this.userService.createClans(data);
   }
 
@@ -65,7 +71,12 @@ export class UserController {
 
   @Post('/clans/leave')
   @isUser()
-  async clansLeave(@Body() data: MemberClans) {
+  async clansLeave(@Body() data: MemberClans, @Req() req: any) {
+    const owner = req.user;
+    if (owner.sub !== data.uid)
+      throw new BadRequestException(
+        'Bạn đã bị từ chối dịch vụ, vì bạn không phải chủ nhân của Token!',
+      );
     const user = await this.userService.removeMemberClans(data);
     delete user.pwd_h;
     return user;
@@ -75,6 +86,18 @@ export class UserController {
   @isUser()
   async clansDelete(@Body() data: MemberClans) {
     return await this.userService.deleteClanWithOwner(data);
+  }
+
+  @Get('/clans')
+  @Public()
+  async clansGet() {
+    return await this.userService.clansGet({});
+  }
+
+  @Get('/clans/info/:id')
+  @Public()
+  async clansInfo(@Param('id') id: any) {
+    return await this.userService.clansInfo(id);
   }
 
   //TODO ———————————————[Path Info]———————————————

@@ -1174,13 +1174,13 @@ export class EventService {
         });
       } else {
         // Check if the result is jack pot
-        // if (result.includes('99')) {
-        //   await this.handleJackPotServerAuto({
-        //     betId: old_bet?.id,
-        //     result: result,
-        //     server: `24`,
-        //   });
-        // }
+        if (result.includes('99')) {
+          await this.handleJackPotServerAuto({
+            betId: old_bet?.id,
+            result: result,
+            server: `24`,
+          });
+        }
 
         // Send result for user bet the sv
         await this.handleResultServerWithBoss({
@@ -1291,15 +1291,25 @@ export class EventService {
 
       // let send the prize for user and update the prize on history bet
       for (const user of list_user_prize) {
+        const target = await this.userService.findById(user.uid);
         await this.userService.update(user.uid, {
           $inc: {
             gold: +user.prize,
           },
         });
         await this.handleMessageSystem(
-          `Chúc mừng người chơi có ID: ${this.shortenString(user.uid, 3, 3)} đã trúng jackpot ${user.prize} gold`,
+          `Chúc mừng người chơi ${target.name ?? 'ID:' + this.shortenString(user.uid, 3, 3)} đã trúng jackpot ${user.prize} gold`,
           server,
         );
+        await this.userService.handleCreateUserActive({
+          active: JSON.stringify({
+            name: 'Jackpot',
+            prize: user.prize,
+          }),
+          currentGold: target.gold ?? 0,
+          newGold: (target.gold ?? 0) + user.prize,
+          uid: user.uid,
+        });
       }
 
       let totalPrize = list_user_prize.reduce((a, b) => a + b.prize, 0);
