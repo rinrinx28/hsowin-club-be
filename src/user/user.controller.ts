@@ -201,7 +201,7 @@ export class UserController {
     const user = req.user;
     const now = moment();
     const date = data.date;
-    if (now.isBefore(moment(date)))
+    if (now.format('DD/MM/YYYY') !== moment(date).format('DD/MM/YYYY'))
       throw new BadRequestException(
         'Xin lỗi bạn không thể điểm danh cho ngày khác',
       );
