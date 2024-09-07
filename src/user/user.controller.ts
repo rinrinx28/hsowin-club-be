@@ -172,8 +172,9 @@ export class UserController {
   async handleUserBetLogs(
     @Query('limit') limit: any,
     @Query('server') server: any,
+    @Query('userId') userId: any,
   ) {
-    return await this.userService.handleUserBetLogs(limit, server);
+    return await this.userService.handleUserBetLogs(limit, server, userId);
   }
 
   @Get('/bets/log')
