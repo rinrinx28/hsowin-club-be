@@ -1330,15 +1330,16 @@ export class EventService {
   async handleRankClans() {
     try {
       // Let find top 10 rank clans with totalBet
-      const topClans = await this.userService.getTopClans();
+      // const topClans = await this.userService.getTopClans();
 
-      // Let find list user in the top clans
-      let list_clans_users: Record<string, Array<any>> = {};
-      for (const clan of topClans) {
-        const { id } = clan;
-        const users = await this.userService.getUserWithClansId(id);
-        list_clans_users[id] = users;
-      }
+      // // Let find list user in the top clans
+      // let list_clans_users: Record<string, Array<any>> = {};
+      // for (const clan of topClans) {
+      //   const { id } = clan;
+      //   const users = await this.userService.getUserWithClansId(id);
+      //   list_clans_users[id] = users;
+      // }
+      await this.userService.resetTotalBetClan();
       // console.log(list_clans_users);
     } catch (err) {
       // throw new CatchException(err);

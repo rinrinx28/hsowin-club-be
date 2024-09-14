@@ -35,6 +35,8 @@ export class CreateClans {
 
   @IsNotEmpty({ message: 'typeClan không thể để trống' })
   typeClan: string;
+
+  description?: string;
 }
 
 export class MemberClans {

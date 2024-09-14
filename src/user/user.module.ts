@@ -12,6 +12,7 @@ import { UserPrize, UserPrizeSchema } from './schema/prize.schema';
 import { UserActive, UserActiveSchema } from './schema/userActive';
 import { UserVip, UserVipSchema } from './schema/userVip.schema';
 import { MissionDaily, MissionDailySchema } from './schema/missionDaily.schema';
+import { PenningClans, PenningClansSchema } from './schema/PenningClans.schema';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { MissionDaily, MissionDailySchema } from './schema/missionDaily.schema';
       { name: UserActive.name, schema: UserActiveSchema },
       { name: UserVip.name, schema: UserVipSchema },
       { name: MissionDaily.name, schema: MissionDailySchema },
+      { name: PenningClans.name, schema: PenningClansSchema },
     ]),
   ],
   controllers: [UserController],

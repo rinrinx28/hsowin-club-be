@@ -38,6 +38,7 @@ import { UserVip } from './schema/userVip.schema';
 import { MissionDaily } from './schema/missionDaily.schema';
 import * as moment from 'moment';
 import { Mutex } from 'async-mutex';
+import { PenningClans } from './schema/PenningClans.schema';
 
 @Injectable()
 export class UserService {
@@ -62,6 +63,8 @@ export class UserService {
     private readonly userVipModel: Model<UserVip>,
     @InjectModel(MissionDaily.name)
     private readonly missionDailyModel: Model<MissionDaily>,
+    @InjectModel(PenningClans.name)
+    private readonly penningClansModel: Model<PenningClans>,
   ) {}
   private logger: Logger = new Logger('UserService');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -185,21 +188,36 @@ export class UserService {
     try {
       // Check if owner was owner of clan
       const user = await this.findById(data.ownerId);
+      if (!user) throw new Error('Người dùng không tồn tại!');
+      // Config event;
+      const e_clans_price = await this.handleGetEventModel('e-clans-price');
       const userClanJSON = JSON.parse(user?.clan);
       if ('clanId' in userClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(userClanJSON?.clanId);
         if (user?.id === OwnerTargetClan.ownerId)
           throw new Error('Bạn đã là chủ một Clan');
       }
+      const clans_prices: number[] = JSON.parse(e_clans_price.option);
+      const clans_price = clans_prices[parseInt(data.typeClan, 10) - 1];
+      if (user.gold - clans_price <= 0)
+        throw new Error('Xin lỗi, bạn không đủ thỏi vàng để tạo Bang Hội!');
+
       const targetClan = await this.clansModel.create(data);
       const targetUser = await this.update(data.ownerId, {
         clan: JSON.stringify({
           clanId: targetClan.id,
           timejoin: new Date(),
         }),
+        $inc: {
+          gold: -clans_price,
+        },
       });
-      delete targetUser.pwd_h;
-      return [targetClan, targetUser];
+      let new_target_user = targetUser.toObject();
+      delete new_target_user.pwd_h;
+      return {
+        status: true,
+        data: [targetClan, new_target_user],
+      };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -208,38 +226,32 @@ export class UserService {
   async addMemberClans(data: MemberClans) {
     try {
       // Check if owner was owner of clan
-      const target = await this.findById(data.uid);
+      const target = await this.userModel.findById(data.uid);
+      if (!target) throw new Error('Người dùng không tồn tại!');
+      const targetClan = await this.clansModel.findById(data.clanId);
+      if (!targetClan) throw new Error('Bang Hội không tồn tại!');
       const targetClanJSON = JSON.parse(target?.clan);
       if ('clanId' in targetClanJSON) {
         let OwnerTargetClan = await this.findClanWithId(targetClanJSON?.clanId);
         if (target?.id === OwnerTargetClan.ownerId)
           throw new Error('Bạn là chủ của một Clan');
       }
-      // Update member into clans
-      await this.clansModel.findByIdAndUpdate(
-        data?.clanId,
-        {
-          $inc: {
-            member: +1,
-          },
-        },
-        { upsert: true, new: true },
-      );
-      const clanInfo = {
-        clanId: data?.clanId,
-        timejoin: new Date(),
+      // Check old penning a clan;
+      let target_penning = await this.penningClansModel.findOne({
+        userId: data.uid,
+        clanId: data.clanId,
+      });
+      if (target_penning)
+        throw new Error('Xin lỗi, bạn đã nộp đơn xin gia nhập Bang hội này!');
+      // Add member to penning clans;
+      await this.penningClansModel.create({
+        userId: data.uid,
+        clanId: data.clanId,
+      });
+      return {
+        status: true,
+        message: `Bạn đã gửi yêu cầu tham gia Bang Hội ${targetClan.clanName}`,
       };
-      const clanInfoString = JSON.stringify(clanInfo);
-      const user = await this.userModel
-        .findByIdAndUpdate(
-          data?.uid,
-          {
-            clan: clanInfoString,
-          },
-          { upsert: true, new: true },
-        )
-        .exec();
-      return user;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -258,7 +270,7 @@ export class UserService {
           );
       }
       // Update member into clans
-      await this.clansModel.findByIdAndUpdate(
+      const target_clans = await this.clansModel.findByIdAndUpdate(
         data?.clanId,
         {
           $inc: {
@@ -267,16 +279,20 @@ export class UserService {
         },
         { upsert: true, new: true },
       );
-      const user = await this.userModel
-        .findByIdAndUpdate(
+      let target_user = (
+        await this.userModel.findByIdAndUpdate(
           data?.uid,
           {
-            clan: '',
+            clan: '{}',
           },
           { upsert: true, new: true },
         )
-        .exec();
-      return user;
+      ).toObject();
+      delete target_user.pwd_h;
+      return {
+        status: true,
+        data: [target_clans, target_user],
+      };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -295,7 +311,7 @@ export class UserService {
   }
 
   async getTopClans() {
-    return await this.clansModel.find().sort({ totalBet: -1 }).limit(10).exec();
+    return await this.clansModel.find().sort({ totalBet: -1 }).limit(7).exec();
   }
 
   async findClanWithId(id: any) {
@@ -308,7 +324,23 @@ export class UserService {
       if (targetClan.ownerId !== data.uid)
         throw new Error('Bạn không phải là chủ một Clan');
       await this.clansModel.findByIdAndDelete(data.clanId);
-      return 'ok';
+      const list_user = await this.userModel.find({
+        clan: {
+          $regex: `${targetClan.id}`,
+        },
+      });
+      let list_uid = list_user.map((u) => u.id);
+      await this.userModel.updateMany(
+        { _id: { $in: list_uid } },
+        { $set: { clan: '{}' } },
+      );
+      let owner = (await this.userModel.findById(data.uid)).toObject();
+      delete owner.pwd_h;
+      return {
+        status: true,
+        data: owner,
+        message: 'Bạn đã xóa thành công bang Hội!',
+      };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -329,29 +361,143 @@ export class UserService {
         },
       });
       const users = clan_users.map((u) => {
-        const {
-          pwd_h,
-          username,
-          email,
-          gold,
-          totalBank,
-          diamon,
-          trade,
-          limitedTrade,
-          isBan,
-          isReason,
-          createdAt,
-          updatedAt,
-          ip_address,
-          _id,
-          ...res
-        } = u.toObject();
+        let res = u.toObject();
+        delete res.pwd_h;
         return res;
       });
       return users;
     } catch (err) {
       throw new BadRequestException(err.message);
     }
+  }
+
+  async handlerGetPenningClans(id: any) {
+    try {
+      const target_penning = await this.penningClansModel.find({
+        clanId: id,
+      });
+      const list_user = target_penning.map((p) => p.userId);
+      let users = await this.userModel.find({
+        _id: {
+          $in: list_user,
+        },
+      });
+      let new_users = users.map((u) => {
+        let user = u.toObject();
+        delete user.pwd_h;
+        return user;
+      });
+      return {
+        penings: target_penning,
+        users: new_users,
+      };
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async handleAcpectUserJoinClans(id: any) {
+    try {
+      const penning_data = await this.penningClansModel.findById(id);
+
+      if (!penning_data) throw new Error('Đơn gia nhập không tồn tại!');
+      if (penning_data.isAcpect)
+        throw new Error('Đơn xin gia nhập đã được duyệt!');
+
+      const { userId, clanId } = penning_data;
+
+      const target_user = await this.userModel.findById(userId);
+      const target_clans = await this.clansModel.findById(clanId);
+
+      if (!target_user) throw new Error('Người dùng không tồn tại!');
+      if (!target_clans) throw new Error('Bang hội không tồn tại!');
+
+      const e_clans_members_limit = await this.handleGetEventModel(
+        'e-clans-limit-members',
+      );
+      const clans_members_limit = e_clans_members_limit.value;
+
+      const targetClanJSON = JSON.parse(target_user?.clan);
+      if ('clanId' in targetClanJSON) {
+        let OwnerTargetClan = await this.findClanWithId(clanId);
+        if (target_user?.id === OwnerTargetClan.ownerId)
+          throw new Error(
+            'Bạn là chủ của một Bang Hội, bạn không thể gia nhập vào một Bang Hội khác!',
+          );
+      }
+
+      if (target_clans.member + 1 > clans_members_limit)
+        throw new Error(
+          `Thành viên tối đa của Bang Hội là ${clans_members_limit}`,
+        );
+      // Update member into the clans;
+      const clans = await this.clansModel.findByIdAndUpdate(
+        clanId,
+        {
+          $inc: {
+            member: +1,
+          },
+        },
+        { upsert: true, new: true },
+      );
+      const clanInfo = {
+        clanId: clanId,
+        timejoin: new Date(),
+      };
+      const clanInfoString = JSON.stringify(clanInfo);
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          userId,
+          {
+            clan: clanInfoString,
+          },
+          { upsert: true, new: true },
+        )
+        .exec();
+      await this.penningClansModel.findByIdAndDelete(id);
+      return {
+        status: true,
+        data: [clans, user],
+      };
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async handlerDeclineUserJoinClans(id: any) {
+    try {
+      await this.penningClansModel.findByIdAndDelete(id);
+      return {
+        status: true,
+        message: 'Bạn đã xóa đơn xin gia nhập thành công!',
+        data: null,
+      };
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  async handlerClanOwner({ userId, clanId }: { userId: any; clanId: string }) {
+    try {
+      const target_clans = await this.clansModel.findById(clanId);
+      if (!target_clans) throw new Error('Bang hội không tồn tại!');
+      if (target_clans.ownerId !== userId)
+        throw new Error('Bạn không phải chủ Bang hội!');
+      return true;
+    } catch (err: any) {
+      return false;
+    }
+  }
+
+  async resetTotalBetClan() {
+    return await this.clansModel.updateMany(
+      {},
+      {
+        $set: {
+          totalBet: 0,
+        },
+      },
+    );
   }
 
   //TODO ———————————————[Handle Event Model]———————————————

@@ -65,7 +65,6 @@ export class UserController {
   @isUser()
   async clansJoin(@Body() data: MemberClans) {
     const user = await this.userService.addMemberClans(data);
-    delete user.pwd_h;
     return user;
   }
 
@@ -78,13 +77,17 @@ export class UserController {
         'Bạn đã bị từ chối dịch vụ, vì bạn không phải chủ nhân của Token!',
       );
     const user = await this.userService.removeMemberClans(data);
-    delete user.pwd_h;
     return user;
   }
 
   @Post('/clans/delete')
   @isUser()
-  async clansDelete(@Body() data: MemberClans) {
+  async clansDelete(@Body() data: MemberClans, @Req() req: any) {
+    const owner = req.user;
+    if (data.uid !== owner.sub)
+      throw new BadRequestException(
+        'Bạn đã bị từ chối dịch vụ, vì bạn không phải chủ nhân của Token!',
+      );
     return await this.userService.deleteClanWithOwner(data);
   }
 
@@ -98,6 +101,84 @@ export class UserController {
   @Public()
   async clansInfo(@Param('id') id: any) {
     return await this.userService.clansInfo(id);
+  }
+
+  //TODO ———————————————[Handler Clan Owner]———————————————
+  @Post('/clans/kick')
+  @isUser()
+  async clanKick(@Req() req: any, @Body() data: any) {
+    try {
+      const owner = req.user;
+      const { clanId, userId } = data;
+      const isOwner = await this.userService.handlerClanOwner({
+        userId: owner.sub,
+        clanId: clanId,
+      });
+      if (!isOwner) throw new Error('Bạn không phải chủ Bang Hội!');
+      const user = await this.userService.removeMemberClans({
+        clanId: clanId,
+        uid: userId,
+      });
+      return user;
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  //TODO ———————————————[Handler Clan Penning Owner]———————————————
+  @Get('/clans/pening/list/:id')
+  @isUser()
+  async clanPeningList(@Req() req: any, @Param('id') id: string) {
+    try {
+      const user = req.user;
+      const isOwner = await this.userService.handlerClanOwner({
+        userId: user.sub,
+        clanId: id,
+      });
+      if (!isOwner) throw new Error('Bạn không phải chủ Bang hội!');
+      const list_penning = await this.userService.handlerGetPenningClans(id);
+      return {
+        status: true,
+        data: list_penning,
+        message: 'Dữ liệu đã được gửi!',
+      };
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/clans/pening/acpect')
+  @isUser()
+  async clanPeningAcpect(@Req() req: any, @Body() data: any) {
+    try {
+      const { id, clanId } = data;
+      const owner = req.user;
+      const isOwner = await this.userService.handlerClanOwner({
+        clanId: clanId,
+        userId: owner.sub,
+      });
+      if (!isOwner) throw new Error('Bạn không phải chủ Bang Hội!');
+      return await this.userService.handleAcpectUserJoinClans(id);
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
+  @Post('/clans/pening/decline')
+  @isUser()
+  async clanPenningDecline(@Req() req: any, @Body() data: any) {
+    try {
+      const { id, clanId } = data;
+      const owner = req.user;
+      const isOwner = await this.userService.handlerClanOwner({
+        clanId: clanId,
+        userId: owner.sub,
+      });
+      if (!isOwner) throw new Error('Bạn không phải chủ Bang Hội!');
+      return await this.userService.handlerDeclineUserJoinClans(id);
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
   }
 
   //TODO ———————————————[Path Info]———————————————
@@ -145,10 +226,18 @@ export class UserController {
     return await this.userService.handleGetAllUserbet();
   }
 
+  //TODO ———————————————[Non Call Controller]———————————————
+
   @Get('/rank')
   @Public()
   async handleUserRank() {
     return await this.userService.handleUserRank();
+  }
+
+  @Get('/rank/clans')
+  @Public()
+  async handleUser() {
+    return await this.userService.getTopClans();
   }
 
   //TODO ———————————————[User bank and trade]———————————————

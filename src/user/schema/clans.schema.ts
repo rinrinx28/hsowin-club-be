@@ -19,6 +19,9 @@ export class Clans {
   @Prop({ default: 0 })
   totalBet: number;
 
+  @Prop({ default: '' })
+  descriptions: string;
+
   @Prop({ default: 1 })
   member: number;
 
