@@ -39,6 +39,7 @@ import { MissionDaily } from './schema/missionDaily.schema';
 import * as moment from 'moment';
 import { Mutex } from 'async-mutex';
 import { PenningClans } from './schema/PenningClans.schema';
+import { TopBank } from './schema/topBank.schema';
 
 @Injectable()
 export class UserService {
@@ -65,6 +66,8 @@ export class UserService {
     private readonly missionDailyModel: Model<MissionDaily>,
     @InjectModel(PenningClans.name)
     private readonly penningClansModel: Model<PenningClans>,
+    @InjectModel(TopBank.name)
+    private readonly topBankModel: Model<TopBank>,
   ) {}
   private logger: Logger = new Logger('UserService');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -361,8 +364,23 @@ export class UserService {
         },
       });
       const users = clan_users.map((u) => {
-        let res = u.toObject();
-        delete res.pwd_h;
+        let {
+          pwd_h,
+          createdAt,
+          diamon,
+          email,
+          ip_address,
+          isBan,
+          isReason,
+          server,
+          type,
+          updatedAt,
+          totalBank,
+          limitedTrade,
+          trade,
+          username,
+          ...res
+        } = u.toObject();
         return res;
       });
       return users;
@@ -454,7 +472,7 @@ export class UserService {
           { upsert: true, new: true },
         )
         .exec();
-      await this.penningClansModel.findByIdAndDelete(id);
+      await this.penningClansModel.deleteMany({ userId: userId });
       return {
         status: true,
         data: [clans, user],
@@ -1097,5 +1115,13 @@ export class UserService {
 
   async handleGetAllMissionData() {
     return await this.missionDailyModel.find();
+  }
+
+  //TODO ———————————————[Handler Top Bank]———————————————
+  async updateTopBankWithUID(uid: string, data: any) {
+    return await this.topBankModel.findOneAndUpdate({ uid: uid }, data, {
+      new: true,
+      upsert: true,
+    });
   }
 }

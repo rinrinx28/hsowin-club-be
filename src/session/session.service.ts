@@ -207,9 +207,7 @@ export class SessionService {
   }
 
   async updateById(id: string, data: any) {
-    if (data?.status === '2') {
-      this.cronJobService.remove(id);
-    }
+    this.cronJobService.remove(id);
     const result = await this.sessionModel.findByIdAndUpdate(id, data, {
       upsert: true,
       new: true,
