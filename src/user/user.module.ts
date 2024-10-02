@@ -14,6 +14,7 @@ import { UserVip, UserVipSchema } from './schema/userVip.schema';
 import { MissionDaily, MissionDailySchema } from './schema/missionDaily.schema';
 import { PenningClans, PenningClansSchema } from './schema/PenningClans.schema';
 import { TopBank, TopBankSchema } from './schema/topBank.schema';
+import { Messeges, MessegesSchema } from 'src/messeges/schema/messeges.schema';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TopBank, TopBankSchema } from './schema/topBank.schema';
       { name: MissionDaily.name, schema: MissionDailySchema },
       { name: PenningClans.name, schema: PenningClansSchema },
       { name: TopBank.name, schema: TopBankSchema },
+      { name: Messeges.name, schema: MessegesSchema },
     ]),
   ],
   controllers: [UserController],

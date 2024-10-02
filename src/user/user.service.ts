@@ -41,6 +41,7 @@ import { Mutex } from 'async-mutex';
 import { PenningClans } from './schema/PenningClans.schema';
 import { TopBank } from './schema/topBank.schema';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Messeges } from 'src/messeges/schema/messeges.schema';
 
 @Injectable()
 export class UserService {
@@ -69,6 +70,8 @@ export class UserService {
     private readonly penningClansModel: Model<PenningClans>,
     @InjectModel(TopBank.name)
     private readonly topBankModel: Model<TopBank>,
+    @InjectModel(Messeges.name)
+    private readonly messagesModel: Model<Messeges>,
     private eventEmitter: EventEmitter2,
   ) {}
   private logger: Logger = new Logger('UserService');
@@ -341,6 +344,9 @@ export class UserService {
         { _id: { $in: list_uid } },
         { $set: { clan: '{}' } },
       );
+      await this.messagesModel.deleteMany({
+        server: data.clanId,
+      });
       let owner = (await this.userModel.findById(data.uid)).toObject();
       delete owner.pwd_h;
       return {
