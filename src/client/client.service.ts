@@ -178,10 +178,6 @@ export class ClientService {
             start_data,
             end_data,
           );
-          // Update Level VIP
-          await this.userService.update(old_session?.uid, {
-            vip: targetVip + 1,
-          });
           // Check OLD VIP in user
           if (target.vip !== 0) {
             await this.userService.handleCreateUserActive({
@@ -227,12 +223,14 @@ export class ClientService {
             });
           }
 
+          // Update User
           await this.userService.update(old_session?.uid, {
             $inc: {
               gold: +Number(data?.gold_receive),
               totalBank: +Number(data?.gold_receive),
               diamon: +e_value_diamom_claim.value * Number(data?.gold_receive),
             },
+            vip: targetVip + 1,
           });
         } else {
           await this.userService.handleCreateUserActive({

@@ -40,7 +40,8 @@ export class SessionService {
   private readonly mutexMap = new Map<string, Mutex>();
 
   async create(body: CreateSessionDto, user: PayLoad) {
-    const parameter = `${user.sub}-session-create`; // Value will be lock
+    const { sub } = user;
+    const parameter = `${sub}-session-create`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -49,7 +50,6 @@ export class SessionService {
 
     const mutex = this.mutexMap.get(parameter);
     const release = await mutex.acquire();
-    const { sub } = user;
     try {
       const e_auto_rut =
         await this.userService.handleGetEventModel('e-auto-rut-vang');
@@ -78,6 +78,7 @@ export class SessionService {
         .findOne({ uid: sub, status: '0' })
         .sort({ updatedAt: -1 })
         .exec();
+
       // old session has exist > return error BadRequest
       if (old_session)
         throw new Error(
@@ -121,6 +122,7 @@ export class SessionService {
         status: '0',
         uid: body.uid,
       });
+
       // Let Update Active
       if (body.type === '1') {
         await this.userService.handleCreateUserActive({
@@ -162,6 +164,7 @@ export class SessionService {
         // remove task from memory storage
         this.cronJobService.remove(result?.id);
       }, 1e3 * 600); // 1e3 = 1000ms
+
       // send task to memory storage
       this.logger.log(
         `UID: ${sub} - ${body.type === '1' ? 'Rut' : 'Nạp'} - GOLD: ${body.amount}`,
@@ -207,7 +210,6 @@ export class SessionService {
   }
 
   async updateById(id: string, data: any) {
-    this.cronJobService.remove(id);
     const result = await this.sessionModel.findByIdAndUpdate(id, data, {
       upsert: true,
       new: true,

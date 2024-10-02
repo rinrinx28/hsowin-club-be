@@ -40,6 +40,7 @@ import * as moment from 'moment';
 import { Mutex } from 'async-mutex';
 import { PenningClans } from './schema/PenningClans.schema';
 import { TopBank } from './schema/topBank.schema';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserService {
@@ -68,6 +69,7 @@ export class UserService {
     private readonly penningClansModel: Model<PenningClans>,
     @InjectModel(TopBank.name)
     private readonly topBankModel: Model<TopBank>,
+    private eventEmitter: EventEmitter2,
   ) {}
   private logger: Logger = new Logger('UserService');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -1123,5 +1125,9 @@ export class UserService {
       new: true,
       upsert: true,
     });
+  }
+
+  async handleResetRankUser() {
+    return await this.eventEmitter.emitAsync('rank-days', '');
   }
 }

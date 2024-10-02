@@ -371,4 +371,11 @@ export class UserController {
     const user = req.user;
     return await this.userService.handleFindMissionUser(user.sub);
   }
+
+  @Get('/reset/rank/user')
+  @isAdmin()
+  async handleResetRankUser() {
+    await this.userService.handleResetRankUser();
+    return 'ok';
+  }
 }

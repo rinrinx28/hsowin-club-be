@@ -1414,29 +1414,8 @@ export class EventService {
       for (const vip of vips) {
         if (!vip.isEnd) {
           const user = await this.userService.findById(vip.uid);
-          if (now.isAfter(moment(vip.timeEnd).endOf('day'))) {
-            await this.userService.update(vip.uid, {
-              vip: 0,
-              totalBank: 0,
-            });
-            await this.userService.handleStopUserVip({
-              isEnd: true,
-              uid: vip.uid,
-            });
-          } else {
-            //
-            let new_data = JSON.parse(vip.data);
-            let find_index_data_now = new_data?.findIndex(
-              (d: any) =>
-                moment(d.date).format('DD/MM/YYYY') ===
-                yesterday.format('DD/MM/YYYY'),
-            );
-            let find_isCancel = new_data?.reduce(
-              (a: any, b: any) => a + (b?.isCancel ? 1 : 0),
-              0,
-            );
-            if (find_isCancel >= 7) {
-              // Reset VIP User
+          if (user) {
+            if (now.isAfter(moment(vip.timeEnd).endOf('day'))) {
               await this.userService.update(vip.uid, {
                 vip: 0,
                 totalBank: 0,
@@ -1445,24 +1424,45 @@ export class EventService {
                 isEnd: true,
                 uid: vip.uid,
               });
-              // Update server data
-              await this.handleCreateUserActive({
-                uid: vip.uid,
-                active: JSON.stringify({
-                  name: 'Reset VIP',
-                  date: moment(),
-                }),
-                currentGold: user.gold,
-                newGold: user.gold,
-              });
-            }
-            if (find_index_data_now > -1) {
-              new_data[find_index_data_now] = {
-                ...new_data[find_index_data_now],
-                isNext: true,
-                isCancel: user?.totalBet > 0 ? false : true,
-              };
-              if (user) {
+            } else {
+              //
+              let new_data = JSON.parse(vip.data);
+              let find_index_data_now = new_data?.findIndex(
+                (d: any) =>
+                  moment(d.date).format('DD/MM/YYYY') ===
+                  yesterday.format('DD/MM/YYYY'),
+              );
+              let find_isCancel = new_data?.reduce(
+                (a: any, b: any) => a + (b?.isCancel ? 1 : 0),
+                0,
+              );
+              if (find_isCancel >= 7) {
+                // Reset VIP User
+                await this.userService.update(vip.uid, {
+                  vip: 0,
+                  totalBank: 0,
+                });
+                await this.userService.handleStopUserVip({
+                  isEnd: true,
+                  uid: vip.uid,
+                });
+                // Update server data
+                await this.handleCreateUserActive({
+                  uid: vip.uid,
+                  active: JSON.stringify({
+                    name: 'Reset VIP',
+                    date: moment(),
+                  }),
+                  currentGold: user.gold,
+                  newGold: user.gold,
+                });
+              }
+              if (find_index_data_now > -1) {
+                new_data[find_index_data_now] = {
+                  ...new_data[find_index_data_now],
+                  isNext: true,
+                  isCancel: user?.totalBet > 0 ? false : true,
+                };
                 await this.userService.handleUpdateUserVip(user.id, {
                   data: JSON.stringify(new_data),
                 });
