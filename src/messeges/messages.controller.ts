@@ -8,11 +8,12 @@ import {
   UseGuards,
   Request,
   BadRequestException,
+  Req,
 } from '@nestjs/common';
 import { MessegesService } from './messeges.service';
 import { CreateMessage, CreateMessagesBan } from './dto/message.dto';
 import { SocketGateway } from 'src/socket/socket.gateway';
-import { Public, isAdmin } from 'src/auth/decorators/public.decorator';
+import { Public, isAdmin, isUser } from 'src/auth/decorators/public.decorator';
 
 @Controller('message')
 export class MessagesController {
@@ -39,5 +40,13 @@ export class MessagesController {
   @Public()
   async handleMessegesBan(@Body() data: CreateMessagesBan) {
     return await this.messegesService.MessegeBan(data);
+  }
+
+  @Get('/clan')
+  @isUser()
+  async clanMessage(@Req() req: any) {
+    const user = req.user;
+    const clan = JSON.parse(user.clan);
+    return await this.messegesService.clanMessage(clan.clanId ?? '');
   }
 }

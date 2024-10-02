@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Messeges } from './schema/messeges.schema';
 import { MessegesBan } from './schema/messegesBan.schema';
@@ -37,5 +37,19 @@ export class MessegesService {
 
   async FindMessegesBanUser(uid: string) {
     return await this.messageBanModel.findOne({ uid: uid });
+  }
+
+  // Get Message Clan with ClanId
+  async clanMessage(id: string) {
+    try {
+      if (id.length === 0) throw new Error('Bạn không có bang hội!');
+      const msg = await this.messageModel
+        .find({ server: id })
+        .sort({ updatedAt: -1 })
+        .limit(10);
+      return msg;
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
   }
 }

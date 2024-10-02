@@ -217,6 +217,8 @@ export class UserService {
           gold: -clans_price,
         },
       });
+      // Delete All Penning
+      await this.penningClansModel.deleteMany({ userId: data.ownerId });
       let new_target_user = targetUser.toObject();
       delete new_target_user.pwd_h;
       return {

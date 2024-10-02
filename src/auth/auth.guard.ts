@@ -50,9 +50,9 @@ export class AuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: jwtConstants.secret,
       });
-      request['user'] = payload;
 
       const user = await this.userService.findById(payload?.sub);
+      request['user'] = { ...user.toObject(), sub: payload.sub };
       if (!user) throw new ForbiddenException('Không tìm thấy người dùng');
 
       if (user.isBan)

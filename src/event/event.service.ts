@@ -1708,6 +1708,57 @@ export class EventService {
     }
   }
 
+  @OnEvent('message-clan', { async: true })
+  async handleMessageClan(data: MessagesChat) {
+    const parameter = `message-clan`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      const payload = await this.jwtService.verifyAsync(data.token, {
+        secret: jwtConstants.secret,
+      });
+      const user = await this.userService.findById(payload?.sub);
+      const findUserMsgBan = await this.messageService.FindMessegesBanUser(
+        user.id,
+      );
+      if (findUserMsgBan && findUserMsgBan.isBan)
+        throw new Error(
+          `Bạn đã bị cấm chat ${findUserMsgBan?.isReason.length > 0 ? `Bởi vì ${findUserMsgBan?.isReason}` : ''}`,
+        );
+      await this.userService.handleCreateUserActive({
+        uid: user.id,
+        active: JSON.stringify({
+          name: 'Chat Clan',
+          content: data.content,
+        }),
+        currentGold: user.gold,
+        newGold: user.gold,
+      });
+      const msg = await this.messageService.MessageCreate({
+        uid: user?.id,
+        content: data.content,
+        server: data.server,
+        username: user?.name ?? user?.username,
+        meta: JSON.stringify({ avatar: user?.avatar, vip: user?.vip }),
+      });
+      this.socketGateway.server.emit('message-clan-re', { status: true, msg });
+    } catch (err) {
+      this.socketGateway.server.emit('message-clan-re', {
+        status: false,
+        msg: err.message,
+        token: data.token,
+      });
+    } finally {
+      release();
+    }
+  }
+
   async handleCreateUserActive(data: CreateUserActive) {
     return await this.userService.handleCreateUserActive(data);
   }
