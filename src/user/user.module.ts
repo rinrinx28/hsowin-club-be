@@ -15,6 +15,7 @@ import { MissionDaily, MissionDailySchema } from './schema/missionDaily.schema';
 import { PenningClans, PenningClansSchema } from './schema/PenningClans.schema';
 import { TopBank, TopBankSchema } from './schema/topBank.schema';
 import { Messeges, MessegesSchema } from 'src/messeges/schema/messeges.schema';
+import { WebSocketModule } from 'src/socket/socket.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { Messeges, MessegesSchema } from 'src/messeges/schema/messeges.schema';
       { name: TopBank.name, schema: TopBankSchema },
       { name: Messeges.name, schema: MessegesSchema },
     ]),
+    WebSocketModule,
   ],
   controllers: [UserController],
   providers: [UserService],

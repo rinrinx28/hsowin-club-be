@@ -872,6 +872,11 @@ export class EventService {
         data?.receive,
         clansObj?.clanId,
       );
+      await this.userService.update(uid, {
+        $inc: {
+          totalClan: +data?.receive,
+        },
+      });
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
@@ -1038,6 +1043,11 @@ export class EventService {
         data?.receive,
         clansObj?.clanId,
       );
+      await this.userService.update(uid, {
+        $inc: {
+          totalClan: +data?.receive,
+        },
+      });
     }
     await this.userService.updateBet(id, data);
     if (data?.receive > 0) {
@@ -1538,6 +1548,7 @@ export class EventService {
           totalBet: 0,
           limitedTrade: 0,
           trade: 0,
+          totalClan: 0,
         },
       });
 

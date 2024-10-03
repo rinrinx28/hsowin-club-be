@@ -42,6 +42,7 @@ import { PenningClans } from './schema/PenningClans.schema';
 import { TopBank } from './schema/topBank.schema';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Messeges } from 'src/messeges/schema/messeges.schema';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class UserService {
@@ -73,6 +74,7 @@ export class UserService {
     @InjectModel(Messeges.name)
     private readonly messagesModel: Model<Messeges>,
     private eventEmitter: EventEmitter2,
+    private readonly socketGateway: SocketGateway,
   ) {}
   private logger: Logger = new Logger('UserService');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -228,6 +230,7 @@ export class UserService {
       await this.penningClansModel.deleteMany({ userId: data.ownerId });
       let new_target_user = targetUser.toObject();
       delete new_target_user.pwd_h;
+      await this.getInfoClan(targetClan.id);
       return {
         status: true,
         data: [targetClan, new_target_user],
@@ -262,6 +265,7 @@ export class UserService {
         userId: data.uid,
         clanId: data.clanId,
       });
+      await this.getInfoClan(targetClan.id);
       return {
         status: true,
         message: `Bạn đã gửi yêu cầu tham gia Bang Hội ${targetClan.clanName}`,
@@ -298,11 +302,18 @@ export class UserService {
           data?.uid,
           {
             clan: '{}',
+            totalClan: 0,
           },
           { upsert: true, new: true },
         )
       ).toObject();
       delete target_user.pwd_h;
+      await this.getInfoClan(target_clans.id);
+      this.socketGateway.server.emit('clan-kick', {
+        uid: data?.uid,
+        clanId: data.clanId,
+        user: target_user,
+      });
       return {
         status: true,
         data: [target_clans, target_user],
@@ -350,13 +361,15 @@ export class UserService {
       let list_uid = list_user.map((u) => u.id);
       await this.userModel.updateMany(
         { _id: { $in: list_uid } },
-        { $set: { clan: '{}' } },
+        { $set: { clan: '{}', totalClan: 0 } },
       );
       await this.messagesModel.deleteMany({
         server: data.clanId,
       });
       let owner = (await this.userModel.findById(data.uid)).toObject();
       delete owner.pwd_h;
+
+      this.socketGateway.server.emit('clan-delete', targetClan.id);
       return {
         status: true,
         data: owner,
@@ -401,7 +414,7 @@ export class UserService {
         } = u.toObject();
         return res;
       });
-      return users;
+      return { ...clan_data.toObject(), members: users };
     } catch (err) {
       throw new BadRequestException(err.message);
     }
@@ -481,16 +494,25 @@ export class UserService {
         timejoin: new Date(),
       };
       const clanInfoString = JSON.stringify(clanInfo);
-      const user = await this.userModel
-        .findByIdAndUpdate(
-          userId,
-          {
-            clan: clanInfoString,
-          },
-          { upsert: true, new: true },
-        )
-        .exec();
+      const user = (
+        await this.userModel
+          .findByIdAndUpdate(
+            userId,
+            {
+              clan: clanInfoString,
+            },
+            { upsert: true, new: true },
+          )
+          .exec()
+      ).toObject();
+      delete user.pwd_h;
       await this.penningClansModel.deleteMany({ userId: userId });
+      await this.getInfoClan(clanId);
+      this.socketGateway.server.emit('clan-notice', {
+        uid: userId,
+        clanId: clanId,
+        user: user,
+      });
       return {
         status: true,
         data: [clans, user],
@@ -534,6 +556,12 @@ export class UserService {
         },
       },
     );
+  }
+
+  async getInfoClan(id: any) {
+    const clanInfo = await this.clansInfo(id);
+    this.socketGateway.server.emit('clan-update', clanInfo);
+    return;
   }
 
   //TODO ———————————————[Handle Event Model]———————————————

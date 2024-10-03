@@ -64,6 +64,9 @@ export class User {
   @Prop({ default: 0 })
   totalBank: number;
 
+  @Prop({ default: 0 })
+  totalClan: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
