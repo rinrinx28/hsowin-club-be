@@ -1329,20 +1329,80 @@ export class EventService {
   @OnEvent('rank-clans', { async: true })
   async handleRankClans() {
     try {
-      // Let find top 10 rank clans with totalBet
-      // const topClans = await this.userService.getTopClans();
+      // Let stop all Sv Map boss
+      await this.userService.handleUpdateEventModel('e-auto-bet-boss', {
+        $set: {
+          status: false,
+        },
+      });
+      await this.userService.handleUpdateEventModel('e-auto-bet-sv', {
+        $set: {
+          status: false,
+        },
+      });
+      // Let get config Clan Prizes
+      const top_prizes =
+        await this.userService.handleGetEventModel('e-clans-prizes');
+      const top_prizes_value: Array<number> = JSON.parse(top_prizes.option);
+      // Let find 4 top clan
+      const topClans = await this.userService.getTopClans(4);
 
-      // // Let find list user in the top clans
-      // let list_clans_users: Record<string, Array<any>> = {};
-      // for (const clan of topClans) {
-      //   const { id } = clan;
-      //   const users = await this.userService.getUserWithClansId(id);
-      //   list_clans_users[id] = users;
-      // }
+      // Let find member in the top
+      const members_top_clans = await this.userService.findAll({
+        $or: topClans.map((c) => ({ clan: { $regex: `${c.id}` } })),
+      });
+
+      // Check if user join before 8h
+      const members_top_clans_new = members_top_clans.filter(
+        (m) =>
+          moment().unix() - moment(JSON.parse(m.clan).timejoin).unix() >
+          3600 * 8,
+      );
+
+      // Send prizes to members (bulk update)
+      for (const [index, clan] of topClans.entries()) {
+        // Get members belonging to this clan
+        const clanId = clan.id;
+        const prize = top_prizes_value[index]; // Prize based on clan rank
+
+        const target_members = members_top_clans_new.filter((m) =>
+          m.clan.includes(clanId),
+        );
+
+        // Perform bulk update for all users in this clan who joined more than 8 hours ago
+        await this.userService.updateMany(
+          {
+            _id: { $in: target_members.map((m) => m._id) }, // Filter only valid users
+          },
+          { $inc: { gold: +prize } }, // Set the prize for all users
+        );
+
+        // Save active
+        const bulk_active = target_members.map((m) => {
+          return {
+            uid: m.id,
+            // active: `Giải thưởng top rank clan`,
+            active: JSON.stringify({
+              name: 'rank clan',
+              rank: index + 1,
+              prize: prize,
+            }),
+            currentGold: m.gold,
+            newGold: m.gold + prize,
+          };
+        });
+        await this.userService.handlerBulkCreateActive(bulk_active);
+
+        // Send notice for Top Clans
+        await this.handleMessageSystemNoti(
+          `Chúc mừng Clan: ${clan.clanName} đã đạt TOP ${index + 1} với phần thưởng mỗi thành viên là ${prize} thỏi vàng!`,
+        );
+      }
+
       await this.userService.resetTotalBetClan();
-      // console.log(list_clans_users);
+      this.logger.log(`Rank Clan Status: Done`);
     } catch (err) {
-      // throw new CatchException(err);
+      throw new CatchException(err);
     }
   }
 
@@ -1479,6 +1539,19 @@ export class EventService {
           trade: 0,
         },
       });
+
+      // Let stop all Sv Map boss
+      await this.userService.handleUpdateEventModel('e-auto-bet-boss', {
+        $set: {
+          status: true,
+        },
+      });
+      await this.userService.handleUpdateEventModel('e-auto-bet-sv', {
+        $set: {
+          status: true,
+        },
+      });
+      this.logger.log(`Rank Days Status: Done`);
     } catch (err) {
       throw new CatchException(err);
     }

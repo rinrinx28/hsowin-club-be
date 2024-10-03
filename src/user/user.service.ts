@@ -102,8 +102,8 @@ export class UserService {
     }
   }
 
-  findAll() {
-    return `This action returns all user`;
+  async findAll(data: any) {
+    return await this.userModel.find(data);
   }
 
   async findOne(username: any) {
@@ -123,6 +123,10 @@ export class UserService {
     });
     delete user.pwd_h;
     return user;
+  }
+
+  async updateMany(filter: any, update: any) {
+    return this.userModel.updateMany(filter, update);
   }
 
   async updateAll(updateUserDto: any) {
@@ -320,8 +324,12 @@ export class UserService {
     );
   }
 
-  async getTopClans() {
-    return await this.clansModel.find().sort({ totalBet: -1 }).limit(7).exec();
+  async getTopClans(limit?: number) {
+    return await this.clansModel
+      .find()
+      .sort({ totalBet: -1 })
+      .limit(limit ?? 7)
+      .exec();
   }
 
   async findClanWithId(id: any) {
@@ -831,6 +839,10 @@ export class UserService {
     } catch (err) {
       return err.message;
     }
+  }
+
+  async handlerBulkCreateActive(data: any) {
+    return await this.userActiveModel.insertMany(data);
   }
 
   //TODO ———————————————[Handle Vip]———————————————
