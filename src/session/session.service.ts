@@ -214,6 +214,7 @@ export class SessionService {
       upsert: true,
       new: true,
     });
+    this.cronJobService.remove(id);
     return result;
   }
 

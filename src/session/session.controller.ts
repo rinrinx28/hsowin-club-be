@@ -42,6 +42,8 @@ export class SessionController {
       await this.userService.update(data.uid, {
         $inc: {
           gold: +target.amount,
+          trade: -target.amount,
+          limitedTrade: +target.amount,
         },
       });
     }
