@@ -293,6 +293,7 @@ export class UserService {
         {
           $inc: {
             member: -1,
+            totalBet: -target.totalClan,
           },
         },
         { upsert: true, new: true },
