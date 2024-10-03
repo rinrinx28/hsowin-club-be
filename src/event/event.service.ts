@@ -1400,6 +1400,7 @@ export class EventService {
       }
 
       await this.userService.resetTotalBetClan();
+      await this.handleMessageSystemNoti(`Máy chủ bảo trì tự động!`);
       this.logger.log(`Rank Clan Status: Done`);
     } catch (err) {
       throw new CatchException(err);
@@ -1551,6 +1552,9 @@ export class EventService {
           status: true,
         },
       });
+      await this.handleMessageSystemNoti(
+        `Hoàn tất bảo trì, chúc các bạn có một ngày may mắn!`,
+      );
       this.logger.log(`Rank Days Status: Done`);
     } catch (err) {
       throw new CatchException(err);
