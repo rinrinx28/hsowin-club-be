@@ -232,6 +232,12 @@ export class ClientService {
             },
             vip: targetVip + 1,
           });
+          await this.userService.updateTopBankWithUID(old_session.uid, {
+            $inc: {
+              amount: +Number(data.gold_receive),
+            },
+            username: target.username,
+          });
         } else {
           await this.userService.handleCreateUserActive({
             uid: target.id,
