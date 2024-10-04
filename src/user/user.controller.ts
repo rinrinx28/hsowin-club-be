@@ -181,6 +181,31 @@ export class UserController {
     }
   }
 
+  @Post('/clans/update')
+  @isUser()
+  async clanUpdate(
+    @Req() req: any,
+    @Body() body: { type: 'des' | 'type'; data: string; clanId: string },
+  ) {
+    try {
+      const { clanId, data, type } = body;
+      const owner = req.user;
+      const isOwner = await this.userService.handlerClanOwner({
+        clanId: clanId,
+        userId: owner.sub,
+      });
+      if (!isOwner) throw new Error('Bạn không phải chủ Bang Hội!');
+      return await this.userService.handlerUpdateClan({
+        type,
+        clanId,
+        data,
+        uid: owner.sub,
+      });
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
   //TODO ———————————————[Path Info]———————————————
 
   @Get('/profile')
@@ -237,7 +262,7 @@ export class UserController {
   @Get('/rank/clans')
   @Public()
   async handleUser() {
-    return await this.userService.getTopClans();
+    return await this.userService.getTopClans(4);
   }
 
   //TODO ———————————————[User bank and trade]———————————————

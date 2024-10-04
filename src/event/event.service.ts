@@ -1366,7 +1366,7 @@ export class EventService {
       const members_top_clans_new = members_top_clans.filter(
         (m) =>
           moment().unix() - moment(JSON.parse(m.clan).timejoin).unix() >
-          3600 * 8,
+            3600 * 8 && m.totalClan >= 3000,
       );
 
       // Send prizes to members (bulk update)
@@ -1782,7 +1782,11 @@ export class EventService {
         content: data.content,
         server: data.server,
         username: user?.name ?? user?.username,
-        meta: JSON.stringify({ avatar: user?.avatar, vip: user?.vip }),
+        meta: JSON.stringify({
+          avatar: user?.avatar,
+          vip: user?.vip,
+          clanId: JSON.parse(user?.clan).clanId ?? null,
+        }),
       });
       this.socketGateway.server.emit('message-user-re', { status: true, msg });
     } catch (err) {

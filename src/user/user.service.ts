@@ -565,6 +565,46 @@ export class UserService {
     return;
   }
 
+  async handlerUpdateClan(body: {
+    type: 'des' | 'type';
+    clanId: string;
+    data: string;
+    uid: string;
+  }) {
+    try {
+      const { clanId, type, data, uid } = body;
+      const clan = await this.clansModel.findById(clanId);
+      if (!clan) throw new Error('Bang hội không tồn tại!');
+
+      const user = await this.userModel.findById(uid);
+      if (!user) throw new Error('Người dùng không tồn tại!');
+
+      if (type === 'des') {
+        clan.descriptions = data;
+        await clan.save();
+        return { clan: clan.toObject(), user: null };
+      } else {
+        const e_clans_price = await this.handleGetEventModel('e-clans-price');
+        const clans_prices: number[] = JSON.parse(e_clans_price.option);
+        const clans_price = clans_prices[parseInt(data, 10) - 1];
+        if (user.gold - clans_price <= 0)
+          throw new Error(
+            'Xin lỗi, bạn không đủ thỏi vàng để đổi biểu tượng Bang Hội!',
+          );
+
+        clan.typeClan = data;
+        await clan.save();
+        user.gold -= clans_price;
+        await user.save();
+        const user_n = user.toObject();
+        delete user_n.pwd_h;
+        return { clan: clan.toObject(), user: user_n };
+      }
+    } catch (err: any) {
+      throw new BadRequestException(err.message);
+    }
+  }
+
   //TODO ———————————————[Handle Event Model]———————————————
   async handleCreateEventModel(data: CreateEvent) {
     return await this.eventModel.create(data);
