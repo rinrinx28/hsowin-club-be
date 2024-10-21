@@ -446,7 +446,7 @@ export class EventService {
       });
       const { pwd_h, ...res } = user.toObject();
       // Delete UserBet
-      await this.userService.deletOneUserBetWithID(userBetId);
+      await this.userService.deletOneUserBetWithID(targetUserBetLog.id);
       const msg = this.handleMessageResult({
         message: 'Đã hủy cược thành công',
         status: true,
@@ -1294,8 +1294,9 @@ export class EventService {
       }
 
       // let render show the prize of user
+      let prizes_jackpot = historyBet.jackpot * 0.5;
       let list_user_prize = list_user_percent.map((user) => {
-        let prize = historyBet.jackpot * user.percent;
+        let prize = prizes_jackpot * user.percent;
         return { ...user, prize };
       });
 
