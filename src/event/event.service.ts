@@ -1603,10 +1603,10 @@ export class EventService {
 
     // Check Sv Default of user ...
     let min_amount = e_min.value;
-    let max_amount = ['24', server].includes(target?.server)
+    let max_amount = ['24', target?.server].includes(server)
       ? e_max_bet_main.value
       : e_max_bet_server.value;
-    let total_amount = ['24', server].includes(target?.server)
+    let total_amount = ['24', target?.server].includes(server)
       ? e_total_bet_main.value
       : e_total_bet_server.value;
     if (target.gold - amount < 0)
