@@ -225,7 +225,7 @@ export class UserService {
       if (user.gold - clans_price <= 0)
         throw new Error('Xin lỗi, bạn không đủ thỏi vàng để tạo Bang Hội!');
 
-      const targetClan = await this.clansModel.create(data);
+      const targetClan = await this.clansModel.create({ ...data, member: 1 });
       const targetUser = await this.update(data.ownerId, {
         clan: JSON.stringify({
           clanId: targetClan.id,
