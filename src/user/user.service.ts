@@ -1102,6 +1102,15 @@ export class UserService {
 
   //TODO ———————————————[Handle Mission]———————————————
   async handleClaimMission(data, claim: ClaimMission) {
+    const parameter = `handleClaimMission`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const user = await this.findById(data.sub);
       const e_value_mission = await this.handleGetEventModel(
@@ -1163,6 +1172,8 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
