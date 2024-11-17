@@ -403,4 +403,10 @@ export class UserController {
     await this.userService.handleResetRankUser();
     return 'ok';
   }
+
+  @Get('/top-bank')
+  @Public()
+  async handlerGetTopBank() {
+    return this.userService.getTopBank();
+  }
 }

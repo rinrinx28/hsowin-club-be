@@ -247,7 +247,7 @@ export class ClientService {
             $inc: {
               amount: +Number(data.gold_receive),
             },
-            username: target.username,
+            username: target.name,
           });
         } else {
           await this.userService.handleCreateUserActive({

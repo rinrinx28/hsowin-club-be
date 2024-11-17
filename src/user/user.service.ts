@@ -1333,4 +1333,31 @@ export class UserService {
   async handleResetRankUser() {
     return await this.eventEmitter.emitAsync('rank-days', '');
   }
+
+  //TODO ———————————————[Handler Top bank]———————————————
+  async getTopBank() {
+    const parameter = `getTopBank`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+
+    try {
+      const list_top_bank = await this.topBankModel
+        .find()
+        .sort({ amount: -1 })
+        .limit(7)
+        .exec();
+      return { topBank: list_top_bank, message: 'Get Top Bank is success' };
+    } catch (err: any) {
+      this.logger.log(`Top Bank err: ${err.message}`);
+      throw new BadRequestException(err.message);
+    } finally {
+      release();
+    }
+  }
 }
