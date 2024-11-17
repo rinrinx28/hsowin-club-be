@@ -199,6 +199,15 @@ export class UserService {
 
   //TODO ———————————————[Clans Model]———————————————
   async createClans(data: CreateClans) {
+    const parameter = `${data.ownerId}.handleAcpectUserJoinClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       // Check if owner was owner of clan
       const user = await this.findById(data.ownerId);
@@ -237,10 +246,21 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
   async addMemberClans(data: MemberClans) {
+    const parameter = `${data.clanId}.addMemberClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       // Check if owner was owner of clan
       const target = await this.userModel.findById(data.uid);
@@ -272,10 +292,21 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
   async removeMemberClans(data: MemberClans) {
+    const parameter = `${data.clanId}.removeMemberClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       // Check if owner was owner of clan
       const target = await this.findById(data.uid);
@@ -321,6 +352,8 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
@@ -349,6 +382,15 @@ export class UserService {
   }
 
   async deleteClanWithOwner(data: MemberClans) {
+    const parameter = `${data.clanId}.handleAcpectUserJoinClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const targetClan = await this.findClanWithId(data.clanId);
       if (targetClan.ownerId !== data.uid)
@@ -378,6 +420,8 @@ export class UserService {
       };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
@@ -386,6 +430,15 @@ export class UserService {
   }
 
   async clansInfo(id: any) {
+    const parameter = `${id}.clansInfo`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const clan_data = await this.clansModel.findById(id);
       if (!clan_data) throw new Error('Bang hội không tồn tại!');
@@ -418,6 +471,8 @@ export class UserService {
       return { ...clan_data.toObject(), members: users };
     } catch (err) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
@@ -447,6 +502,15 @@ export class UserService {
   }
 
   async handleAcpectUserJoinClans(id: any) {
+    const parameter = `${id}.handleAcpectUserJoinClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const penning_data = await this.penningClansModel.findById(id);
 
@@ -520,10 +584,21 @@ export class UserService {
       };
     } catch (err: any) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
   async handlerDeclineUserJoinClans(id: any) {
+    const parameter = `${id}.handlerDeclineUserJoinClans`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       await this.penningClansModel.findByIdAndDelete(id);
       return {
@@ -533,6 +608,8 @@ export class UserService {
       };
     } catch (err: any) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
@@ -571,6 +648,15 @@ export class UserService {
     data: string;
     uid: string;
   }) {
+    const parameter = `${body.clanId}.handlerUpdateClan`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const { clanId, type, data, uid } = body;
       const clan = await this.clansModel.findById(clanId);
@@ -602,6 +688,8 @@ export class UserService {
       }
     } catch (err: any) {
       throw new BadRequestException(err.message);
+    } finally {
+      release();
     }
   }
 
