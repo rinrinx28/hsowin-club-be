@@ -36,6 +36,7 @@ import { JwtService } from '@nestjs/jwt';
 import { jwtConstants } from 'src/auth/constants';
 import seedrandom from 'seedrandom';
 import { CreateUserActive } from 'src/user/dto/user.dto';
+import { TopBank } from 'src/user/schema/topBank.schema';
 
 @Injectable()
 export class EventService {
@@ -52,6 +53,8 @@ export class EventService {
     private eventEmitter: EventEmitter2,
     @InjectModel(EventRandom.name)
     private readonly eventRandomDrawModel: Model<EventRandom>,
+    @InjectModel(TopBank.name)
+    private readonly topBankModel: Model<TopBank>,
     private jwtService: JwtService,
   ) {}
 
@@ -2051,6 +2054,32 @@ export class EventService {
         uid: data?.uid ?? '',
         token: data?.token ?? '',
       });
+    }
+  }
+
+  //TODO ———————————————[Reset Top bank]———————————————
+  @OnEvent('rs.top.bank', { async: true })
+  async handlerTopBank() {
+    const parameter = `rs.top.bank`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      await this.topBankModel.updateMany(
+        {},
+        { amount: 0 },
+        { upsert: true, new: true },
+      );
+      this.logger.log('Reset Top Bank is success');
+    } catch (err: any) {
+      this.logger.log(`Reset Top Bank Err: ${err.message}`);
+    } finally {
+      release();
     }
   }
 }

@@ -41,6 +41,13 @@ export class CronjobService {
     this.eventEmitter.emit('rank-clans', 'isrun');
   }
 
+  @Cron('0 0 0 * * *', {
+    name: 'Reset Top Bank',
+  })
+  handleTopBank() {
+    this.eventEmitter.emit('rs.top.bank', 'isrun');
+  }
+
   @Cron('0 59 23 * * *', {
     name: 'turn off system mission',
   })

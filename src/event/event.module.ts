@@ -12,11 +12,13 @@ import { CronjobModule } from 'src/cronjob/cronjob.module';
 import { MessagesModule } from 'src/messeges/messeges.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventRandom, EventRandomSchema } from './schema/eventRandom';
+import { TopBank, TopBankSchema } from 'src/user/schema/topBank.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: EventRandom.name, schema: EventRandomSchema },
+      { name: TopBank.name, schema: TopBankSchema },
     ]),
     ClientModule,
     BossModule,
