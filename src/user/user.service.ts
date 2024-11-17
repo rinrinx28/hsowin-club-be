@@ -980,6 +980,8 @@ export class UserService {
       if (!user) throw new Error('Không tìm thấy Người Chơi');
       if (!targetVip || user.vip === 0)
         throw new Error('Người chơi phải đạt ít nhất là VIP 1');
+      if (!e_value_vip_claim.status)
+        throw new Error('Hệ thống nhiệm vụ VIP đang bảo trì');
       const rule_value = rule_value_claim[user.vip - 1];
       if (user.totalBet < rule_value)
         throw new Error(
@@ -1113,7 +1115,7 @@ export class UserService {
 
   //TODO ———————————————[Handle Mission]———————————————
   async handleClaimMission(data, claim: ClaimMission) {
-    const parameter = `handleClaimMission`; // Value will be lock
+    const parameter = `${data.sub}.handleClaimMission`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
@@ -1130,6 +1132,8 @@ export class UserService {
       const e_claim_mission = await this.handleGetEventModel(
         'e-claim-mission-daily',
       );
+      if (!e_claim_mission.status)
+        throw new BadRequestException('Hệ thống nhận quà hiện đang bảo trì');
       const value_mission = JSON.parse(e_value_mission.option);
       const claim_mission = JSON.parse(e_claim_mission.option);
       const index = this.findPosition(value_mission, user.totalBet);

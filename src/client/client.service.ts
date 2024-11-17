@@ -14,6 +14,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Event } from 'src/event/schema/event.schema';
 import * as moment from 'moment';
+import { Mutex } from 'async-mutex';
 
 @Injectable()
 export class ClientService {
@@ -31,6 +32,7 @@ export class ClientService {
     private readonly eventModel: Model<Event>,
   ) {}
   private logger: Logger = new Logger('Client Auto');
+  private readonly mutexMap = new Map<string, Mutex>();
 
   async getStatusBoss(data: StatusBoss) {
     await this.eventEmitter.emitAsync('status-boss', data);
@@ -55,6 +57,15 @@ export class ClientService {
   }
 
   async getTransaction(data: Transaction) {
+    const parameter = `${data.bot_id}.handleClaimVip`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const { player_name, type, player_id, service_id, server } = data;
       const e_value_diamom_claim = await this.eventModel.findOne({
@@ -253,6 +264,8 @@ export class ClientService {
       }
     } catch (err) {
       return err.message;
+    } finally {
+      release();
     }
   }
 

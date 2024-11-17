@@ -41,6 +41,13 @@ export class CronjobService {
     this.eventEmitter.emit('rank-clans', 'isrun');
   }
 
+  @Cron('0 59 23 * * *', {
+    name: 'turn off system mission',
+  })
+  handlerSystemMission() {
+    this.eventEmitter.emit('turn.off.mission', 'isrun');
+  }
+
   // @Cron('* * * * * *')
   // handleTest() {
   //   let now = Date.now();

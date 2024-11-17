@@ -1553,7 +1553,7 @@ export class EventService {
         },
       });
 
-      // Let stop all Sv Map boss
+      // Let turn on all Sv Map boss
       await this.userService.handleUpdateEventModel('e-auto-bet-boss', {
         $set: {
           status: true,
@@ -1564,12 +1564,47 @@ export class EventService {
           status: true,
         },
       });
+
+      // turn on mission
+      const e_claim_mission_daily = await this.userService.handleGetEventModel(
+        'e-claim-mission-daily',
+      );
+      e_claim_mission_daily.status = true;
+      await e_claim_mission_daily.save();
+
+      // turn on mission
+      const e_value_vip_claim =
+        await this.userService.handleGetEventModel('e-value-vip-claim');
+      e_value_vip_claim.status = true;
+      await e_value_vip_claim.save();
+
       await this.handleMessageSystemNoti(
         `Hoàn tất bảo trì, chúc các bạn có một ngày may mắn!`,
       );
       this.logger.log(`Rank Days Status: Done`);
     } catch (err) {
       throw new CatchException(err);
+    }
+  }
+
+  @OnEvent('turn.off.mission', { async: true })
+  async handleTurnOffMission() {
+    try {
+      // turn off mission
+      const e_claim_mission_daily = await this.userService.handleGetEventModel(
+        'e-claim-mission-daily',
+      );
+      e_claim_mission_daily.status = false;
+      await e_claim_mission_daily.save();
+
+      // turn off mission
+      const e_value_vip_claim =
+        await this.userService.handleGetEventModel('e-value-vip-claim');
+      e_value_vip_claim.status = false;
+      await e_value_vip_claim.save();
+      this.logger.log('Turn off mission is success');
+    } catch (err: any) {
+      this.logger.log(`Turn off mission err:${err.message}`);
     }
   }
 
