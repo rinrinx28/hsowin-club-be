@@ -682,6 +682,15 @@ export class UserService {
   }
 
   async handleUserTrade(data: UserTrade) {
+    const parameter = `${data.userId}.handleClaimVip`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
     try {
       const target = await this.userModel.findById(data?.targetId);
       if (!target) throw new ForbiddenException('Không tìm thấy người chơi');
@@ -744,6 +753,8 @@ export class UserService {
       };
     } catch (err) {
       throw new CatchException(err);
+    } finally {
+      release();
     }
   }
 
@@ -948,7 +959,7 @@ export class UserService {
   }
 
   async handleClaimVip(uid: any, date: any) {
-    const parameter = `user-claim-vip`; // Value will be lock
+    const parameter = `${uid}.handleClaimVip`; // Value will be lock
 
     // Create mutex if it not exist
     if (!this.mutexMap.has(parameter)) {
