@@ -25,10 +25,15 @@ import {
 import { CreateEvent } from 'src/event/dto/event.dto';
 import * as moment from 'moment';
 import { isUser, isAdmin, Public } from 'src/auth/decorators/public.decorator';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CreateUserBet } from 'src/socket/dto/socket.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   //TODO ———————————————[User Password]———————————————
 
@@ -408,5 +413,19 @@ export class UserController {
   @Public()
   async handlerGetTopBank() {
     return this.userService.getTopBank();
+  }
+
+  @Post('/v2/place/boss')
+  @Public()
+  async handlerBotPlaceBoss(@Body() data: CreateUserBet) {
+    await this.eventEmitter.emit('bet-user-ce-boss', data);
+    return 'ok';
+  }
+
+  @Post('/v2/place/24')
+  @Public()
+  async handlerBotPlace24(@Body() data: CreateUserBet) {
+    await this.eventEmitter.emit('bet-user-ce-sv', data);
+    return 'ok';
   }
 }
