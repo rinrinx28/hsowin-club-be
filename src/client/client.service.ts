@@ -15,6 +15,7 @@ import { Model } from 'mongoose';
 import { Event } from 'src/event/schema/event.schema';
 import * as moment from 'moment';
 import { Mutex } from 'async-mutex';
+import { BotActive } from './schema/botActive.schema';
 
 @Injectable()
 export class ClientService {
@@ -30,6 +31,8 @@ export class ClientService {
     private eventEmitter: EventEmitter2,
     @InjectModel(Event.name)
     private readonly eventModel: Model<Event>,
+    @InjectModel(BotActive.name)
+    private readonly BotActiveModel: Model<BotActive>,
   ) {}
   private logger: Logger = new Logger('Client Auto');
   private readonly mutexMap = new Map<string, Mutex>();
@@ -67,7 +70,7 @@ export class ClientService {
     const mutex = this.mutexMap.get(parameter);
     const release = await mutex.acquire();
     try {
-      const { player_name, type, player_id, service_id, server } = data;
+      const { player_name, type, player_id, service_id, server, bot_id } = data;
       const e_value_diamom_claim = await this.eventModel.findOne({
         name: 'e-value-diamon-claim',
       });
@@ -260,6 +263,17 @@ export class ClientService {
             newGold: target.gold,
           });
         }
+        await this.BotActiveModel.create({
+          botId: bot_id,
+          currentGold: data.gold_current,
+          newGold: data.gold_last,
+          name: target.name,
+          uid: target.id,
+          playerName: player_name,
+          playerId: player_id,
+          type: old_session?.type,
+          serviceId: old_session.id,
+        });
         return 'ok';
       }
     } catch (err) {

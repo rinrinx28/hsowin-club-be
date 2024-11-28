@@ -11,6 +11,7 @@ import { BetLogModule } from 'src/bet-log/bet-log.module';
 import { CronjobModule } from 'src/cronjob/cronjob.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Event, EventSchema } from 'src/event/schema/event.schema';
+import { BotActive, BotActiveSchema } from './schema/botActive.schema';
 
 @Module({
   imports: [
@@ -21,7 +22,10 @@ import { Event, EventSchema } from 'src/event/schema/event.schema';
     WebSocketModule,
     BetLogModule,
     CronjobModule,
-    MongooseModule.forFeature([{ name: Event.name, schema: EventSchema }]),
+    MongooseModule.forFeature([
+      { name: Event.name, schema: EventSchema },
+      { name: BotActive.name, schema: BotActiveSchema },
+    ]),
   ],
   controllers: [ClientController],
   providers: [ClientService, UnitlService],
