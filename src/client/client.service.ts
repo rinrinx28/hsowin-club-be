@@ -265,8 +265,8 @@ export class ClientService {
         }
         await this.BotActiveModel.create({
           botId: bot_id,
-          currentGold: data.gold_current,
-          newGold: data.gold_last,
+          currentGold: data.gold_last,
+          newGold: data.gold_current,
           name: target.name,
           uid: target.id,
           playerName: player_name,
