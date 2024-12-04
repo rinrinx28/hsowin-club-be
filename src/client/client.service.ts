@@ -23,11 +23,9 @@ export class ClientService {
     private readonly socketGateway: SocketGateway,
     private readonly unitlService: UnitlService,
     private readonly botService: BotService,
-    private readonly bossService: BossService,
     private readonly sessionService: SessionService,
     private readonly cronJobService: CronjobService,
     private readonly userService: UserService,
-    private readonly betLogService: BetLogService,
     private eventEmitter: EventEmitter2,
     @InjectModel(Event.name)
     private readonly eventModel: Model<Event>,
@@ -243,6 +241,7 @@ export class ClientService {
               gold: +Number(data?.gold_receive),
               totalBank: +Number(data?.gold_receive),
               diamon: +e_value_diamom_claim.value * Number(data?.gold_receive),
+              deposit: +Number(data?.gold_receive),
             },
             vip: targetVip + 1,
           });
@@ -261,6 +260,11 @@ export class ClientService {
             }),
             currentGold: target.gold,
             newGold: target.gold,
+          });
+          await this.userService.update(target.id, {
+            $inc: {
+              withdraw: +old_session.amount,
+            },
           });
         }
         await this.BotActiveModel.create({

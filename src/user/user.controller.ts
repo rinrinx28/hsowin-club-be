@@ -428,4 +428,12 @@ export class UserController {
     await this.eventEmitter.emit('bet-user-ce-sv', data);
     return 'ok';
   }
+
+  //TODO ———————————————[Admin Router]———————————————
+  @Get('/v3/users')
+  @isAdmin()
+  async getListUser(@Param() parma: string[]) {
+    console.log(parma);
+    return 'ok';
+  }
 }

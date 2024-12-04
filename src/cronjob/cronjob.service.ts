@@ -54,11 +54,4 @@ export class CronjobService {
   handlerSystemMission() {
     this.eventEmitter.emit('turn.off.mission', 'isrun');
   }
-
-  // @Cron('* * * * * *')
-  // handleTest() {
-  //   let now = Date.now();
-  //   let rng = seedrandom('hello.');
-  //   console.log(rng());
-  // }
 }

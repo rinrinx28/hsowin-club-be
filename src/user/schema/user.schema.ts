@@ -67,6 +67,12 @@ export class User {
   @Prop({ default: 0 })
   totalClan: number;
 
+  @Prop({ default: 0 })
+  deposit: number;
+
+  @Prop({ default: 0 })
+  withdraw: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
