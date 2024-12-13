@@ -25,6 +25,8 @@ import {
       'http://localhost:3000',
       'https://hsgame.me',
       'https://www.hsgame.me',
+      'https://admin.hsgame.me',
+      'https://www.admin.hsgame.me',
     ],
     credentials: true,
   },

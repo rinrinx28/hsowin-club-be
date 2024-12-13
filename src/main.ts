@@ -15,6 +15,8 @@ async function bootstrap() {
     'http://localhost:3000',
     'https://hsgame.me',
     'https://www.hsgame.me',
+    'https://admin.hsgame.me',
+    'https://www.admin.hsgame.me',
   ];
 
   app.enableCors({
