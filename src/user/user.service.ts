@@ -1360,4 +1360,277 @@ export class UserService {
       release();
     }
   }
+
+  //TODO ———————————————[Admin Service]———————————————
+  async getListUserV3({
+    pageNumber,
+    limitNumber,
+    search,
+    server,
+    vip,
+    sort,
+  }: {
+    pageNumber: number;
+    limitNumber: number;
+    search: string;
+    server: string;
+    vip: string;
+    sort: {
+      gold: 'asc' | 'desc' | 'all';
+      deposit: 'asc' | 'desc' | 'all';
+      withdraw: 'asc' | 'desc' | 'all';
+      totalBet: 'asc' | 'desc' | 'all';
+    };
+  }) {
+    try {
+      const query: any = {};
+
+      // Thêm điều kiện filter nếu khác "all"
+      if (server !== 'all') {
+        query.server = server;
+      }
+
+      if (vip !== 'all') {
+        query.vip = vip;
+      }
+
+      if (search !== '') {
+        query.name = { $regex: search };
+      }
+
+      // Chuẩn bị điều kiện sort
+      const sortConditions: any = {};
+      if (sort.gold !== 'all') {
+        sortConditions.gold = sort.gold === 'asc' ? 1 : -1;
+      }
+      if (sort.deposit !== 'all') {
+        sortConditions.deposit = sort.deposit === 'asc' ? 1 : -1;
+      }
+      if (sort.withdraw !== 'all') {
+        sortConditions.withdraw = sort.withdraw === 'asc' ? 1 : -1;
+      }
+      if (sort.totalBet !== 'all') {
+        sortConditions.totalBet = sort.totalBet === 'asc' ? 1 : -1;
+      }
+
+      const startIndex = (pageNumber - 1) * limitNumber;
+
+      // Thực hiện truy vấn với lọc và sắp xếp
+      const users = await this.userModel
+        .find(query)
+        .sort(sortConditions)
+        .limit(limitNumber)
+        .skip(startIndex)
+        .exec();
+
+      const count = await this.userModel.countDocuments(query);
+      const totalPage = Math.ceil(count / limitNumber);
+
+      return {
+        page: pageNumber,
+        limit: limitNumber,
+        total: count,
+        totalPage: totalPage,
+        data: users,
+      };
+    } catch (err: any) {
+      console.error('Error fetching user list:', err.message);
+      return {
+        page: pageNumber,
+        limit: limitNumber,
+        total: 0,
+        totalPage: 0,
+        data: [],
+        error: err.message,
+      };
+    }
+  }
+
+  async goldUser({
+    type,
+    uid,
+    amount,
+  }: {
+    type: 'plus' | 'minus' | 'set';
+    uid: string;
+    amount: number;
+  }) {
+    try {
+      const e_value_diamom_claim = await this.handleGetEventModel(
+        'e-value-diamon-claim',
+      );
+      let user = await this.userModel.findById(uid);
+
+      if (!user) throw new Error('User not found');
+
+      let newGold = user.gold;
+      let activeMessage = '';
+      let vipChanges = null;
+
+      switch (type) {
+        case 'minus':
+          newGold -= amount;
+          activeMessage = 'Bạn đã bị trừ vàng từ Admin';
+          await this.handleCreateUserActive({
+            uid,
+            active: JSON.stringify({ name: activeMessage, isAdm: true }),
+            currentGold: user.gold,
+            newGold,
+          });
+          break;
+
+        case 'plus':
+          newGold += amount;
+          activeMessage = 'Bạn đã được nạp vàng thành công từ Admin';
+
+          // Handle VIP logic
+          const e_value_vip = await this.handleGetEventModel('e-value-vip');
+          const value_vip = JSON.parse(e_value_vip.option);
+          const targetBank = user.totalBank + amount;
+          const targetVip = this.findPosition(value_vip, targetBank);
+          const start_data = moment();
+          const end_data = moment().add(1, 'month');
+          const data_vip = this.handleGenVipClaim(start_data, end_data);
+
+          if (user.vip !== 0) {
+            vipChanges = {
+              name: 'VIP Upgrade',
+              currentVip: user.vip,
+              newVip: targetVip + 1,
+            };
+          } else {
+            const old_targetVip = await this.handleFindUserVip(uid);
+            if (!old_targetVip) {
+              await this.handleCreateUserVip({
+                data: JSON.stringify(data_vip),
+                timeEnd: end_data,
+                uid,
+              });
+            } else {
+              await this.handleUpdateUserVip(uid, {
+                data: JSON.stringify(data_vip),
+                timeEnd: end_data,
+                isEnd: false,
+              });
+            }
+            vipChanges = {
+              name: 'Set VIP',
+              currentVip: user.vip,
+              newVip: targetVip + 1,
+            };
+          }
+
+          await this.handleCreateUserActive({
+            uid,
+            active: JSON.stringify(vipChanges),
+            currentGold: user.gold,
+            newGold,
+          });
+          user = await this.userModel
+            .findByIdAndUpdate(
+              uid,
+              {
+                $inc: {
+                  gold: +amount,
+                  totalBank: +amount,
+                  diamon: +e_value_diamom_claim.value * amount,
+                  deposit: +amount,
+                },
+                vip: targetVip + 1,
+              },
+              { upsert: true, new: true },
+            )
+            .exec();
+          break;
+
+        case 'set':
+          newGold = amount;
+          activeMessage = 'Bạn đã được điều chỉnh vàng từ Admin';
+          await this.handleCreateUserActive({
+            uid,
+            active: JSON.stringify({ name: activeMessage, isAdm: true }),
+            currentGold: user.gold,
+            newGold,
+          });
+          break;
+
+        default:
+          throw new Error('Invalid type');
+      }
+
+      // Cập nhật số vàng cho loại 'minus' và 'set'
+      if (type !== 'plus') {
+        user = await this.userModel
+          .findByIdAndUpdate(
+            uid,
+            { gold: newGold },
+            { upsert: true, new: true },
+          )
+          .exec();
+      }
+
+      return { message: 'ok', user };
+    } catch (err: any) {
+      return { error: err.message };
+    }
+  }
+
+  async banUser({ uid, reason }: { uid: string; reason: string }) {
+    try {
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          uid,
+          {
+            isBan: true,
+            isReason: reason,
+          },
+          { upsert: true, new: true },
+        )
+        .exec();
+      return {
+        message: 'ok',
+        user,
+      };
+    } catch (err: any) {
+      return {
+        error: err.message,
+      };
+    }
+  }
+
+  async unBanUser({ uid, reason }: { uid: string; reason: string }) {
+    try {
+      const user = await this.userModel
+        .findByIdAndUpdate(
+          uid,
+          {
+            isBan: false,
+            isReason: reason,
+          },
+          { upsert: true, new: true },
+        )
+        .exec();
+      return {
+        message: 'ok',
+        user,
+      };
+    } catch (err: any) {
+      return {
+        error: err.message,
+      };
+    }
+  }
+
+  async deleteUser({ uid }: { uid: string }) {
+    try {
+      await this.userModel.findByIdAndDelete(uid).exec();
+      return {
+        message: 'ok',
+      };
+    } catch (err: any) {
+      return {
+        error: err.message,
+      };
+    }
+  }
 }

@@ -589,6 +589,7 @@ export class EventService {
           isEnd: true,
         });
         bet.resultBet = result;
+        bet.isEnd = true;
         newBetUser.push(bet);
       }
       const userNoti = newBetUser.filter(
@@ -964,6 +965,7 @@ export class EventService {
           isEnd: true,
         });
         bet.resultBet = result;
+        bet.isEnd = true;
         newBetUser.push(bet);
       }
       await this.eventRandomDrawModel.findOneAndUpdate(

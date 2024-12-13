@@ -436,4 +436,75 @@ export class UserController {
     console.log(parma);
     return 'ok';
   }
+
+  @Get('/v3/list/users')
+  @isAdmin()
+  async getListUserV3(
+    @Query('page') page: number = 1, // Mặc định là trang 1
+    @Query('limit') limit: number = 10, // Mặc định là 10 user/trang
+    @Query('server') server: string = 'all', // Mặc định là 'all'
+    @Query('search') search: string = '', // Mặc định là ''
+    @Query('vip') vip: string = 'all', // Mặc định là 'all'
+    @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+    @Query('deposit') deposit: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+    @Query('withdraw') withdraw: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+    @Query('totalBet') totalBet: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+  ) {
+    // Chuyển đổi page và limit thành số nguyên
+    const pageNumber = parseInt(page.toString(), 10) || 1;
+    const limitNumber = parseInt(limit.toString(), 10) || 10;
+
+    return await this.userService.getListUserV3({
+      pageNumber: pageNumber,
+      limitNumber: limitNumber,
+      search,
+      server,
+      vip,
+      sort: {
+        gold,
+        deposit,
+        withdraw,
+        totalBet,
+      },
+    });
+  }
+
+  @Post('/v3/gold/plus')
+  @isAdmin()
+  async plusGoldUser(@Body() data: { uid: string; amount: number }) {
+    const { amount, uid } = data;
+    return await this.userService.goldUser({ type: 'plus', amount, uid });
+  }
+  @Post('/v3/gold/minus')
+  @isAdmin()
+  async minusGoldUser(@Body() data: { uid: string; amount: number }) {
+    const { amount, uid } = data;
+    return await this.userService.goldUser({ type: 'minus', amount, uid });
+  }
+  @Post('/v3/gold/set')
+  @isAdmin()
+  async setGoldUser(@Body() data: { uid: string; amount: number }) {
+    const { amount, uid } = data;
+    return await this.userService.goldUser({ type: 'set', amount, uid });
+  }
+
+  @Post('/v3/ban')
+  @isAdmin()
+  async setBanUser(@Body() data: { uid: string; reason: string }) {
+    const { reason, uid } = data;
+    return await this.userService.banUser({ uid, reason });
+  }
+  @Post('/v3/unban')
+  @isAdmin()
+  async setUnBanUser(@Body() data: { uid: string; reason: string }) {
+    const { reason, uid } = data;
+    return await this.userService.unBanUser({ uid, reason });
+  }
+
+  @Post('/v3/delete')
+  @isAdmin()
+  async deleteUser(@Body() data: { uid: string }) {
+    const { uid } = data;
+    return await this.userService.deleteUser({ uid });
+  }
 }

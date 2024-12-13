@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { BetLogService } from './bet-log.service';
 import { TopBetServer } from './dto/bet-log.dto';
-import { Public } from 'src/auth/decorators/public.decorator';
+import { Public, isAdmin } from 'src/auth/decorators/public.decorator';
 
 @Controller('bet-log')
 export class BetLogController {
@@ -43,5 +43,24 @@ export class BetLogController {
       return await this.betLogService.findBetHistoryByServer(id);
     }
     return;
+  }
+
+  @Get('/live')
+  @isAdmin()
+  async handlerGetServerLive() {
+    return await this.betLogService.handlerLive();
+  }
+
+  @Get('/result/24/:betId')
+  @isAdmin()
+  async getResult24(@Param('betId') betId: string) {
+    return await this.betLogService.getResult24(betId);
+  }
+
+  @Post('/change/24/:betId')
+  @isAdmin()
+  async changeResult24(@Param('betId') betId: string, @Body() body: any) {
+    const { newResult } = body;
+    return await this.betLogService.changeResult24(betId, newResult);
   }
 }

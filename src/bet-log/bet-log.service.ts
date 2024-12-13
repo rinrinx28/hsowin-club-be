@@ -9,6 +9,8 @@ import {
 } from './dto/bet-log.dto';
 import { BetServer } from './schema/bet-sv.schema';
 import { BetHistory } from './schema/bet-history.schema';
+import { EventRandom } from 'src/event/schema/eventRandom';
+import { UserBet } from 'src/user/schema/userBet.schema';
 
 @Injectable()
 export class BetLogService {
@@ -19,6 +21,10 @@ export class BetLogService {
     private readonly betServerModel: Model<BetServer>,
     @InjectModel(BetHistory.name)
     private readonly betHistoryModel: Model<BetHistory>,
+    @InjectModel(EventRandom.name)
+    private readonly eventRandomDrawModel: Model<EventRandom>,
+    @InjectModel(UserBet.name)
+    private readonly userBetModel: Model<UserBet>,
   ) {}
 
   /**
@@ -165,5 +171,52 @@ export class BetLogService {
 
   async handleGetAllBoss() {
     return await this.betLogModel.find();
+  }
+
+  async handlerLive() {
+    const sv = await this.betServerModel.findOne({
+      isEnd: false,
+      server: '24',
+    });
+    const boss1 = this.betLogModel
+      .findOne({ server: '1' })
+      .sort({ updatedAt: -1 });
+    const boss2 = this.betLogModel
+      .findOne({ server: '2' })
+      .sort({ updatedAt: -1 });
+    const boss3 = this.betLogModel
+      .findOne({ server: '3' })
+      .sort({ updatedAt: -1 });
+    const boss = await Promise.all([boss1, boss2, boss3]);
+    const data = [...boss, sv];
+    const userBets = await this.userBetModel.find({
+      betId: { $in: data.map((d) => d.id) },
+    });
+    return { livegame: data, userBets: userBets };
+  }
+
+  async getResult24(betId: string) {
+    try {
+      const targetReulst = await this.eventRandomDrawModel.findOne({
+        betId: betId,
+      });
+      return targetReulst;
+    } catch (err: any) {
+      return err;
+    }
+  }
+
+  async changeResult24(betId: string, newResult: string) {
+    try {
+      await this.eventRandomDrawModel.findOneAndUpdate(
+        { betId: betId },
+        {
+          value: newResult,
+        },
+      );
+      return 'ok';
+    } catch (err: any) {
+      return err;
+    }
   }
 }
