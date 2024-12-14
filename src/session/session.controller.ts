@@ -14,7 +14,7 @@ import {
 import { SessionService } from './session.service';
 import { BankCreate, CancelSession, CreateSessionDto } from './dto/session.dto';
 import { UserService } from 'src/user/user.service';
-import { isUser } from 'src/auth/decorators/public.decorator';
+import { isAdmin, isUser } from 'src/auth/decorators/public.decorator';
 import { Mutex } from 'async-mutex';
 import { CatchException } from 'src/common/common.exception';
 
@@ -132,5 +132,34 @@ export class SessionController {
       limit,
       user.sub,
     );
+  }
+
+  //TODO ———————————————[Admin Router]———————————————
+  @Get('/v3/list/services')
+  @isAdmin()
+  async getListServicesV3(
+    @Query('page') page: number = 1, // Mặc định là trang 1
+    @Query('limit') limit: number = 10, // Mặc định là 10 user/trang
+    @Query('server') server: string = 'all', // Mặc định là 'all'
+    @Query('type') type: string = 'all', // Mặc định là 'all'
+    @Query('uid') uid: string = '', // Mặc định là ''
+    @Query('playerName') playerName: string = '', // Mặc định là ''
+    @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+  ) {
+    // Chuyển đổi page và limit thành số nguyên
+    const pageNumber = parseInt(page.toString(), 10) || 1;
+    const limitNumber = parseInt(limit.toString(), 10) || 10;
+
+    return await this.sessionService.getListServicesV3({
+      pageNumber: pageNumber,
+      limitNumber: limitNumber,
+      uid,
+      server,
+      playerName,
+      type,
+      sort: {
+        gold,
+      },
+    });
   }
 }

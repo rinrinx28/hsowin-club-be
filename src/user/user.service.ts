@@ -1366,6 +1366,7 @@ export class UserService {
     pageNumber,
     limitNumber,
     search,
+    uid,
     server,
     vip,
     sort,
@@ -1373,6 +1374,7 @@ export class UserService {
     pageNumber: number;
     limitNumber: number;
     search: string;
+    uid: string;
     server: string;
     vip: string;
     sort: {
@@ -1396,6 +1398,10 @@ export class UserService {
 
       if (search !== '') {
         query.name = { $regex: search };
+      }
+
+      if (uid !== '') {
+        query._id = uid;
       }
 
       // Chuẩn bị điều kiện sort

@@ -444,6 +444,7 @@ export class UserController {
     @Query('limit') limit: number = 10, // Mặc định là 10 user/trang
     @Query('server') server: string = 'all', // Mặc định là 'all'
     @Query('search') search: string = '', // Mặc định là ''
+    @Query('uid') uid: string = '', // Mặc định là ''
     @Query('vip') vip: string = 'all', // Mặc định là 'all'
     @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
     @Query('deposit') deposit: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
@@ -458,6 +459,7 @@ export class UserController {
       pageNumber: pageNumber,
       limitNumber: limitNumber,
       search,
+      uid,
       server,
       vip,
       sort: {

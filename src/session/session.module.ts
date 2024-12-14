@@ -9,6 +9,7 @@ import { Bank, BankSchema } from './schema/bank.schema';
 import { Event, EventSchema } from 'src/event/schema/event.schema';
 import { User, UserSchema } from 'src/user/schema/user.schema';
 import { UserWithDraw, UserWithDrawSchema } from 'src/user/schema/userWithdraw';
+import { WebSocketModule } from 'src/socket/socket.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UserWithDraw, UserWithDrawSchema } from 'src/user/schema/userWithdraw';
     ]),
     UserModule,
     CronjobModule,
+    WebSocketModule,
   ],
   controllers: [SessionController],
   providers: [SessionService],

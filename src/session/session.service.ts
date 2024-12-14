@@ -19,6 +19,7 @@ import { Event } from 'src/event/schema/event.schema';
 import { CatchException } from 'src/common/common.exception';
 import { UserWithDraw } from 'src/user/schema/userWithdraw';
 import { Mutex } from 'async-mutex';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Injectable()
 export class SessionService {
@@ -34,6 +35,7 @@ export class SessionService {
     private readonly userWithDrawModel: Model<UserWithDraw>,
     private readonly userService: UserService,
     private readonly cronJobService: CronjobService,
+    private readonly socketGateway: SocketGateway,
   ) {}
 
   private logger: Logger = new Logger('SessionService');
@@ -147,10 +149,10 @@ export class SessionService {
       }
       // Let make auto cancel with timeout 600s = 10p
       const timeOutId = setTimeout(async () => {
-        await this.sessionModel.findByIdAndUpdate(
+        const service_cancel = await this.sessionModel.findByIdAndUpdate(
           result?.id,
           { status: '1' },
-          { upsert: true },
+          { upsert: true, new: true },
         );
         if (result.type === '1') {
           await this.userService.update(sub, {
@@ -161,6 +163,10 @@ export class SessionService {
             },
           });
         }
+        this.socketGateway.server.emit(
+          'session-res',
+          service_cancel.toObject(),
+        );
         // remove task from memory storage
         this.cronJobService.remove(result?.id);
       }, 1e3 * 600); // 1e3 = 1000ms
@@ -170,6 +176,7 @@ export class SessionService {
         `UID: ${sub} - ${body.type === '1' ? 'Rut' : 'Nạp'} - GOLD: ${body.amount}`,
       );
       this.cronJobService.create(result?.id, timeOutId);
+      this.socketGateway.server.emit('session-ce', result.toObject());
       return result;
     } catch (err) {
       throw new CatchException(err);
@@ -439,5 +446,83 @@ export class SessionService {
       .sort({ updatedAt: -1 })
       .limit(limit)
       .skip((page - 1) * limit);
+  }
+
+  //TODO ———————————————[Handler Admin]———————————————
+  async getListServicesV3({
+    pageNumber,
+    limitNumber,
+    uid,
+    server,
+    playerName,
+    type,
+    sort,
+  }: {
+    pageNumber: number;
+    limitNumber: number;
+    uid: string;
+    server: string;
+    playerName: string;
+    type: string;
+    sort: {
+      gold: 'asc' | 'desc' | 'all';
+    };
+  }) {
+    try {
+      const query: any = {};
+
+      // Thêm điều kiện filter nếu khác "all"
+      if (server !== 'all') {
+        query.server = server;
+      }
+
+      if (type !== 'all') {
+        query.type = type;
+      }
+
+      if (uid !== '') {
+        query.uid = uid;
+      }
+
+      if (playerName !== '') {
+        query.playerName = { $regex: playerName };
+      }
+      // Chuẩn bị điều kiện sort
+      const sortConditions: any = {};
+      if (sort.gold !== 'all') {
+        sortConditions.amount = sort.gold === 'asc' ? 1 : -1;
+      }
+      if (sort.gold === 'all') {
+        sortConditions.createdAt = -1;
+      }
+      const startIndex = (pageNumber - 1) * limitNumber;
+      // Thực hiện truy vấn với lọc và sắp xếp
+      const services = await this.sessionModel
+        .find(query)
+        .sort(sortConditions)
+        .limit(limitNumber)
+        .skip(startIndex)
+        .exec();
+
+      const count = await this.sessionModel.countDocuments(query);
+      const totalPage = Math.ceil(count / limitNumber);
+
+      return {
+        page: pageNumber,
+        limit: limitNumber,
+        total: count,
+        totalPage: totalPage,
+        data: services,
+      };
+    } catch (err: any) {
+      return {
+        page: pageNumber,
+        limit: limitNumber,
+        total: 0,
+        totalPage: 0,
+        data: [],
+        error: err.message,
+      };
+    }
   }
 }
