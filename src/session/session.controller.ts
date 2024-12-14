@@ -17,12 +17,14 @@ import { UserService } from 'src/user/user.service';
 import { isAdmin, isUser } from 'src/auth/decorators/public.decorator';
 import { Mutex } from 'async-mutex';
 import { CatchException } from 'src/common/common.exception';
+import { SocketGateway } from 'src/socket/socket.gateway';
 
 @Controller('session')
 export class SessionController {
   constructor(
     private readonly sessionService: SessionService,
     private readonly userService: UserService,
+    private readonly socketGateway: SocketGateway,
   ) {}
 
   private readonly mutexMap = new Map<string, Mutex>();
@@ -61,9 +63,14 @@ export class SessionController {
           },
         });
       }
-      return await this.sessionService.updateById(data?.sessionId, {
-        status: '1',
-      });
+      const service_cancel = await this.sessionService.updateById(
+        data?.sessionId,
+        {
+          status: '1',
+        },
+      );
+      this.socketGateway.server.emit('session-res', service_cancel.toObject());
+      return service_cancel;
     } catch (err: any) {
       throw new CatchException(err);
     } finally {
