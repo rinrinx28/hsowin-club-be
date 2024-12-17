@@ -112,6 +112,10 @@ export class UserService {
     return await this.userModel.findOne({ username });
   }
 
+  async findOneName(name: any) {
+    return await this.userModel.findOne({ name });
+  }
+
   async findById(id: any) {
     const user = await this.userModel.findById(id);
     delete user?.pwd_h;

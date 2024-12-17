@@ -123,6 +123,7 @@ export class SessionService {
         ...body,
         status: '0',
         uid: body.uid,
+        name: target.name, // Tên hiển thị
       });
 
       // Let Update Active
@@ -456,6 +457,8 @@ export class SessionService {
     server,
     playerName,
     type,
+    startDate,
+    endDate,
     sort,
   }: {
     pageNumber: number;
@@ -464,6 +467,8 @@ export class SessionService {
     server: string;
     playerName: string;
     type: string;
+    startDate: string;
+    endDate: string;
     sort: {
       gold: 'asc' | 'desc' | 'all';
     };
@@ -478,6 +483,13 @@ export class SessionService {
 
       if (type !== 'all') {
         query.type = type;
+      }
+
+      if (startDate !== '' && endDate !== '') {
+        query.createdAt = {
+          $gte: new Date(`${startDate}T00:00:00Z`),
+          $lt: new Date(`${endDate}T23:59:59Z`),
+        };
       }
 
       if (uid !== '') {
@@ -524,5 +536,243 @@ export class SessionService {
         error: err.message,
       };
     }
+  }
+
+  async v3Create(body: CreateSessionDto) {
+    const { name } = body;
+    const parameter = `admin-session-create`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      const e_auto_rut =
+        await this.userService.handleGetEventModel('e-auto-rut-vang');
+      const e_auto_nap =
+        await this.userService.handleGetEventModel('e-auto-nap-vang');
+      const e_min_withdraw = await this.userService.handleGetEventModel(
+        'e-min-withdraw-gold',
+      );
+      const e_max_withdraw = await this.userService.handleGetEventModel(
+        'e-max-withdraw-gold',
+      );
+      const e_min_deposit =
+        await this.userService.handleGetEventModel('e-min-deposit-gold');
+
+      if (body.type === '0' && !e_auto_nap.status)
+        throw new Error(
+          'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
+        );
+      if (body.type === '1' && !e_auto_rut.status)
+        throw new Error(
+          'Hệ thống rút tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
+        );
+
+      const target = await this.userService.findOneName(name);
+      if (body.type === '1' && target.limitedTrade - body.amount < 0)
+        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
+
+      // Let find old session
+      let old_session = await this.sessionModel
+        .findOne({ uid: target.id, status: '0' })
+        .sort({ updatedAt: -1 })
+        .exec();
+
+      // old session has exist > return error BadRequest
+      if (old_session)
+        throw new Error(
+          `Bạn vui lòng hoàn thành đơn ${body.type === '1' ? 'rút' : 'nạp'} trước đó!`,
+        );
+
+      // Limited Amount
+      if (body.type === '0' && body.amount < e_min_deposit.value)
+        throw new Error(
+          `Số thỏi vàng cần nạp phải lớn ${e_min_deposit.value} thỏi vàng`,
+        );
+      if (
+        (body.type === '1' && body.amount > e_max_withdraw.value) ||
+        (body.type === '1' && body.amount < e_min_withdraw.value)
+      )
+        throw new Error(
+          `Số thỏi vàng cần rút phải lớn ${e_min_withdraw.value} và nhỏ hon ${e_max_withdraw.value} thỏi vàng`,
+        );
+
+      // Let minus gold of user
+      if (body.type === '1') {
+        if (target?.gold - body.amount < 0)
+          throw new Error(
+            'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
+          );
+        await this.userService.update(target.id, {
+          $inc: {
+            gold: -body.amount,
+            limitedTrade: -body.amount,
+            trade: +body.amount,
+          },
+        });
+      }
+
+      const result = await this.sessionModel.create({
+        ...body,
+        status: '0',
+        uid: body.uid,
+      });
+
+      // Let Update Active
+      if (body.type === '1') {
+        await this.userService.handleCreateUserActive({
+          uid: body.uid,
+          active: JSON.stringify({
+            name: 'Tạo Rút vàng',
+            id: result.id,
+          }),
+          currentGold: target.gold,
+          newGold: target.gold - body?.amount,
+        });
+      } else {
+        await this.userService.handleCreateUserActive({
+          uid: body.uid,
+          active: JSON.stringify({
+            name: 'Tạo nạp vàng',
+            id: result.id,
+          }),
+          currentGold: target.gold,
+          newGold: target.gold,
+        });
+      }
+      // Let make auto cancel with timeout 600s = 10p
+      const timeOutId = setTimeout(async () => {
+        const service_cancel = await this.sessionModel.findByIdAndUpdate(
+          result?.id,
+          { status: '1' },
+          { upsert: true, new: true },
+        );
+        if (result.type === '1') {
+          await this.userService.update(target.id, {
+            $inc: {
+              gold: +body.amount,
+              limitedTrade: +body.amount,
+              trade: -body.amount,
+            },
+          });
+        }
+        this.socketGateway.server.emit(
+          'session-res',
+          service_cancel.toObject(),
+        );
+        // remove task from memory storage
+        this.cronJobService.remove(result?.id);
+      }, 1e3 * 600); // 1e3 = 1000ms
+
+      // send task to memory storage
+      this.logger.log(
+        `[Admin] UID: ${target.id} - ${body.type === '1' ? 'Rut' : 'Nạp'} - GOLD: ${body.amount}`,
+      );
+      this.cronJobService.create(result?.id, timeOutId);
+      this.socketGateway.server.emit('session-ce', result.toObject());
+      return 'ok';
+    } catch (err) {
+      throw new CatchException(err);
+    } finally {
+      release();
+    }
+  }
+
+  // Lấy dữ liệu nhóm theo ngày/tháng/năm
+  async getDashboardData(type: string) {
+    let groupByFormat;
+
+    // Xác định format nhóm theo ngày/tháng/năm
+    switch (type) {
+      case 'month':
+        groupByFormat = {
+          $dateToString: { format: '%Y-%m', date: '$createdAt' },
+        }; // YYYY-MM
+        break;
+      case 'year':
+        groupByFormat = { $dateToString: { format: '%Y', date: '$createdAt' } }; // YYYY
+        break;
+      default:
+        groupByFormat = {
+          $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+        }; // YYYY-MM-DD
+    }
+
+    return this.sessionModel.aggregate([
+      {
+        $group: {
+          _id: {
+            date: groupByFormat, // Nhóm theo thời gian
+            type: '$type', // Nhóm riêng theo type (Nạp/Rút)
+          },
+          totalRecive: { $sum: '$recive' }, // Tổng số tiền nhận
+          totalTransactions: { $count: {} }, // Tổng số giao dịch
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.date', // Nhóm lại theo thời gian
+          types: {
+            $push: {
+              type: '$_id.type', // Type (Nạp/Rút)
+              totalRecive: '$totalRecive', // Tổng số tiền theo type
+              totalTransactions: '$totalTransactions', // Tổng số giao dịch theo type
+            },
+          },
+        },
+      },
+      { $sort: { _id: 1 } }, // Sắp xếp theo thời gian
+    ]);
+  }
+
+  async getGoldDataByRange(from: Date, to: Date) {
+    return this.sessionModel.aggregate([
+      // Chuẩn hóa ngày (bỏ giờ)
+      {
+        $addFields: {
+          dateOnly: {
+            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+          },
+        },
+      },
+      // Lọc theo khoảng ngày
+      {
+        $match: {
+          dateOnly: {
+            $gte: from.toISOString().split('T')[0],
+            $lte: to.toISOString().split('T')[0],
+          },
+        },
+      },
+      // Gom nhóm theo ngày
+      {
+        $group: {
+          _id: {
+            date: '$dateOnly',
+            type: '$type',
+          },
+          totalRecive: { $sum: '$recive' },
+          totalTransactions: { $count: {} },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.date',
+          types: {
+            $push: {
+              type: '$_id.type',
+              totalRecive: '$totalRecive',
+              totalTransactions: '$totalTransactions',
+            },
+          },
+        },
+      },
+      // Sắp xếp theo ngày tăng dần
+      { $sort: { _id: 1 } },
+    ]);
   }
 }

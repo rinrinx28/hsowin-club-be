@@ -149,6 +149,8 @@ export class SessionController {
     @Query('limit') limit: number = 10, // Mặc định là 10 user/trang
     @Query('server') server: string = 'all', // Mặc định là 'all'
     @Query('type') type: string = 'all', // Mặc định là 'all'
+    @Query('startDate') startDate: string = '', // Mặc định là ''
+    @Query('endDate') endDate: string = '', // Mặc định là ''
     @Query('uid') uid: string = '', // Mặc định là ''
     @Query('playerName') playerName: string = '', // Mặc định là ''
     @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
@@ -164,9 +166,73 @@ export class SessionController {
       server,
       playerName,
       type,
+      startDate,
+      endDate,
       sort: {
         gold,
       },
     });
+  }
+
+  @Post('/v3/create')
+  @isAdmin()
+  async v3Create(@Body() body: CreateSessionDto) {
+    return await this.sessionService.v3Create({ ...body });
+  }
+
+  @Post('/v3/cancel')
+  @isAdmin()
+  async v3Cancel(@Body() data: CancelSession) {
+    const parameter = `admin-session-cancel`; // Value will be lock
+
+    // Create mutex if it not exist
+    if (!this.mutexMap.has(parameter)) {
+      this.mutexMap.set(parameter, new Mutex());
+    }
+
+    const mutex = this.mutexMap.get(parameter);
+    const release = await mutex.acquire();
+    try {
+      const target = await this.sessionService.findByID(data?.sessionId);
+      if (!target)
+        throw new BadGatewayException('Không tìm thấy phiên giao dịch');
+      if (target.type === '1') {
+        await this.userService.update(data.uid, {
+          $inc: {
+            gold: +target.amount,
+            trade: -target.amount,
+            limitedTrade: +target.amount,
+          },
+        });
+      }
+      const service_cancel = await this.sessionService.updateById(
+        data?.sessionId,
+        {
+          status: '1',
+        },
+      );
+      this.socketGateway.server.emit('session-res', service_cancel.toObject());
+      return 'ok';
+    } catch (err: any) {
+      throw new CatchException(err);
+    } finally {
+      release();
+    }
+  }
+
+  @Get('/v3/dashboard/gold')
+  @isAdmin()
+  async getDashboard(
+    @Query('type') type: 'day' | 'month' | 'year' | 'range' = 'day',
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    if (type === 'range' && from && to) {
+      return this.sessionService.getGoldDataByRange(
+        new Date(`${from}T00:00:00Z`),
+        new Date(`${to}T23:59:59Z`),
+      );
+    }
+    return this.sessionService.getDashboardData(type);
   }
 }

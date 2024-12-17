@@ -4,6 +4,7 @@ export class CreateSessionDto {
   amount: number;
   playerName: string;
   uid: string;
+  name?: string;
 }
 
 export class CancelSession {

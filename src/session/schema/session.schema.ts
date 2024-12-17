@@ -31,6 +31,9 @@ export class Session {
   @Prop()
   server: string;
 
+  @Prop()
+  name: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
