@@ -471,7 +471,6 @@ export class SessionService {
     endDate: string;
     sort: {
       gold: 'asc' | 'desc' | 'all';
-      trade: 'asc' | 'desc' | 'all';
     };
   }) {
     try {
@@ -506,13 +505,11 @@ export class SessionService {
         sortConditions.amount = sort.gold === 'asc' ? 1 : -1;
       }
 
-      if (sort.trade !== 'all') {
-        sortConditions.trade = sort.trade === 'asc' ? 1 : -1;
-      }
-
-      if (sort.gold === 'all' && sort.trade === 'all') {
+      if (sort.gold === 'all') {
         sortConditions.createdAt = -1;
       }
+
+      console.log(sortConditions);
       const startIndex = (pageNumber - 1) * limitNumber;
       // Thực hiện truy vấn với lọc và sắp xếp
       const services = await this.sessionModel

@@ -447,6 +447,7 @@ export class UserController {
     @Query('uid') uid: string = '', // Mặc định là ''
     @Query('vip') vip: string = 'all', // Mặc định là 'all'
     @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+    @Query('trade') trade: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
     @Query('deposit') deposit: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
     @Query('withdraw') withdraw: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
     @Query('totalBet') totalBet: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
@@ -464,6 +465,7 @@ export class UserController {
       vip,
       sort: {
         gold,
+        trade,
         deposit,
         withdraw,
         totalBet,

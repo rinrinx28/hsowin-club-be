@@ -1386,6 +1386,7 @@ export class UserService {
       deposit: 'asc' | 'desc' | 'all';
       withdraw: 'asc' | 'desc' | 'all';
       totalBet: 'asc' | 'desc' | 'all';
+      trade: 'asc' | 'desc' | 'all';
     };
   }) {
     try {
@@ -1421,6 +1422,9 @@ export class UserService {
       }
       if (sort.totalBet !== 'all') {
         sortConditions.totalBet = sort.totalBet === 'asc' ? 1 : -1;
+      }
+      if (sort.trade !== 'all') {
+        sortConditions.trade = sort.trade === 'asc' ? 1 : -1;
       }
 
       const startIndex = (pageNumber - 1) * limitNumber;
