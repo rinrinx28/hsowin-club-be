@@ -554,6 +554,7 @@ export class SessionService {
     const release = await mutex.acquire();
     try {
       const target = await this.userService.findOneName(name);
+      if (!target) throw new Error('Không tìm thấy người chơi');
 
       // Let find old session
       let old_session = await this.sessionModel
