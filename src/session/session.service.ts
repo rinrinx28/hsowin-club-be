@@ -509,7 +509,6 @@ export class SessionService {
         sortConditions.createdAt = -1;
       }
 
-      console.log(sortConditions);
       const startIndex = (pageNumber - 1) * limitNumber;
       // Thực hiện truy vấn với lọc và sắp xếp
       const services = await this.sessionModel
@@ -571,13 +570,28 @@ export class SessionService {
       const result = await this.sessionModel.create({
         ...body,
         status: '0',
-        uid: body.uid,
+        uid: target.id,
       });
+
+      // Let minus gold of user
+      if (body.type === '1') {
+        if (target?.gold - body.amount < 0)
+          throw new Error(
+            'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
+          );
+        await this.userService.update(target.id, {
+          $inc: {
+            gold: -body.amount,
+            limitedTrade: -body.amount,
+            trade: +body.amount,
+          },
+        });
+      }
 
       // Let Update Active
       if (body.type === '1') {
         await this.userService.handleCreateUserActive({
-          uid: body.uid,
+          uid: target.id,
           active: JSON.stringify({
             name: '[AD] Tạo Rút vàng',
             id: result.id,
@@ -587,7 +601,7 @@ export class SessionService {
         });
       } else {
         await this.userService.handleCreateUserActive({
-          uid: body.uid,
+          uid: target.id,
           active: JSON.stringify({
             name: '[AD] Tạo nạp vàng',
             id: result.id,
@@ -598,8 +612,14 @@ export class SessionService {
       }
       // Let make auto cancel with timeout 600s = 10p
       const timeOutId = setTimeout(async () => {
+        const find_service = await this.sessionModel.findById(result?.id);
+        if (!find_service) {
+          // remove task from memory storage
+          this.cronJobService.remove(result?.id);
+          return;
+        }
         const service_cancel = await this.sessionModel.findByIdAndUpdate(
-          result?.id,
+          find_service.id,
           { status: '1' },
           { upsert: true, new: true },
         );
@@ -618,6 +638,7 @@ export class SessionService {
         );
         // remove task from memory storage
         this.cronJobService.remove(result?.id);
+        return;
       }, 1e3 * 600); // 1e3 = 1000ms
 
       // send task to memory storage
