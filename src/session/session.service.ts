@@ -553,31 +553,7 @@ export class SessionService {
     const mutex = this.mutexMap.get(parameter);
     const release = await mutex.acquire();
     try {
-      const e_auto_rut =
-        await this.userService.handleGetEventModel('e-auto-rut-vang');
-      const e_auto_nap =
-        await this.userService.handleGetEventModel('e-auto-nap-vang');
-      const e_min_withdraw = await this.userService.handleGetEventModel(
-        'e-min-withdraw-gold',
-      );
-      const e_max_withdraw = await this.userService.handleGetEventModel(
-        'e-max-withdraw-gold',
-      );
-      const e_min_deposit =
-        await this.userService.handleGetEventModel('e-min-deposit-gold');
-
-      if (body.type === '0' && !e_auto_nap.status)
-        throw new Error(
-          'Hệ thống nạp tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
-        );
-      if (body.type === '1' && !e_auto_rut.status)
-        throw new Error(
-          'Hệ thống rút tự động đang tạm dừng, xin vui lòng liên hệ Fanpage',
-        );
-
       const target = await this.userService.findOneName(name);
-      if (body.type === '1' && target.limitedTrade - body.amount < 0)
-        throw new Error(`Xin lỗi, bạn đã rút vượt quá hạn mức quy định`);
 
       // Let find old session
       let old_session = await this.sessionModel
@@ -591,34 +567,6 @@ export class SessionService {
           `Bạn vui lòng hoàn thành đơn ${body.type === '1' ? 'rút' : 'nạp'} trước đó!`,
         );
 
-      // Limited Amount
-      if (body.type === '0' && body.amount < e_min_deposit.value)
-        throw new Error(
-          `Số thỏi vàng cần nạp phải lớn ${e_min_deposit.value} thỏi vàng`,
-        );
-      if (
-        (body.type === '1' && body.amount > e_max_withdraw.value) ||
-        (body.type === '1' && body.amount < e_min_withdraw.value)
-      )
-        throw new Error(
-          `Số thỏi vàng cần rút phải lớn ${e_min_withdraw.value} và nhỏ hon ${e_max_withdraw.value} thỏi vàng`,
-        );
-
-      // Let minus gold of user
-      if (body.type === '1') {
-        if (target?.gold - body.amount < 0)
-          throw new Error(
-            'Số dư tài khoản của bạn hiện không đủ để thực hiện lệnh rút',
-          );
-        await this.userService.update(target.id, {
-          $inc: {
-            gold: -body.amount,
-            limitedTrade: -body.amount,
-            trade: +body.amount,
-          },
-        });
-      }
-
       const result = await this.sessionModel.create({
         ...body,
         status: '0',
@@ -630,7 +578,7 @@ export class SessionService {
         await this.userService.handleCreateUserActive({
           uid: body.uid,
           active: JSON.stringify({
-            name: 'Tạo Rút vàng',
+            name: '[AD] Tạo Rút vàng',
             id: result.id,
           }),
           currentGold: target.gold,
@@ -640,7 +588,7 @@ export class SessionService {
         await this.userService.handleCreateUserActive({
           uid: body.uid,
           active: JSON.stringify({
-            name: 'Tạo nạp vàng',
+            name: '[AD] Tạo nạp vàng',
             id: result.id,
           }),
           currentGold: target.gold,
