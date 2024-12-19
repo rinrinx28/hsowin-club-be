@@ -154,6 +154,7 @@ export class SessionController {
     @Query('uid') uid: string = '', // Mặc định là ''
     @Query('playerName') playerName: string = '', // Mặc định là ''
     @Query('gold') gold: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
+    @Query('trade') trade: 'asc' | 'desc' | 'all' = 'all', // Mặc định là 'all'
   ) {
     // Chuyển đổi page và limit thành số nguyên
     const pageNumber = parseInt(page.toString(), 10) || 1;
@@ -170,6 +171,7 @@ export class SessionController {
       endDate,
       sort: {
         gold,
+        trade,
       },
     });
   }

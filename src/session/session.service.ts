@@ -471,6 +471,7 @@ export class SessionService {
     endDate: string;
     sort: {
       gold: 'asc' | 'desc' | 'all';
+      trade: 'asc' | 'desc' | 'all';
     };
   }) {
     try {
@@ -504,7 +505,12 @@ export class SessionService {
       if (sort.gold !== 'all') {
         sortConditions.amount = sort.gold === 'asc' ? 1 : -1;
       }
-      if (sort.gold === 'all') {
+
+      if (sort.trade !== 'all') {
+        sortConditions.trade = sort.trade === 'asc' ? 1 : -1;
+      }
+
+      if (sort.gold === 'all' && sort.trade === 'all') {
         sortConditions.createdAt = -1;
       }
       const startIndex = (pageNumber - 1) * limitNumber;
